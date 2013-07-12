@@ -1,0 +1,9 @@
+/local
+/editor
+*.swp
+/.hg*
+
+
+/.buildpath
+/.project
+/.settings

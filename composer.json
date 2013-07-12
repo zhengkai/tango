@@ -1,0 +1,15 @@
+{
+	"name": "soulogic/tango",
+	"description": "Tango Framework",
+	"authors": [
+		{
+			"name": "Zheng Kai",
+			"email": "zhengkai@gmail.com",
+			"homepage": "http://soulogic.com",
+			"role": "Developer"
+		}
+	],
+	"require": {
+		"php": ">=5.4.0"
+	}
+}
