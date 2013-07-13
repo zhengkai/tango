@@ -1,7 +1,7 @@
 <?php
 namespace Tango\Core;
 
-require_once __DIR__.'/ext.class.php';
+require_once __DIR__.'/ext.php';
 
 $T =& Tango::$T;
 $D =& Tango::$D;

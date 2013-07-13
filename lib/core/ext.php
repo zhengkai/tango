@@ -1,7 +1,7 @@
 <?php
 namespace Tango\Core;
 
-require_once __DIR__.'/html.class.php';
+require_once __DIR__.'/html.php';
 
 class Ext {
 

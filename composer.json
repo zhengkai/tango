@@ -1,6 +1,8 @@
 {
 	"name": "tango/tango",
+	"license": "MIT",
 	"description": "Tango Framework",
+	"homepage": "https://github.com/zhengkai/tango",
 	"authors": [
 		{
 			"name": "Zheng Kai",
