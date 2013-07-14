@@ -15,13 +15,22 @@ class HTML {
 		'http://yui.yahooapis.com/pure/0.2.0/pure-min.css',
 	];
 
-	static public function run($T) {
-		require self::_getPath('head');
-		require self::_getPath('nav');
-		echo '<pre>';
-		echo htmlspecialchars(print_r($T, TRUE));
-		echo '</pre>';
-		require self::_getPath('foot');
+	static public function run($T, $D) {
+
+		ob_start();
+		require self::_getFile($_SERVER['SCRIPT_NAME']);
+		$s = ob_get_clean();
+
+		require self::_getTpl('head');
+		echo "\n";
+		require self::_getTpl('nav');
+		echo "\n";
+
+		echo trim($s);
+
+		echo "\n\n";
+
+		require self::_getTpl('foot');
 	}
 
 	static public function setTpl($lTpl, $sValue = NULL) {
@@ -40,8 +49,12 @@ class HTML {
 		}
 	}
 
-	static protected function _getPath($sTpl) {
-		return SITE_ROOT.'/tpl'.self::$_lTpl[$sTpl].'.php';
+	static protected function _getTpl($sTpl) {
+		return self::_getFile(self::$_lTpl[$sTpl].'.php');
+	}
+
+	static protected function _getFile($sFile) {
+		return SITE_ROOT.'/tpl'.$sFile;
 	}
 
 	static public function getTitle() {
@@ -62,5 +75,33 @@ class HTML {
 
 	static public function addCSS($sFile) {
 		self::$_lCSS[] = $sFile;
+	}
+
+	/**
+	 * 递归对数组进行 HTML 转义
+	 */
+	static public function escape($mInput) {
+
+		if (is_string($mInput)) {
+			//$mRow = preg_replace("/\\p{C}|\\p{M}/u", "", $mRow);
+			// TODO 防止各种火星文，有待测试，以后放到 class Filter 里
+
+			return htmlspecialchars($mInput, ENT_QUOTES | ENT_HTML5);
+		}
+
+		if (!is_array($mInput)) {
+			return $mInput;
+		}
+
+		$fnSelf = [__CLASS__, __FUNCTION__];
+
+		$lReturn = [];
+		foreach ($mInput as $mKey => $mValue) {
+			$mKey = $fnSelf($mKey);
+			$mValue = $fnSelf($mValue);
+			$lReturn[$mKey] = $mValue;
+		}
+
+		return $lReturn;
 	}
 }
