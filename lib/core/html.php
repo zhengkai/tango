@@ -19,6 +19,9 @@ class HTML {
 
 	static public function run($T, $D) {
 
+		dump($T);
+		echo 'abc';
+
 		ob_start();
 		require self::_getFile($_SERVER['SCRIPT_NAME']);
 		$s = ob_get_clean();
