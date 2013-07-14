@@ -1,10 +1,6 @@
 <?php
 namespace Tango\Core;
 
-$T =& Tango::$T;
-$D =& Tango::$D;
-$_IN =& Tango::$IN;
-
 class Tango {
 
 	static public $T = [];
@@ -75,6 +71,16 @@ class Tango {
 			echo $s;
 			return;
 		}
+
+		if (
+			($aError = error_get_last())
+			&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
+		) {
+			http_response_code(500);
+			dump($aError);
+			return;
+		}
+
 		Ext::parse(self::$T, self::$D);
 	}
 }

@@ -4,9 +4,9 @@ namespace Tango\Core;
 class HTML {
 
 	static protected $_lTpl = [
-		'head' => '/head',
-		'foot' => '/foot',
-		'nav'  => '/nav',
+		'head'  => '/head',
+		'foot'  => '/foot',
+		'nav'   => '/nav',
 		'error' => '/error',
 	];
 
@@ -18,9 +18,6 @@ class HTML {
 	];
 
 	static public function run($T, $D) {
-
-		dump($T);
-		echo 'abc';
 
 		ob_start();
 		require self::_getFile($_SERVER['SCRIPT_NAME']);
@@ -39,6 +36,7 @@ class HTML {
 	}
 
 	static public function setTpl($lTpl, $sValue = NULL) {
+
 		if (is_string($aTpl)) {
 			$lTpl = [$aTpl => $sValue];
 		}
