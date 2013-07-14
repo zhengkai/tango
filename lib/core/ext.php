@@ -1,8 +1,6 @@
 <?php
 namespace Tango\Core;
 
-require_once __DIR__.'/html.php';
-
 class Ext {
 
 	static protected $_aExt = FALSE;

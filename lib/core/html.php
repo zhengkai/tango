@@ -10,7 +10,9 @@ class HTML {
 		'error' => '/error',
 	];
 
-	static protected $_lJS = [];
+	static protected $_lJS = [
+		'http://code.jquery.com/jquery-2.0.3.min.js',
+	];
 	static protected $_lCSS = [
 		'http://yui.yahooapis.com/pure/0.2.0/pure-min.css',
 	];
@@ -66,6 +68,10 @@ class HTML {
 		foreach (self::$_lCSS as $sCSS) {
 			$sReturn .= '<link rel="stylesheet" href="'.$sCSS.'" type="text/css" />'."\n";
 		}
+
+		foreach (self::$_lJS as $sJS) {
+			$sReturn .= '<script src="'.$sJS.'"></script>'."\n";
+		}
 		return $sReturn;
 	}
 
@@ -78,7 +84,7 @@ class HTML {
 	}
 
 	/**
-	 * 递归对数组进行 HTML 转义
+	 * 递归对数组进行 HTML 转义（包括 key 和 value）
 	 */
 	static public function escape($mInput) {
 

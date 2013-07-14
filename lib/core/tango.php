@@ -1,8 +1,6 @@
 <?php
 namespace Tango\Core;
 
-require_once __DIR__.'/ext.php';
-
 $T =& Tango::$T;
 $D =& Tango::$D;
 $_IN =& Tango::$IN;
