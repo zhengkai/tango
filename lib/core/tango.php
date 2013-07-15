@@ -1,6 +1,10 @@
 <?php
 namespace Tango\Core;
 
+require __DIR__.'/config.php';
+
+Config::setFileDefault('tango', __DIR__.'/../config/tango.php');
+
 class Tango {
 
 	static public $T = [];
