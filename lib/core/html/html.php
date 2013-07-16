@@ -1,6 +1,8 @@
 <?php
 namespace Tango\Core;
 
+Config::setFileDefault('html', dirname(dirname(__DIR__)).'/config/html.php');
+
 class HTML {
 
 	static protected $_lTpl = [
@@ -8,36 +10,36 @@ class HTML {
 		'foot'  => '/foot',
 		'nav'   => '/nav',
 		'error' => '/error',
+		'main'  => NULL,
 	];
 
-	static protected $_lJS = [
-		'http://code.jquery.com/jquery-2.0.3.min.js',
-	];
-	static protected $_lCSS = [
-		'http://yui.yahooapis.com/pure/0.2.0/pure-min.css',
-	];
+	static protected $_lJS = [];
+	static protected $_lCSS = [];
+	static protected $_sAddMeta = '';
 
-	static public function run($T, $D) {
+	static protected $_sTitle = 'Tango';
+
+	static public function run() {
+
+		if (!self::$_lTpl['main']) {
+			self::$_lTpl['main'] = substr($_SERVER['SCRIPT_NAME'], 0, -4);
+		}
+
+		$T =& Tango::$T;
+		$D =& Tango::$D;
+
+		$T = self::escape($T);
 
 		ob_start();
-		require self::_getFile($_SERVER['SCRIPT_NAME']);
-		$s = ob_get_clean();
+		require self::getTpl('main');
+		$s = trim(ob_get_clean());
 
-		require self::_getTpl('head');
-		echo "\n";
-		require self::_getTpl('nav');
-		echo "\n";
-
-		echo trim($s);
-
-		echo "\n\n";
-
-		require self::_getTpl('foot');
+		Layout::run($s);
 	}
 
 	static public function setTpl($lTpl, $sValue = NULL) {
 
-		if (is_string($aTpl)) {
+		if (is_string($lTpl)) {
 			$lTpl = [$aTpl => $sValue];
 		}
 		foreach ($lTpl as $sKey => $sValue) {
@@ -52,7 +54,7 @@ class HTML {
 		}
 	}
 
-	static protected function _getTpl($sTpl) {
+	static public function getTpl($sTpl) {
 		return self::_getFile(self::$_lTpl[$sTpl].'.php');
 	}
 
@@ -60,20 +62,31 @@ class HTML {
 		return SITE_ROOT.'/tpl'.$sFile;
 	}
 
+	static public function setTitle($sTitle) {
+		self::$_sTitle = $sTitle;
+	}
+
 	static public function getTitle() {
-		return 'Tango';
+		return self::$_sTitle;
 	}
 
 	static public function getMeta() {
 		$sReturn = '';
-		foreach (self::$_lCSS as $sCSS) {
+		foreach (array_merge(Config::get('html')['css'], self::$_lCSS) as $sCSS) {
 			$sReturn .= '<link rel="stylesheet" href="'.$sCSS.'" type="text/css" />'."\n";
 		}
 
-		foreach (self::$_lJS as $sJS) {
+		foreach (array_merge(Config::get('html')['js'], self::$_lJS) as $sJS) {
 			$sReturn .= '<script src="'.$sJS.'"></script>'."\n";
 		}
+		if (self::$_sAddMeta) {
+			$sReturn .= self::$_sAddMeta."\n";
+		}
 		return $sReturn;
+	}
+
+	static public function addMeta($s) {
+		self::$_sAddMeta = trim($s);
 	}
 
 	static public function addJS($sFile) {

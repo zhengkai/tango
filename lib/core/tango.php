@@ -1,9 +1,7 @@
 <?php
 namespace Tango\Core;
 
-require __DIR__.'/config.php';
-
-Config::setFileDefault('tango', __DIR__.'/../config/tango.php');
+Config::setFileDefault('tango', dirname(__DIR__).'/config/tango.php');
 
 class Tango {
 
@@ -81,7 +79,6 @@ class Tango {
 			&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
 		) {
 			http_response_code(500);
-			dump($aError);
 			return;
 		}
 

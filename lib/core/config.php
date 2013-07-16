@@ -19,10 +19,11 @@ class Config {
 	}
 
 	static protected function _setFile($sName, $sPath, $bDefault = FALSE) {
+
 		$sVar = $bDefault ? '_lFileDefault' : '_lFile';
 		$sCurrentPath =& self::${$sVar}[$sName];
 		if ($sCurrentPath) {
-			trigger_error('define duplicate');
+			trigger_error('"'.$sName.'"'.($bDefault ? '(default)' : '').' define duplicate');
 			exit;
 		}
 		$sCurrentPath = $sPath;
