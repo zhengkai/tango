@@ -1,7 +1,7 @@
 <?php
 namespace Tango\Core;
 
-class Ext {
+class Page {
 
 	static protected $_aExt = FALSE;
 	static protected $_lExt = [
@@ -24,6 +24,15 @@ class Ext {
 			'mime' => 'application/xml',
 		],
 	];
+
+	static protected $_bParse = FALSE;
+
+	static public function error($sError) {
+		if (self::$_bParse) {
+			throw new TangoException('Page has been sent');
+		}
+		Tango::$T['error'] = $sError;
+	}
 
 	static public function set($sExt, $bTry = FALSE) {
 		if ($bTry && self::$_aExt) {
@@ -49,24 +58,47 @@ class Ext {
 		return self::$_aExt;
 	}
 
-	static public function parse($T, $D) {
+	static public function parse() {
+
+		self::$_bParse = TRUE;
+
 		$sExt = self::$_aExt['ext'];
+
+		if ($sExt === 'html') {
+
+			if (
+				(!empty(Tango::$T['error']) && Tango::$T['error'] === 'http500')
+				|| (
+					($aError = error_get_last())
+					&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
+				)
+			) {
+				//http_response_code(500);
+				Tango::$T = [];
+				Tango::$D = [];
+
+				Layout::set(FALSE);
+				HTML::setTpl('main', '/error/500');
+			}
+
+			HTML::run();
+			return TRUE;
+		}
+
 		$call = [__CLASS__, '_parse'.ucfirst($sExt)];
 		if (is_callable($call)) {
 			header('Content-Type: '.self::$_aExt['mime'].'; charset=utf-8');
 			$call($T, $D);
+			return TRUE;
 		} else {
 			header('Content-Type: text/plain; charset=utf-8');
 			echo "\n\t", 'Error: method '.$sExt.' incomplete', "\n";
+			return FALSE;
 		}
 	}
 
-	static protected function _parseHtml($T, $D) {
-		HTML::run($T, $D);
-	}
-
-	static protected function _parseJson($T) {
-		echo json_encode($T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+	static protected function _parseJson() {
+		echo json_encode(Tango::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 		return TRUE;
 	}
 }

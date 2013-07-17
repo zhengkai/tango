@@ -1,9 +1,7 @@
 <?php
 namespace Tango\Core;
 
-require __DIR__.'/config.php';
-
-Config::setFileDefault('tango', __DIR__.'/../config/tango.php');
+Config::setFileDefault('tango', dirname(__DIR__).'/config/tango.php');
 
 class Tango {
 
@@ -18,6 +16,17 @@ class Tango {
 	static protected $_bInit = FALSE;
 
 	static protected $_bOB = TRUE; // output buffering
+	static protected $_iAI = 0;
+
+	static public function isDebug() {
+		$aConfig = Config::get('tango');
+		return $aConfig['debug']['enable']
+			&& in_array($_SERVER["REMOTE_ADDR"], $aConfig['debug']['allow_ip']);
+	}
+
+	static public function isInit() {
+		return self::$_bInit;
+	}
 
 	static public function init() {
 
@@ -47,7 +56,7 @@ class Tango {
 						break;
 					default:
 						if (self::$_bOutbuffer) {
-							Ext::set($sExt, TRUE);
+							Page::set($sExt, TRUE);
 						}
 						break 2;
 				}
@@ -62,7 +71,7 @@ class Tango {
 
 		if (self::$_bOB) {
 			register_shutdown_function([__CLASS__, 'tpl']);
-			Ext::set('html', TRUE);
+			Page::set('html', TRUE);
 			ob_start();
 		}
 
@@ -76,15 +85,10 @@ class Tango {
 			return;
 		}
 
-		if (
-			($aError = error_get_last())
-			&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
-		) {
-			http_response_code(500);
-			dump($aError);
-			return;
-		}
+		Page::parse();
+	}
 
-		Ext::parse(self::$T, self::$D);
+	static public function getAI() {
+		return ++self::$_iAI;
 	}
 }

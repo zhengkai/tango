@@ -19,10 +19,11 @@ class Config {
 	}
 
 	static protected function _setFile($sName, $sPath, $bDefault = FALSE) {
+
 		$sVar = $bDefault ? '_lFileDefault' : '_lFile';
 		$sCurrentPath =& self::${$sVar}[$sName];
 		if ($sCurrentPath) {
-			trigger_error('define duplicate');
+			throw new TangoException('"'.$sName.'"'.($bDefault ? '(default)' : '').' define duplicate');
 			exit;
 		}
 		$sCurrentPath = $sPath;
@@ -31,9 +32,15 @@ class Config {
 
 	static public function get($sName) {
 		$aReturn =& self::$_lStore[$sName];
+
 		if (!$aReturn) {
-			$sFile        =& self::$_lFile[$sName];
+
 			$sFileDefault =& self::$_lFileDefault[$sName];
+			if (!Tango::isInit()) {
+				return $sFileDefault ? require $sFileDefault : [];
+			}
+
+			$sFile =& self::$_lFile[$sName];
 			$aReturn = ($sFile ? require $sFile : [])
 				+ ($sFileDefault ? require $sFileDefault : []);
 		}
