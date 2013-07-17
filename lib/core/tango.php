@@ -16,6 +16,17 @@ class Tango {
 	static protected $_bInit = FALSE;
 
 	static protected $_bOB = TRUE; // output buffering
+	static protected $_iAI = 0;
+
+	static public function isDebug() {
+		$aConfig = Config::get('tango');
+		return $aConfig['debug']['enable']
+			&& in_array($_SERVER["REMOTE_ADDR"], $aConfig['debug']['allow_ip']);
+	}
+
+	static public function isInit() {
+		return self::$_bInit;
+	}
 
 	static public function init() {
 
@@ -74,14 +85,10 @@ class Tango {
 			return;
 		}
 
-		if (
-			($aError = error_get_last())
-			&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
-		) {
-			http_response_code(500);
-			return;
-		}
+		Page::parse();
+	}
 
-		Page::parse(self::$T, self::$D);
+	static public function getAI() {
+		return ++self::$_iAI;
 	}
 }

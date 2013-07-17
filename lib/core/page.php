@@ -25,6 +25,15 @@ class Page {
 		],
 	];
 
+	static protected $_bParse = FALSE;
+
+	static public function error($sError) {
+		if (self::$_bParse) {
+			throw new TangoException('Page has been sent');
+		}
+		Tango::$T['error'] = $sError;
+	}
+
 	static public function set($sExt, $bTry = FALSE) {
 		if ($bTry && self::$_aExt) {
 			trigger_error('ext exists');
@@ -51,9 +60,27 @@ class Page {
 
 	static public function parse() {
 
+		self::$_bParse = TRUE;
+
 		$sExt = self::$_aExt['ext'];
 
 		if ($sExt === 'html') {
+
+			if (
+				(!empty(Tango::$T['error']) && Tango::$T['error'] === 'http500')
+				|| (
+					($aError = error_get_last())
+					&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
+				)
+			) {
+				//http_response_code(500);
+				Tango::$T = [];
+				Tango::$D = [];
+
+				Layout::set(FALSE);
+				HTML::setTpl('main', '/error/500');
+			}
+
 			HTML::run();
 			return TRUE;
 		}

@@ -10,7 +10,7 @@ class HTML {
 		'foot'  => '/foot',
 		'nav'   => '/nav',
 		'error' => '/error',
-		'main'  => NULL,
+		'main'  => '',
 	];
 
 	static protected $_lJS = [];
@@ -40,17 +40,16 @@ class HTML {
 	static public function setTpl($lTpl, $sValue = NULL) {
 
 		if (is_string($lTpl)) {
-			$lTpl = [$aTpl => $sValue];
+			$lTpl = [$lTpl => $sValue];
 		}
 		foreach ($lTpl as $sKey => $sValue) {
 			if (!$sValue) {
 				die('setTpl "'.$sKey.'" empty');
 			}
-			$sCurrent =& self::$_lTpl[$sKey];
-			if (!$sOrig) {
+			if (!isset(self::$_lTpl[$sKey])) {
 				die('setTpl "'.$sKey.'" unknown');
 			}
-			$sCurrent = $sValue;
+			self::$_lTpl[$sKey] = $sValue;
 		}
 	}
 
@@ -123,5 +122,13 @@ class HTML {
 		}
 
 		return $lReturn;
+	}
+
+	static public function test($s = 'abc') {
+		self::_test();
+	}
+
+	static public function _test() {
+		throw new TangoException('something error', 2);
 	}
 }
