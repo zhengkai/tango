@@ -1,7 +1,7 @@
 <?php
 namespace Tango\Core;
 
-class Ext {
+class Page {
 
 	static protected $_aExt = FALSE;
 	static protected $_lExt = [

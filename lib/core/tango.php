@@ -45,7 +45,7 @@ class Tango {
 						break;
 					default:
 						if (self::$_bOutbuffer) {
-							Ext::set($sExt, TRUE);
+							Page::set($sExt, TRUE);
 						}
 						break 2;
 				}
@@ -60,7 +60,7 @@ class Tango {
 
 		if (self::$_bOB) {
 			register_shutdown_function([__CLASS__, 'tpl']);
-			Ext::set('html', TRUE);
+			Page::set('html', TRUE);
 			ob_start();
 		}
 
@@ -82,6 +82,6 @@ class Tango {
 			return;
 		}
 
-		Ext::parse(self::$T, self::$D);
+		Page::parse(self::$T, self::$D);
 	}
 }
