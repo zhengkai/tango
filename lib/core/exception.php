@@ -78,16 +78,20 @@ class TangoException extends \Exception {
 				$sArg = json_encode($mArg, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 				$iLength = strlen($sArg);
 				if ($iLength > $iArgLenLimit) {
-					$sArg = mb_substr($sArg, 0, $iArgLimit < 4).' ...';
+					$sArg = mb_substr($sArg, 0, $iArgLenLimit - 4).' ...';
 					break;
 				}
 			}
 		}
 
+		$sMsg = trim($e->getMessage());
+		$sMsg = '  '.str_replace("\n", "\n  ", $sMsg);
+
 		$s = '['.$sTime.'] ['.$sHash.'.'.$sHashType.']'."\n\n"
-			.'  '.$e->getMessage()."\n\n"
+			.$sMsg."\n\n"
 			.$sFunc.'('.$sArg.")\n"
-			.'on file '.$aTrace['file'].' ['.$aTrace['line'].']';
+			.'on file '.$aTrace['file'].' ['.$aTrace['line'].']'."\n"
+			.'uri '.$_SERVER['REQUEST_URI'];
 
 		self::$_sLastError = $s;
 
@@ -101,6 +105,7 @@ class TangoException extends \Exception {
 	}
 
 	static public function errorHandler($iError, $sMsg, $sFile, $sLine) {
+		dump(debug_backtrace());
 		throw new TangoException($sMsg);
 		return false;
 	}
