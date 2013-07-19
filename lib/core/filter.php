@@ -83,6 +83,11 @@ class Filter {
 					break;
 				case 'bool':
 					break;
+				case "hex":
+					if (!preg_match("/^[0-9a-f]{0,1024}$/", $mValue)) {
+						$mValue = FALSE;
+					}
+					break;
 				case 'json';
 					$mValue = json_decode($mValue, TRUE, 5);
 					break;
