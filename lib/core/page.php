@@ -74,11 +74,12 @@ class Page {
 				)
 			) {
 				//http_response_code(500);
-				Tango::$T = [];
-				Tango::$D = [];
 
-				Layout::set(FALSE);
 				HTML::setTpl('main', '/error/500');
+
+			} else if (!empty(Tango::$T['error']) && Tango::$T['error'] === 'http404') {
+
+				HTML::setTpl('main', '/error/404');
 			}
 
 			HTML::run();
