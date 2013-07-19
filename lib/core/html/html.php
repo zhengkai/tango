@@ -19,6 +19,9 @@ class HTML {
 
 	static protected $_sTitle = 'Tango';
 
+	static protected $_bRobotsIndex = TRUE;
+	static protected $_bRobotsFollow = TRUE;
+
 	static public function run() {
 
 		if (!self::$_lTpl['main']) {
@@ -35,6 +38,13 @@ class HTML {
 		$s = trim(ob_get_clean());
 
 		Layout::run($s);
+	}
+
+	static public function setFollow($bFollow) {
+		self::$_bRobotsFollow = (bool)$bFollow;
+	}
+	static public function setIndex($bIndex) {
+		self::$_bRobotsIndex = (bool)$bIndex;
 	}
 
 	static public function setTpl($lTpl, $sValue = NULL) {
@@ -71,16 +81,28 @@ class HTML {
 
 	static public function getMeta() {
 		$sReturn = '';
+
+		// nofollow, noindex
+		if (!self::$_bRobotsIndex || !self::$_bRobotsFollow) {
+			$sReturn .= '<meta name="ROBOTS" content="'
+				.(self::$_bRobotsIndex  ? 'INDEX'  : 'NOINDEX').', '
+				.(self::$_bRobotsFollow ? 'FOLLOW' : 'NOFOLLOW').'">'."\n";
+		}
+
+		// css
 		foreach (array_merge(Config::get('html')['css'], self::$_lCSS) as $sCSS) {
 			$sReturn .= '<link rel="stylesheet" href="'.$sCSS.'" type="text/css" />'."\n";
 		}
 
+		// js
 		foreach (array_merge(Config::get('html')['js'], self::$_lJS) as $sJS) {
 			$sReturn .= '<script src="'.$sJS.'"></script>'."\n";
 		}
+
 		if (self::$_sAddMeta) {
 			$sReturn .= self::$_sAddMeta."\n";
 		}
+
 		return $sReturn;
 	}
 
