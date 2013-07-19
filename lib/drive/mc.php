@@ -3,7 +3,7 @@ namespace Tango\Drive;
 
 use Tango\Core\Config;
 
-Config::setFileDefault('memcache', dirname(dirname(__DIR__)).'/config/memcache.php');
+Config::setFileDefault('memcache', dirname(__DIR__).'/config/memcache.php');
 
 class MC extends \Memcached {
 
