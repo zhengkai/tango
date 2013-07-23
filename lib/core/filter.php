@@ -84,7 +84,7 @@ class Filter {
 				case 'bool':
 					break;
 				case "hex":
-					if (!preg_match("/^[0-9a-f]{0,1024}$/", $mValue)) {
+					if (!preg_match('#^[0-9a-f]{0,1024}$#', $mValue) || ((strlen($mValue) % 2) !== 0)) {
 						$mValue = FALSE;
 					}
 					break;
@@ -101,7 +101,7 @@ class Filter {
 					break;
 			}
 
-			$_IN[$sKey] = FALSE;
+			$_IN[$sKey] = $mValue;
 
 			$_POST = [];
 			$_GET = [];

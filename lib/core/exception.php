@@ -105,7 +105,6 @@ class TangoException extends \Exception {
 	}
 
 	static public function errorHandler($iError, $sMsg, $sFile, $sLine) {
-		dump(debug_backtrace());
 		throw new TangoException($sMsg);
 		return false;
 	}
