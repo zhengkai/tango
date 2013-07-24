@@ -33,7 +33,9 @@ class TangoException extends \Exception {
 
 		$lTrace = $e->getTrace();
 
-		$aTrace = current($lTrace);
+		$aTrace = current($lTrace) + [
+			'file' => '',
+		];
 
 		if (get_class($e) === __CLASS__) {
 			$aSelect =& $lTrace[self::$_iDepth - 1];

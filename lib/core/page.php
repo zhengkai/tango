@@ -64,8 +64,12 @@ class Page {
 	}
 
 	static public function jump($sURL) {
-		self::noParse();
+		if (self::$_bParse) {
+			throw new TangoException('jump before parse');
+		}
+		self::$_bParse = TRUE;
 		header('Location: '.$sURL);
+		exit;
 	}
 
 	static public function parse() {
