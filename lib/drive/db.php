@@ -157,7 +157,13 @@ class DB {
 
 		do {
 			if ($aParam) {
-				$oResult = $this->_oPDO->prepare($sQuery);
+
+				$aOption = [];
+				if (key($aParam) !== 0) {
+					$aOption[\PDO::ATTR_CURSOR] = \PDO::CURSOR_FWDONLY;
+				}
+
+				$oResult = $this->_oPDO->prepare($sQuery, $aOption);
 				$oResult->execute($aParam);
 				$aError = $oResult->errorInfo();
 				if ($sType === 'exec') {
