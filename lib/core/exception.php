@@ -8,11 +8,11 @@ class TangoException extends \Exception {
 	static protected $_iDepth = 1;
 	static protected $_sLastError = '';
 
-	public function __construct($sMessage, $iDepth = 1, $iCode = 0) {
+	public function __construct($sMessage, $iDepth = 0, $iCode = 0) {
 
 		$iDepth = (int)$iDepth;
-		if ($iDepth < 1) {
-			$iDepth = 1;
+		if ($iDepth < 0) {
+			$iDepth = 0;
 		}
 		self::$_iDepth = $iDepth;
 
@@ -36,15 +36,31 @@ class TangoException extends \Exception {
 		$aTrace = current($lTrace);
 
 		if (get_class($e) === __CLASS__) {
-			$aSelect =& $lTrace[self::$_iDepth - 1];
-			if ($aSelect) {
-				$aTrace = $aSelect;
+			if (!self::$_iDepth && !empty($lTrace[0]['class'])) {
+				$sClass = $lTrace[0]['class'];
+				foreach ($lTrace as $aRow) {
+					if (empty($aRow['class']) || $aRow['class'] !== $sClass) {
+						$aTrace = $aPrev;
+						break;
+					}
+					$aPrev = $aRow;
+				}
+			} else {
+				$aSelect =& $lTrace[self::$_iDepth - 1];
+				if ($aSelect) {
+					$aTrace = $aSelect;
+				}
 			}
 		}
 
+		$aTrace += [
+			'file' => '',
+			'line' => '',
+		];
+
 		$sHash = hash('crc32', $_SERVER["REMOTE_PORT"]."\n".microtime(TRUE)."\n".$e->getMessage()."\n".Tango::getAI());
 
-		$sHashType = hash('crc32', $aTrace['file']."\n".$aTrace['line']);
+		$sHashType = hash('crc32', json_encode($aTrace, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
 		$aTrace += [
 			'type' => '',
@@ -75,7 +91,7 @@ class TangoException extends \Exception {
 				} else {
 					$sArg .= ', ';
 				}
-				$sArg = json_encode($mArg, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+				$sArg .= json_encode($mArg, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 				$iLength = strlen($sArg);
 				if ($iLength > $iArgLenLimit) {
 					$sArg = mb_substr($sArg, 0, $iArgLenLimit - 4).' ...';
@@ -105,8 +121,8 @@ class TangoException extends \Exception {
 	}
 
 	static public function errorHandler($iError, $sMsg, $sFile, $sLine) {
-		dump(debug_backtrace());
-		throw new TangoException($sMsg);
+		// error_log(print_r(debug_backtrace(), 1));
+		throw new TangoException($sMsg, 2);
 		return false;
 	}
 }

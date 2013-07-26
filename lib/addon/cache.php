@@ -3,6 +3,7 @@ namespace Tango\Addon;
 
 use Tango\Core\TangoException;
 use Tango\Drive\MC;
+use Tango\Drive\DB;
 
 /*
 	基本上所有的数据都是这么一个流程：
@@ -132,7 +133,7 @@ class Cache {
 		if ($aConfig['func']) {
 			$aData = call_user_func_array($aConfig['func'], $mArgs);
 		} else {
-			$oDB = \DB::getInstance($aConfig['db']);
+			$oDB = DB::getInstance($aConfig['db']);
 			$aData = call_user_func([$oDB, $aConfig['fetch_type']], $aConfig['query'], $mArgs);
 		}
 

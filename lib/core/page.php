@@ -32,6 +32,7 @@ class Page {
 			throw new TangoException('Page has been sent');
 		}
 		Tango::$T['error'] = $sError;
+		exit;
 	}
 
 	static public function set($sExt, $bTry = FALSE) {
@@ -58,28 +59,48 @@ class Page {
 		return self::$_aExt;
 	}
 
+	static public function noParse() {
+		self::$_bParse = TRUE;
+	}
+
+	static public function jump($sURL) {
+		if (self::$_bParse) {
+			throw new TangoException('jump before parse');
+		}
+		self::$_bParse = TRUE;
+		header('Location: '.$sURL);
+		exit;
+	}
+
 	static public function parse() {
 
+		if (self::$_bParse) {
+			return FALSE;
+		}
 		self::$_bParse = TRUE;
 
 		$sExt = self::$_aExt['ext'];
 
 		if ($sExt === 'html') {
 
-			if (
-				(!empty(Tango::$T['error']) && Tango::$T['error'] === 'http500')
-				|| (
-					($aError = error_get_last())
-					&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
-				)
+			if (($aError = error_get_last())
+				&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
 			) {
-				//http_response_code(500);
+				Tango::$T['error'] = 'http500';
+			}
 
-				HTML::setTpl('main', '/error/500');
-
-			} else if (!empty(Tango::$T['error']) && Tango::$T['error'] === 'http404') {
-
-				HTML::setTpl('main', '/error/404');
+			if (!empty(Tango::$T['error'])) {
+				switch ((string)Tango::$T['error']) {
+					case 'http500':
+						HTML::setTpl('main', '/error/500');
+						break;
+					case 'http404':
+						HTML::setTpl('main', '/error/404');
+						break;
+					default:
+						HTML::setTpl('main', '/error/default');
+						break;
+				}
 			}
 
 			HTML::run();
@@ -89,7 +110,7 @@ class Page {
 		$call = [__CLASS__, '_parse'.ucfirst($sExt)];
 		if (is_callable($call)) {
 			header('Content-Type: '.self::$_aExt['mime'].'; charset=utf-8');
-			$call($T, $D);
+			$call();
 			return TRUE;
 		} else {
 			header('Content-Type: text/plain; charset=utf-8');

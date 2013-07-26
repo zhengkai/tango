@@ -4,7 +4,7 @@ namespace Tango\Drive;
 use Tango\Core\Config;
 use Tango\Core\TangoException;
 
-class DB extends \PDO {
+class DB {
 
 	protected $_sName;
 	protected $_bDebug;
@@ -12,6 +12,8 @@ class DB extends \PDO {
 
 	static protected $_lInstance = [];
 	protected $_aConfig = [];
+
+	protected $_oPDO = FALSE;
 
 	static public $lTypeNeedConvert = [];
 
@@ -36,6 +38,10 @@ class DB extends \PDO {
 		return $oDB;
 	}
 
+	public function pdo() {
+		return $this->_oPDO;
+	}
+
 	public function __construct($aServer, $sName) {
 
 		$this->_sName = $sName;
@@ -47,7 +53,7 @@ class DB extends \PDO {
 			'password' => $aServer['password'],
 			'option' => [
 				\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-			]
+			],
 		];
 
 		$this->_connect();
@@ -60,7 +66,7 @@ class DB extends \PDO {
 
 		try {
 
-			parent::__construct(
+			$this->_oPDO = new \PDO(
 				$this->_aConfig['dsn'],
 				$this->_aConfig['user'],
 				$this->_aConfig['password'],
@@ -79,10 +85,12 @@ class DB extends \PDO {
 	/*
 	 * 自动重连
 	 */
-	protected function _connectSmart() {
-		if ($this->errorInfo()[1] == 2006) { // "MySQL server has gone away"
+	protected function _connectSmart($aError) {
+		if ($aError[1] == 2006) {
 			$this->_connect();
 			return TRUE;
+		} else if ($aError[1]) {
+			throw new TangoException('PDO '.$aError[1].': '.$aError[2]);
 		}
 		return FALSE;
 	}
@@ -123,101 +131,68 @@ class DB extends \PDO {
 		return $aRow;
 	}
 
-	public function query($sQuery, $aParam = []) {
+	public function query($sQuery, array $aParam = []) {
+		return $this->_query($sQuery, $aParam, 'query');
+	}
+
+	public function exec($sQuery, array $aParam = []) {
+		return $this->_query($sQuery, $aParam, 'exec');
+	}
+
+	// public _query(sQuery,array aParam=[],sType) {{{
+	/**
+	 * _query
+	 *
+	 * @param mixed $sQuery
+	 * @param array $aParam
+	 * @param string $sType 'query' or 'exec'
+	 * @access public
+	 * @return mixed
+	 */
+	public function _query($sQuery, array $aParam = [], $sType) {
 
 		if (empty($sQuery)) {
-			throw new TangoException('empty query');
+			throw new TangoException('empty $sQuery', 3);
 		}
 
 		do {
 			if ($aParam) {
-				$oResult = $this->prepare($sQuery);
+
+				$aOption = [];
+				if (key($aParam) !== 0) {
+					$aOption[\PDO::ATTR_CURSOR] = \PDO::CURSOR_FWDONLY;
+				}
+
+				$oResult = $this->_oPDO->prepare($sQuery, $aOption);
 				$oResult->execute($aParam);
+				$aError = $oResult->errorInfo();
+				if ($sType === 'exec') {
+					$iAffected = $oResult->rowCount();
+				}
 			} else {
-				$oResult = parent::query($sQuery);
+				if ($sType === 'exec') {
+					$iAffected = $this->_oPDO->exec($sQuery);
+				} else {
+					$oResult = $this->_oPDO->query($sQuery);
+				}
+				$aError = $this->_oPDO->errorInfo();
 			}
-		} while ($this->_connectSmart());
+		} while ($this->_connectSmart($aError));
 
-		return $oResult;
+		return $sType === 'exec' ? $iAffected : $oResult ;
 	}
+	// }}}
 
-	public function pdoQuery() {
-
-		$aArg = func_get_args();
-
-		if (empty($aArg[0])) {
-			throw new TangoException('empty query');
-		}
-
-		do {
-			$oResult = call_user_func_array(['parent', 'query'], $aArg);
-		} while ($this->_connectSmart());
-
-		return $oResult;
-	}
-
-	public function exec($sQuery, $aParam = []) {
-
-		if (empty($sQuery)) {
-			throw new TangoException('empty query');
-		}
-
-		do {
-			if ($aParam) {
-				$oResult = $this->prepare($sQuery);
-				$iAffected = $oResult->execute($aParam);
-			} else {
-				$iAffected = parent::exec($sQuery);
-			}
-		} while ($this->_connectSmart());
-
-		return $iAffected;
-	}
-
-	protected function _errorLog($sQuery, $fTime) {
-
-		if (strlen($sQuery) < 10) {
-			throw new TangoException('MySQL Query Error: '.$sQuery, 2);
-		}
-
-		$aInfo = [
-			'server' => $this->_sName,
-			'query' => strlen($sQuery) > 1000 ? mb_substr($sQuery, 0, 1000) : $sQuery,
-			'time' => sprintf('%.06f', $fTime * 1000),
-		];
-
-		if ($this->errorCode() > 0) {
-
-			$aError = $this->errorInfo();
-			$aInfo['error'] = [
-				'code' => $aError[1],
-				'message' => $aError[2],
-			];
-
-			$sMsg = 'MySQL Query Error '.$aError[1].":\n"
-				.$aError[2];
-
-			throw new TangoException($sMsg, 2);
-		}
-
-		// DB::addDebugLog($aInfo);
-	}
-
-	public function getInsertID($sQuery) {
-		if (!$this->exec($sQuery)) {
+	public function getInsertID($sQuery, array $aParam = []) {
+		if (!$this->_query($sQuery, $aParam, 'exec')) {
 			return FALSE;
 		}
-		return $this->lastInsertId();
+		return (int)$this->_oPDO->lastInsertId();
 	}
 
-	public function getAll($sQuery, $aParam = [], $bByKey = TRUE) {
+	public function getAll($sQuery, array $aParam = [], $bByKey = TRUE) {
 
-		if ($aParam) {
-			$oResult = $this->prepare($sQuery);
-			$oResult->execute($aParam);
-		} else {
-			$oResult = $this->query($sQuery);
-		}
+		$oResult = $this->_query($sQuery, $aParam, 'query');
 
 		$aData = $oResult->fetchAll();
 		if (empty($aData)) {
@@ -257,37 +232,47 @@ class DB extends \PDO {
 		return $aData;
 	}
 
-	// 只取第一行
-	public function getRow($sQuery, $aParam = []) {
+	// public getRow(sQuery,array aParam=[]) {{{
+	/**
+	 * 只取第一行
+	 *
+	 * @param mixed $sQuery
+	 * @param array $aParam
+	 * @access public
+	 * @return void
+	 */
+	public function getRow($sQuery, array $aParam = []) {
 
-		if ($aParam) {
-			$oResult = $this->prepare($sQuery);
-			$oResult->execute($aParam);
-		} else {
-			$oResult = $this->query($sQuery);
-		}
+		$oResult = $this->_query($sQuery, $aParam, 'query');
 
 		$aRow = $oResult->fetch();
 
-		if (!empty($aRow)) {
+		if ($aRow) {
 			self::_ColumnConvertScan($oResult);
 			$aRow = self::_ColumnConvertDo($aRow);
 		}
 
 		return $aRow;
 	}
+	// }}}
 
-	// 只取第一行的第一个字段
-	public function getSingle($sQuery) {
-
-		if (!$aRow = $this->getRow($sQuery)) {
+	// public getSingle(sQuery,array aParam=[]) {{{
+	/**
+	 *
+	 * 只取第一行的第一个字段
+	 *
+	 * @param mixed $sQuery
+	 * @param array $aParam
+	 * @access public
+	 * @return void
+	 */
+	public function getSingle($sQuery, array $aParam = []) {
+		if (!$aRow = $this->getRow($sQuery, $aParam)) {
 			return FALSE;
 		}
-
-		$aRow = current($aRow);
-
-		return $aRow;
+		return current($aRow);
 	}
+	// }}}
 }
 
 // 类的 static 数组在定义时无法包含匿名函数，只能使用曲线方法
