@@ -36,9 +36,9 @@ class Config {
 		if (!$aReturn) {
 
 			$sFileDefault =& self::$_lFileDefault[$sName];
-			if (!Tango::isInit()) {
-				return $sFileDefault ? require $sFileDefault : [];
-			}
+			// if (!Tango::isInit()) {
+			// 	return $sFileDefault ? require $sFileDefault : [];
+			// }
 
 			$sFile =& self::$_lFile[$sName];
 			$aReturn = ($sFile ? require $sFile : [])
