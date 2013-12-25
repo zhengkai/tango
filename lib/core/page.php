@@ -35,6 +35,12 @@ class Page {
 		exit;
 	}
 
+	static public function debugGate() {
+		if (!Tango::isDebug()) {
+			self::error('http404');
+		}
+	}
+
 	static public function set($sExt, $bTry = FALSE) {
 		if ($bTry && self::$_aExt) {
 			trigger_error('ext exists');

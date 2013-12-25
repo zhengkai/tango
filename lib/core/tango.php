@@ -18,10 +18,25 @@ class Tango {
 	static protected $_bOB = TRUE; // output buffering
 	static protected $_iAI = 0;
 
+	static public $_bDebug;
+	static public $_sScriptID;
+
+	static public function getScriptID() {
+		if (!is_null(self::$_sScriptID)) {
+			return $_sScriptID;
+		}
+		self::$_sScriptID = uniqid().sprintf('%07x', mt_rand(0, 0xfffffff));
+		return self::$_sScriptID;
+	}
+
 	static public function isDebug() {
+		if (!is_null(self::$_bDebug)) {
+			return self::$_bDebug;
+		}
 		$aConfig = Config::get('tango');
-		return $aConfig['debug']['enable']
+		self::$_bDebug = $aConfig['debug']['enable']
 			&& in_array($_SERVER["REMOTE_ADDR"], $aConfig['debug']['allow_ip']);
+		return self::$_bDebug;
 	}
 
 	static public function isInit() {
