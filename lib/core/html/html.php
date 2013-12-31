@@ -17,7 +17,7 @@ class HTML {
 	static protected $_lCSS = [];
 	static protected $_sAddMeta = '';
 
-	static protected $_sTitle = 'Tango';
+	static protected $_sTitle = '';
 
 	static protected $_bRobotsIndex = TRUE;
 	static protected $_bRobotsFollow = TRUE;
