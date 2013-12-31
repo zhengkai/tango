@@ -18,8 +18,10 @@ class Tango {
 	static protected $_bOB = TRUE; // output buffering
 	static protected $_iAI = 0;
 
-	static public $_bDebug;
-	static public $_sScriptID;
+	static protected $_bDebug;
+	static protected $_sScriptID;
+
+	static protected $_bOutbuffer;
 
 	static public function getScriptID() {
 		if (!is_null(self::$_sScriptID)) {

@@ -76,7 +76,8 @@ class HTML {
 	}
 
 	static public function getTitle() {
-		return self::$_sTitle;
+		return (self::$_sTitle ? self::$_sTitle.' - ' : '')
+			.Config::get('html')['title'];
 	}
 
 	static public function getMeta() {
