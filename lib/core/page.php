@@ -27,6 +27,12 @@ class Page {
 
 	static protected $_bParse = FALSE;
 
+	static protected $_bWellDone = FALSE;
+
+	static public function isWellDone() {
+		return self::$_bWellDone;
+	}
+
 	static public function error($sError) {
 		if (self::$_bParse) {
 			throw new TangoException('Page has been sent');
@@ -110,6 +116,7 @@ class Page {
 			}
 
 			HTML::run();
+
 			return TRUE;
 		}
 

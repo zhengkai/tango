@@ -21,8 +21,6 @@ class Tango {
 	static protected $_bDebug;
 	static protected $_sScriptID;
 
-	static protected $_bOutbuffer;
-
 	static public function getScriptID() {
 		if (!is_null(self::$_sScriptID)) {
 			return $_sScriptID;
@@ -72,7 +70,7 @@ class Tango {
 					case 'post':
 						break;
 					default:
-						if (self::$_bOutbuffer) {
+						if (self::$_bOB) {
 							Page::set($sExt, TRUE);
 						}
 						break 2;
@@ -92,10 +90,24 @@ class Tango {
 			ob_start();
 		}
 
-		return $sFile;
+		self::_start();
+
+		if (self::$_bOB) {
+			self::tpl();
+		}
+	}
+
+	static protected function _start() {
+
+		$T =& self::$T;
+		$D =& self::$D;
+		$_IN =& self::$IN;
+
+		require $_SERVER['SCRIPT_FILENAME'];
 	}
 
 	static public function tpl() {
+
 		$s = ob_get_clean();
 		if ($s) {
 			echo $s;

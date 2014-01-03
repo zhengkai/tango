@@ -31,6 +31,8 @@ class TangoException extends \Exception {
 	static public function handler(\Exception $e, $bSend = TRUE) {
 		$s = "Uncaught exception: ".$e->getMessage();
 
+		Log::debug('error', 'catch');
+
 		$lTrace = $e->getTrace();
 
 		$aTrace = current($lTrace);
@@ -55,7 +57,7 @@ class TangoException extends \Exception {
 
 		$aTrace += [
 			'file' => '',
-			'line' => '',
+			'line' => 0,
 		];
 
 		$sHash = hash('crc32', $_SERVER["REMOTE_PORT"]."\n".microtime(TRUE)."\n".$e->getMessage()."\n".Tango::getAI());
@@ -121,8 +123,7 @@ class TangoException extends \Exception {
 	}
 
 	static public function errorHandler($iError, $sMsg, $sFile, $sLine) {
-		// error_log(print_r(debug_backtrace(), 1));
-		throw new TangoException($sMsg, 2);
-		return false;
+		self::handler(new TangoException($sMsg, 2), FALSE);
+		return FALSE;
 	}
 }

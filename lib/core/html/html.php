@@ -33,9 +33,34 @@ class HTML {
 
 		$T = self::escape($T);
 
+		Log::debug('error', 'run 1');
+
 		ob_start();
-		require self::getTpl('main');
+		try {
+			include self::getTpl('main');
+		} catch(\Exception $e) {
+			echo '<pre>';
+			print_r($e);
+			exit;
+		}
 		$s = trim(ob_get_clean());
+
+		Log::debug('error', 'run 2');
+
+		if (($aError = error_get_last())
+			&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
+		) {
+			Tango::$T['error'] = 'http500';
+			HTML::setTpl('main', '/error/500');
+
+			echo '<pre>';
+			print_r($aError);
+			exit;
+
+			ob_start();
+			include self::getTpl('main');
+			$s = trim(ob_get_clean());
+		}
 
 		Layout::run($s);
 	}
