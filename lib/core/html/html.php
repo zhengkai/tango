@@ -33,29 +33,30 @@ class HTML {
 
 		$T = self::escape($T);
 
-		Log::debug('error', 'run 1');
+		$s = '';
 
+		$bError = FALSE;
 		ob_start();
 		try {
 			include self::getTpl('main');
+			$s = trim(ob_get_clean());
 		} catch(\Exception $e) {
-			echo '<pre>';
-			print_r($e);
-			exit;
+			$bError = TRUE;
+			TangoException::handler($e);
 		}
-		$s = trim(ob_get_clean());
 
-		Log::debug('error', 'run 2');
+		if (!$bError) {
+			$aError = error_get_last();
+			if ($aError) {
+				// $bError = !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE]);
+				$bError = TRUE;
+			}
+		}
 
-		if (($aError = error_get_last())
-			&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
-		) {
+		if ($bError) {
+			ob_clean();
 			Tango::$T['error'] = 'http500';
 			HTML::setTpl('main', '/error/500');
-
-			echo '<pre>';
-			print_r($aError);
-			exit;
 
 			ob_start();
 			include self::getTpl('main');
@@ -68,6 +69,7 @@ class HTML {
 	static public function setFollow($bFollow) {
 		self::$_bRobotsFollow = (bool)$bFollow;
 	}
+
 	static public function setIndex($bIndex) {
 		self::$_bRobotsIndex = (bool)$bIndex;
 	}

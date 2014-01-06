@@ -13,6 +13,8 @@ class Tango {
 
 	static protected $_sExt  = 'html';
 
+	static protected $_bTplCalled = FALSE;
+
 	static protected $_bInit = FALSE;
 
 	static protected $_bOB = TRUE; // output buffering
@@ -85,7 +87,7 @@ class Tango {
 		$_SERVER['SCRIPT_FILENAME'] = $sFile;
 
 		if (self::$_bOB) {
-			register_shutdown_function([__CLASS__, 'tpl']);
+			register_shutdown_function([__CLASS__, 'shutdown']);
 			Page::set('html', TRUE);
 			ob_start();
 		}
@@ -93,7 +95,7 @@ class Tango {
 		self::_start();
 
 		if (self::$_bOB) {
-			self::tpl();
+			self::shutdown();
 		}
 	}
 
@@ -106,14 +108,18 @@ class Tango {
 		require $_SERVER['SCRIPT_FILENAME'];
 	}
 
-	static public function tpl() {
+	static public function shutdown() {
 
-		$s = ob_get_clean();
-		if ($s) {
-			echo $s;
-			return;
+		if ($aError = error_get_last()) {
+			ob_clean();
+			TangoException::handler(new \ErrorException($aError['message'], 0, 1, $aError['file'], $aError['line']), FALSE);
+		} else {
+			$s = ob_get_clean();
+			if ($s) {
+				echo $s;
+				return;
+			}
 		}
-
 		Page::parse();
 	}
 

@@ -33,12 +33,16 @@ class Page {
 		return self::$_bWellDone;
 	}
 
+	static public function reset() {
+		self::$_bParse = FALSE;
+	}
+
 	static public function error($sError) {
 		if (self::$_bParse) {
 			throw new TangoException('Page has been sent');
 		}
 		Tango::$T['error'] = $sError;
-		exit;
+		return;
 	}
 
 	static public function debugGate() {
@@ -71,7 +75,7 @@ class Page {
 		return self::$_aExt;
 	}
 
-	static public function noParse() {
+	static public function stopParse() {
 		self::$_bParse = TRUE;
 	}
 
