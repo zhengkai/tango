@@ -102,10 +102,10 @@ class Filter {
 			}
 
 			$_IN[$sKey] = $mValue;
-
-			$_POST = [];
-			$_GET = [];
-			$_REQUEST = [];
 		}
+
+		$_POST = [];
+		$_GET = [];
+		$_REQUEST = [];
 	}
 }

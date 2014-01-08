@@ -17,6 +17,8 @@ class Tango {
 
 	static protected $_bInit = FALSE;
 
+	static protected $_bShutdown = FALSE;
+
 	static protected $_bOB = TRUE; // output buffering
 	static protected $_iAI = 0;
 
@@ -109,6 +111,11 @@ class Tango {
 	}
 
 	static public function shutdown() {
+
+		if (self::$_bShutdown) { // run once only
+			return FALSE;
+		}
+		self::$_bShutdown = TRUE;
 
 		if ($aError = error_get_last()) {
 			ob_clean();

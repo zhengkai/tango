@@ -273,6 +273,100 @@ class DB {
 		return current($aRow);
 	}
 	// }}}
+
+	public function page(array $aParam) {
+
+		$aReturn = [[], 0, 1];
+
+		$lReturn =& $aReturn[0];
+		$iCount  =& $aReturn[1];
+		$iPage   =& $aReturn[2];
+
+		$aParam += [
+			'select' => '*',
+			'table' => '',
+			'where' => '',
+			'order_asc' => FALSE,
+			'order_by' =>  '',
+			'page' => 1,
+			'number_per_page' => 20,
+		];
+
+		$iPage = $aParam['page'];
+		if ($iPage < 1) {
+			$iPage = 1;
+		}
+
+		if ($aParam['where']) {
+			$aParam['where'] = 'WHERE '.$aParam['where'];
+		}
+
+		$sQuery = sprintf('SELECT count(*) FROM %s %s', $aParam['table'], $aParam['where']);
+		$iCount = $this->getSingle($sQuery) ?: 0;
+
+		if (!$iCount) {
+			$iPage = 1;
+			return $aReturn;
+		}
+
+		$sOrder = '';
+
+		if ($iCount <= $aParam['number_per_page']) {
+
+			if ($aParam['order_by']) {
+				$sOrder = 'ORDER BY '.$aParam['order_by'].' ';
+				$sOrder .= $aParam['order_asc'] ? 'ASC' : 'DESC';
+			}
+
+			$sQuery = sprintf(
+				'SELECT %s FROM %s %s %s LIMIT %d',
+				$aParam['select'],
+				$aParam['table'],
+				$aParam['where'],
+				$sOrder,
+				$aParam['number_per_page']
+			);
+			$iPage = 1;
+
+		} else {
+
+			$iPageMax = ceil($iCount / $aParam['number_per_page']);
+			if ($iPageMax)
+			$bReverse = FALSE;
+			$sLimit = (($iPage - 1) * $aParam['number_per_page']).', '.$aParam['number_per_page'];
+
+			if ($iPage > $iPageMax) {
+				$iPage = $iPageMax;
+			}
+
+			/*
+			if ($iPage > ceil($iPageMax / 2)) {
+				$bReverse = TRUE;
+				$aParam['order_asc'] = !$aParam['order_asc'];
+
+				$iMod = $iCount % $iPage * $aParam['number_per_page'];
+			}
+			 */
+
+			if ($aParam['order_by']) {
+				$sOrder = 'ORDER BY '.$aParam['order_by'].' ';
+				$sOrder .= $aParam['order_asc'] ? 'ASC' : 'DESC';
+			}
+
+			$sQuery = sprintf(
+				'SELECT %s FROM %s %s %s LIMIT %s',
+				$aParam['select'],
+				$aParam['table'],
+				$aParam['where'],
+				$sOrder,
+				$sLimit
+			);
+		}
+
+		$lReturn = $this->getAll($sQuery, [], FALSE) ?: [];
+
+		return [$lReturn, $iCount, $iPage];
+	}
 }
 
 // 类的 static 数组在定义时无法包含匿名函数，只能使用曲线方法

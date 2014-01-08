@@ -41,6 +41,7 @@ class HTML {
 			include self::getTpl('main');
 			$s = trim(ob_get_clean());
 		} catch(\Exception $e) {
+			ob_clean();
 			$bError = TRUE;
 			TangoException::handler($e);
 		}
@@ -54,7 +55,6 @@ class HTML {
 		}
 
 		if ($bError) {
-			ob_clean();
 			Tango::$T['error'] = 'http500';
 			HTML::setTpl('main', '/error/500');
 
