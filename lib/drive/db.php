@@ -151,6 +151,8 @@ class DB {
 	 */
 	public function _query($sQuery, array $aParam = [], $sType) {
 
+		\Tango\Core\Log::debug('query', $sQuery);
+
 		if (empty($sQuery)) {
 			throw new TangoException('empty $sQuery', 3);
 		}
@@ -189,6 +191,33 @@ class DB {
 		}
 		return (int)$this->_oPDO->lastInsertId();
 	}
+
+	// public genAI(sTable) {{{
+	/**
+	 * auto increment id generator
+	 *
+	 * @param mixed $sTable
+	 * @access public
+	 * @return integer
+
+CREATE TABLE IF NOT EXISTS `id_gen` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=ucs2 AUTO_INCREMENT=1 ;
+
+	 */
+	public function genAI($sTable) {
+		$sTable = '`'.addslashes($sTable).'`';
+		$sQuery = 'INSERT INTO '.$sTable.' SET id = NULL';
+		$iID = $this->getInsertID($sQuery);
+		// if ($iID && !mt_rand(0, 10000)) {
+		if ($iID) {
+			$sQuery = 'DELETE FROM '.$sTable;
+			$this->exec($sQuery);
+		}
+		return $iID;
+	}
+	// }}}
 
 	public function getAll($sQuery, array $aParam = [], $bByKey = TRUE) {
 
