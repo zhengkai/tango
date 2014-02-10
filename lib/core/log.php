@@ -2,8 +2,13 @@
 namespace Tango\Core;
 
 use Tango\Core\TangoException;
+use Tango\Drive\DB;
 
 Config::setFileDefault('log', dirname(__DIR__).'/config/log.php');
+
+settype($_SERVER['SERVER_ADDR'], 'string');
+settype($_SERVER['REMOTE_ADDR'], 'string');
+settype($_SERVER['REQUEST_URI'], 'string');
 
 class Log {
 
@@ -14,9 +19,10 @@ class Log {
 		1 => 'db',
 		2 => 'cache',
 		3 => 'php',
+		4 => 'tmp',
 	];
 	static $_iAI;
-	static $_iStep;
+	static $_iStep = 0;
 
 	static public function init() {
 
@@ -84,22 +90,47 @@ class Log {
 		file_put_contents(self::$_sDebugPath.'/'.$sType, $sMessage, FILE_APPEND | LOCK_EX);
 	}
 
+	static public function getType() {
+		return self::$_lType;
+	}
+
 	static public function collection($sType, array $aMessage) {
+
+		self::$_iStep++;
+		if (self::$_iStep > 1000) {
+			return FALSE;
+		}
 
 		if (!self::init()) {
 			return FALSE;
 		}
 
-		$iType = array_search(self::$_lType, $sType, TRUE);
-		if (!in_array($iType, self::$_lType)) {
+		$iType = array_search((string)$sType, self::$_lType);
+		if (!$iType) {
 			throw new TangoException('unknown type "'.$sType.'"');
 		}
 
 		$oDB = DB::getInstance('_debug');
 		if (!self::$_iAI) {
-			self::$_iAI = $oDB->getAI('id_gen');
+			self::$_iAI = $oDB->genAI('id_gen');
 		}
-		self::$_iStep++;
 
+		if (self::$_iStep == 1) {
+			$aMessage['_init'] = [
+				'sapi' => PHP_SAPI,
+				'server_ip' => $_SERVER['SERVER_ADDR'],
+				'client_ip' => $_SERVER['REMOTE_ADDR'],
+				'uri' => $_SERVER['REQUEST_URI'],
+				'time' => NOW,
+				'elapsed' => microtime(TRUE) - $_SERVER['REQUEST_TIME_FLOAT'],
+			];
+		}
+
+		$sQuery = 'INSERT INTO log '
+			.'SET id = '.self::$_iAI.', '
+			.'step = '.self::$_iStep.', '
+			.'type = '.$iType.', '
+			.'data = 0x'.bin2hex(gzcompress(json_encode($aMessage, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)));
+		$oDB->exec($sQuery);
 	}
 }

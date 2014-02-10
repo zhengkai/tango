@@ -48,7 +48,9 @@ class Page {
 	static public function debugGate() {
 		if (!Tango::isDebug()) {
 			self::error('http404');
+			return FALSE;
 		}
+		return TRUE;
 	}
 
 	static public function set($sExt, $bTry = FALSE) {

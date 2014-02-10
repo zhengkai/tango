@@ -157,6 +157,14 @@ class DB {
 			throw new TangoException('empty $sQuery', 3);
 		}
 
+		if ($this->_sName != '_debug') {
+			\Tango\Core\Log::collection('db', [
+				'query' => $sQuery,
+				'param' => $aParam,
+				'type' => $sType,
+			]);
+		}
+
 		do {
 			if ($aParam) {
 
@@ -211,7 +219,7 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 		$sQuery = 'INSERT INTO '.$sTable.' SET id = NULL';
 		$iID = $this->getInsertID($sQuery);
 		// if ($iID && !mt_rand(0, 10000)) {
-		if ($iID) {
+		if ($iID && !($iID % 1000)) {
 			$sQuery = 'DELETE FROM '.$sTable;
 			$this->exec($sQuery);
 		}
