@@ -1,5 +1,5 @@
 <?php
 return [
 	'enable' => FALSE,
-	'debug_path' => '/tmp/kt.d/',
+	'debug_path' => '/tmp/tango.d/',
 ];
