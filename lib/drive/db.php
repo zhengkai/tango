@@ -4,6 +4,8 @@ namespace Tango\Drive;
 use Tango\Core\Config;
 use Tango\Core\TangoException;
 
+Config::setFileDefault('db', dirname(__DIR__).'/config/db.php');
+
 class DB {
 
 	protected $_sName;
@@ -403,6 +405,13 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 		$lReturn = $this->getAll($sQuery, [], FALSE) ?: [];
 
 		return [$lReturn, $iCount, $iPage];
+	}
+
+	public function cloneTableStructure($sTableSource, $sTableTarget) {
+		$aRow = $this->getRow('SHOW CREATE TABLE `'.$sTableSource.'`');
+		$s = $aRow['Create Table'];
+		$s = preg_replace('#CREATE TABLE `'.$sTableSource.'` \(#', 'CREATE TABLE `'.$sTableTarget.'` (', $s);
+		return $this->_query($s, [], 'exec');
 	}
 }
 
