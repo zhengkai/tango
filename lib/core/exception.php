@@ -72,7 +72,13 @@ class TangoException extends \Exception {
 			'args'   => '',
 		];
 
-		$sHash = hash('crc32', $_SERVER["REMOTE_PORT"]."\n".microtime(TRUE)."\n".$e->getMessage()."\n".Tango::getAI());
+		$aServer = $_SERVER + [
+			'REMOTE_PORT' => 0,
+			'REQUEST_URI' => '',
+		];
+		$bCli = PHP_SAPI === 'cli';
+
+		$sHash = hash('crc32', ($bCli ? posix_getpid() : $_SERVER["REMOTE_PORT"])."\n".sprintf('%.16f', microtime(TRUE))."\n".$e->getMessage()."\n".Tango::getAI());
 
 		$sHashType = hash('crc32', json_encode($aTrace, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
@@ -115,8 +121,8 @@ class TangoException extends \Exception {
 		$s = '['.$sTime.'] ['.$sHash.'.'.$sHashType.']'."\n\n"
 			.$sMsg."\n\n"
 			.($sFunc ? $sFunc.'('.$sArg.")\n" : '')
-			.'on file '.$aTrace['file'].' ['.$aTrace['line'].']'."\n"
-			.'uri '.$_SERVER['REQUEST_URI'];
+			.'on file '.$aTrace['file'].' ['.$aTrace['line'].']'
+			.($bCli ? '' : "\n".'uri '.$_SERVER['REQUEST_URI']);
 
 		self::$_sLastError = $s;
 

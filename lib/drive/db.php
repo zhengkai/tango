@@ -153,13 +153,17 @@ class DB {
 	 */
 	public function _query($sQuery, array $aParam = [], $sType) {
 
-		\Tango\Core\Log::debug('query', $sQuery);
+		$aConfig = Config::get('db')['log'];
+
+		if ($aConfig['debug']) {
+			\Tango\Core\Log::debug('query', $sQuery);
+		}
 
 		if (empty($sQuery)) {
 			throw new TangoException('empty $sQuery', 3);
 		}
 
-		if ($this->_sName != '_debug') {
+		if ($aConfig['collection'] && $this->_sName != '_debug') {
 			\Tango\Core\Log::collection('db', [
 				'query' => $sQuery,
 				'param' => $aParam,
@@ -181,7 +185,9 @@ class DB {
 				if ($sType === 'exec') {
 					$iAffected = $oResult->rowCount();
 				}
+
 			} else {
+
 				if ($sType === 'exec') {
 					$iAffected = $this->_oPDO->exec($sQuery);
 				} else {
@@ -189,6 +195,7 @@ class DB {
 				}
 				$aError = $this->_oPDO->errorInfo();
 			}
+
 		} while ($this->_connectSmart($aError));
 
 		return $sType === 'exec' ? $iAffected : $oResult ;
@@ -213,7 +220,7 @@ class DB {
 CREATE TABLE IF NOT EXISTS `id_gen` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=ucs2 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM DEFAULT CHARSET=binary AUTO_INCREMENT=1 ;
 
 	 */
 	public function genAI($sTable) {

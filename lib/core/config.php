@@ -41,8 +41,10 @@ class Config {
 			// }
 
 			$sFile =& self::$_lFile[$sName];
-			$aReturn = ($sFile ? require $sFile : [])
-				+ ($sFileDefault ? require $sFileDefault : []);
+			$aReturn = array_replace_recursive(
+				$sFileDefault ? require $sFileDefault : [],
+				$sFile ? require $sFile : []
+			);
 		}
 		return $aReturn;
 	}

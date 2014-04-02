@@ -73,6 +73,17 @@ class Log {
 			return FALSE;
 		}
 
+		$aConfig = Config::get('db')['log'];
+
+		$sFile = self::$_sDebugPath.'/'.$sType;
+		if (disk_free_space(self::$_sDebugPath) < $aConfig['disk_free_space']) {
+			return FALSE;
+		}
+
+		if (filesize($sFile) > $aConfig['max_size']) {
+			return FALSE;
+		}
+
 		if (!is_string($sMessage)) {
 			$sMessage = json_encode($sMessage, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 		}
@@ -87,7 +98,7 @@ class Log {
 
 		$sMessage .= "\n";
 
-		file_put_contents(self::$_sDebugPath.'/'.$sType, $sMessage, FILE_APPEND | LOCK_EX);
+		return file_put_contents($sFile, $sMessage, FILE_APPEND | LOCK_EX);
 	}
 
 	static public function getType() {
