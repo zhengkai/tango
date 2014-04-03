@@ -73,14 +73,14 @@ class Log {
 			return FALSE;
 		}
 
-		$aConfig = Config::get('db')['log'];
+		$aConfig = Config::get('log');
 
 		$sFile = self::$_sDebugPath.'/'.$sType;
 		if (disk_free_space(self::$_sDebugPath) < $aConfig['disk_free_space']) {
 			return FALSE;
 		}
 
-		if (filesize($sFile) > $aConfig['max_size']) {
+		if (@filesize($sFile) > $aConfig['max_size']) {
 			return FALSE;
 		}
 

@@ -9,8 +9,6 @@ return [
 	'log' => [
 		'collection' => FALSE,
 		'debug' => FALSE,
-		'max_size' => 1000000000, // 1GB
-		'disk_free_space' => 100000000, // 100MB
 	],
 	'server' => [
 	],
