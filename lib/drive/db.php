@@ -355,61 +355,57 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 			return $aReturn;
 		}
 
-		$sOrder = '';
+		$sLimit = $aParam['number_per_page'];
 
 		if ($iCount <= $aParam['number_per_page']) {
 
-			if ($aParam['order_by']) {
-				$sOrder = 'ORDER BY '.$aParam['order_by'].' ';
-				$sOrder .= $aParam['order_asc'] ? 'ASC' : 'DESC';
-			}
-
-			$sQuery = sprintf(
-				'SELECT %s FROM %s %s %s LIMIT %d',
-				$aParam['select'],
-				$aParam['table'],
-				$aParam['where'],
-				$sOrder,
-				$aParam['number_per_page']
-			);
 			$iPage = 1;
 
 		} else {
 
-			$iPageMax = ceil($iCount / $aParam['number_per_page']);
-			if ($iPageMax)
-			$bReverse = FALSE;
-			$sLimit = (($iPage - 1) * $aParam['number_per_page']).', '.$aParam['number_per_page'];
-
+			$iPageMax = (int)ceil($iCount / $aParam['number_per_page']);
 			if ($iPage > $iPageMax) {
 				$iPage = $iPageMax;
 			}
 
-			/*
-			if ($iPage > ceil($iPageMax / 2)) {
-				$bReverse = TRUE;
+			if ($iPage <= ceil($iPageMax / 2)) {
+				$sLimit = (($iPage - 1) * $aParam['number_per_page']).', '.$aParam['number_per_page'];
+			} else {
+				if (!$aParam['order_by']) {
+					$aParam['order_by'] = 'NULL';
+				}
 				$aParam['order_asc'] = !$aParam['order_asc'];
 
-				$iMod = $iCount % $iPage * $aParam['number_per_page'];
-			}
-			 */
+				$bReverseResult = TRUE;
 
-			if ($aParam['order_by']) {
-				$sOrder = 'ORDER BY '.$aParam['order_by'].' ';
-				$sOrder .= $aParam['order_asc'] ? 'ASC' : 'DESC';
+				$iFill = $iCount % $aParam['number_per_page'];
+				if ($iPage == $iPageMax) {
+					$sLimit = $iFill;
+				} else {
+					$sLimit = (($iPageMax - $iPage - 1) * $aParam['number_per_page'] + $iFill).', '.$aParam['number_per_page'];
+				}
 			}
-
-			$sQuery = sprintf(
-				'SELECT %s FROM %s %s %s LIMIT %s',
-				$aParam['select'],
-				$aParam['table'],
-				$aParam['where'],
-				$sOrder,
-				$sLimit
-			);
 		}
 
+		$sOrder = '';
+		if ($aParam['order_by']) {
+			$sOrder = 'ORDER BY '.$aParam['order_by'].' '
+				.($aParam['order_asc'] ? 'ASC' : 'DESC');
+		}
+
+		$sQuery = sprintf(
+			'SELECT %s FROM %s %s %s LIMIT %s',
+			$aParam['select'],
+			$aParam['table'],
+			$aParam['where'],
+			$sOrder,
+			$sLimit
+		);
+
 		$lReturn = $this->getAll($sQuery, [], FALSE) ?: [];
+		if (!empty($bReverseResult)) {
+			$lReturn = array_reverse($lReturn);
+		}
 
 		return [$lReturn, $iCount, $iPage];
 	}

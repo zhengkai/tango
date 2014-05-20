@@ -29,18 +29,18 @@ class Pagination {
 	protected static $_aTplDefault = [
 		'href'    => '?page=%d',
 		'href_firstpage'  => NULL,
-		'outer'   => '<p class=\'page-number\'>%s</p>',
+		'outer'   => '<ul class="pagination">%s</ul>',
 		'outer_when_null' => '',
-		'link'    => '<a href=\'%s\' class=\'page\'>%s</a>',
-		'current' => '<span class=\'current\'>%s</span>',
-		'dot'     => '<span class=\'dot\'>...</span>',
+		'link'    => '<li><a href="%s">%s</a></span>',
+		'current' => '<li class="active"><a href="%s">%s</a></span>',
+		'dot'     => '<li class="dot"><span>...</span></li>',
 		'number'  => '%02d',
 	];
 
 	protected $iOffset = 2;
 	protected $iBorder = 2;
 
-	public function __construct($iCount, $iNumberPerPage = NULL, $iPageNow = NULL) {
+	public function __construct($iCount, $iPageNow = NULL, $iNumberPerPage = NULL) {
 
 		$iNumberPerPage = intval($iNumberPerPage);
 
@@ -86,7 +86,8 @@ class Pagination {
 	public function __get($sName) {
 
 		if (!in_array($sName, $this->_aPublicName)) {
-			send_error('unknown propertie "'.$sName.'"');
+			echo 'unknown propertie "'.$sName.'"';
+			exit;
 		}
 		return $this->{'_'.$sName};
 	}
@@ -218,13 +219,15 @@ class Pagination {
 
 		$sHTML = '';
 		$iPrevNumber = current($this->_aPageSlice);
+		$bDot = FALSE;
 		foreach ($this->_aPageSlice as $iNumber) {
 			if (1 < $iNumber - $iPrevNumber) {
 				$sHTML .= $aTpl['dot'];
+				$bDot = TRUE;
 			}
 			$sNumber = sprintf($aTpl['number'], $iNumber);
 			if ($iNumber == $this->_iPageNow) {
-				$sHTML .= sprintf($aTpl['current'], $sNumber);
+				$sHTML .= sprintf($aTpl['current'], $iNumber, $sNumber);
 			} else {
 				if ($iNumber == 1 && $aTpl['href_firstpage']) {
 					$sHrefTpl = $aTpl['href_firstpage'];
@@ -236,6 +239,16 @@ class Pagination {
 			}
 			$iPrevNumber = $iNumber;
 		}
+
+		if ($bDot) {
+			$sHTML =
+				'<li><a href="'.sprintf($sHrefTpl, 1).'"><i class="fa fa-fw fa-angle-double-left"></i></a></li>'
+				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageNow <= 1? 1 : $this->_iPageNow - 1).'"><i class="fa fa-fw fa-angle-left"></i></a></li>'
+				.$sHTML
+				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageNow >= $this->_iPageMax ? $this->_iPageMax : $this->_iPageNow + 1).'#"><i class="fa fa-fw fa-angle-right"></i></a></li>'
+				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageMax).'#"><i class="fa fa-fw fa-angle-double-right"></i></a></li>';
+		}
+
 		$sHTML = sprintf($aTpl[$bOnlyOnePage ? 'outer_when_null' : 'outer'], $sHTML);
 		return $sHTML;
 	}
