@@ -155,12 +155,12 @@ class DB {
 
 		$aConfig = Config::get('db')['log'];
 
-		if ($aConfig['debug']) {
-			\Tango\Core\Log::debug('query', $sQuery);
-		}
-
 		if (empty($sQuery)) {
 			throw new TangoException('empty $sQuery', 3);
+		}
+
+		if ($aConfig['debug'] && $this->_sName != '_debug') {
+			\Tango\Core\Log::debug('query', $sQuery);
 		}
 
 		if ($aConfig['collection'] && $this->_sName != '_debug') {

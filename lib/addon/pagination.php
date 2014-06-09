@@ -220,30 +220,32 @@ class Pagination {
 		$sHTML = '';
 		$iPrevNumber = current($this->_aPageSlice);
 		$bDot = FALSE;
-		foreach ($this->_aPageSlice as $iNumber) {
-			if (1 < $iNumber - $iPrevNumber) {
+		foreach ($this->_aPageSlice as $iPage) {
+			if (1 < $iPage - $iPrevNumber) {
 				$sHTML .= $aTpl['dot'];
 				$bDot = TRUE;
 			}
-			$sNumber = sprintf($aTpl['number'], $iNumber);
-			if ($iNumber == $this->_iPageNow) {
-				$sHTML .= sprintf($aTpl['current'], $iNumber, $sNumber);
+			$sNumber = sprintf($aTpl['number'], $iPage);
+
+			if ($iPage == 1 && $aTpl['href_firstpage']) {
+				$sHrefTpl = $aTpl['href_firstpage'];
 			} else {
-				if ($iNumber == 1 && $aTpl['href_firstpage']) {
-					$sHrefTpl = $aTpl['href_firstpage'];
-				} else {
-					$sHrefTpl = $aTpl['href'];
-				}
-				$sHref = sprintf($sHrefTpl, $iNumber);
+				$sHrefTpl = $aTpl['href'];
+			}
+			$sHref = sprintf($sHrefTpl, $iPage);
+
+			if ($iPage == $this->_iPageNow) {
+				$sHTML .= sprintf($aTpl['current'], $sHref, $sNumber);
+			} else {
 				$sHTML .= sprintf($aTpl['link'], $sHref, $sNumber);
 			}
-			$iPrevNumber = $iNumber;
+			$iPrevNumber = $iPage;
 		}
 
 		if ($bDot) {
 			$sHTML =
 				'<li><a href="'.sprintf($sHrefTpl, 1).'"><i class="fa fa-fw fa-angle-double-left"></i></a></li>'
-				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageNow <= 1? 1 : $this->_iPageNow - 1).'"><i class="fa fa-fw fa-angle-left"></i></a></li>'
+				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageNow <= 1 ? 1 : $this->_iPageNow - 1).'"><i class="fa fa-fw fa-angle-left"></i></a></li>'
 				.$sHTML
 				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageNow >= $this->_iPageMax ? $this->_iPageMax : $this->_iPageNow + 1).'#"><i class="fa fa-fw fa-angle-right"></i></a></li>'
 				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageMax).'#"><i class="fa fa-fw fa-angle-double-right"></i></a></li>';
