@@ -80,7 +80,7 @@ class Log {
 			return FALSE;
 		}
 
-		if (file_exists($sFile) && filesize($sFile) > $aConfig['max_size']) {
+		if (file_exists($sFile) && (filesize($sFile) > $aConfig['max_size'] || !is_writable($sFile))) {
 			return FALSE;
 		}
 
