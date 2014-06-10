@@ -247,8 +247,8 @@ class Pagination {
 				'<li><a href="'.sprintf($sHrefTpl, 1).'"><i class="fa fa-fw fa-angle-double-left"></i></a></li>'
 				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageNow <= 1 ? 1 : $this->_iPageNow - 1).'"><i class="fa fa-fw fa-angle-left"></i></a></li>'
 				.$sHTML
-				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageNow >= $this->_iPageMax ? $this->_iPageMax : $this->_iPageNow + 1).'#"><i class="fa fa-fw fa-angle-right"></i></a></li>'
-				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageMax).'#"><i class="fa fa-fw fa-angle-double-right"></i></a></li>';
+				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageNow >= $this->_iPageMax ? $this->_iPageMax : $this->_iPageNow + 1).'"><i class="fa fa-fw fa-angle-right"></i></a></li>'
+				.'<li><a href="'.sprintf($sHrefTpl, $this->_iPageMax).'"><i class="fa fa-fw fa-angle-double-right"></i></a></li>';
 		}
 
 		$sHTML = sprintf($aTpl[$bOnlyOnePage ? 'outer_when_null' : 'outer'], $sHTML);
