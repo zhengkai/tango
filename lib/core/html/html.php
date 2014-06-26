@@ -146,6 +146,49 @@ class HTML {
 		self::$_lCSS[] = $sFile;
 	}
 
+	static public function colorGradient($fRate, $sColorA, $sColorB = '#FFFFFF') {
+
+		$lColorA = self::_colorRGB($sColorA);
+		$lColorB = self::_colorRGB($sColorB);
+
+		$sReturn = '';
+		foreach (range(0, 2) as $i) {
+			$iColor = $lColorB[$i] + ($lColorA[$i] - $lColorB[$i]) / 2 * $fRate;
+			$sReturn .= sprintf('%02s', dechex(round($iColor)));
+		}
+
+		return '#'.$sReturn;
+	}
+
+	static protected function _colorRGB($sColor) {
+		$sError = 'unknown color "'.$sColor.'"';
+		$sColor = strtolower($sColor);
+
+		$sColorOrig = $sColor;
+
+		$sColor = preg_replace('/^#/', '', $sColor);
+		if (strlen($sColor) > 6 || !preg_match('#^[0-9a-f]+$#', $sColor)) {
+			throw new TangoException($sError);
+		}
+
+		switch (strlen($sColor)) {
+			case 3:
+				$lColor = str_split($sColor, 1);
+				$sColor = $lColor[0].$lColor[0].$lColor[1].$lColor[1].$lColor[2].$lColor[2];
+				break;
+			case 6:
+				break;
+			default:
+				throw new TangoException($sError);
+				break;
+		}
+
+		$lColor = str_split($sColor, 2);
+		$lColor = array_map('hexdec', $lColor);
+
+		return $lColor;
+	}
+
 	/**
 	 * 递归对数组进行 HTML 转义（包括 key 和 value）
 	 */
