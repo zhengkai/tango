@@ -89,7 +89,15 @@ class Filter {
 					}
 					break;
 				case 'json';
-					$mValue = json_decode($mValue, TRUE, 5);
+					if (!is_string($mValue) || strlen($mValue) > 10000000) {
+						$mValue = NULL;
+						break;
+					}
+					$mValue = trim($mValue);
+					json_decode($mValue, TRUE, 5);
+					if (json_last_error()) {
+						$mValue = NULL;
+					}
 					break;
 				case 'email';
 					if (!preg_match(self::$_pEmail, $mValue)) {

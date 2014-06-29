@@ -90,11 +90,11 @@ class Tango {
 
 		if (self::$_bOB) {
 			register_shutdown_function([__CLASS__, 'shutdown']);
-			Page::set('html', TRUE);
 			ob_start();
 		}
 
 		self::_start();
+		Page::set('html', TRUE);
 
 		if (self::$_bOB) {
 			self::shutdown();
