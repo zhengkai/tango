@@ -54,8 +54,10 @@ class Page {
 	}
 
 	static public function set($sExt, $bTry = FALSE) {
-		if ($bTry && self::$_aExt) {
-			trigger_error('ext exists');
+		if (self::$_aExt) {
+			if (!$bTry) {
+				trigger_error('ext exists');
+			}
 			return FALSE;
 		}
 		if (!isset(self::$_lExt[$sExt])) {
@@ -133,7 +135,7 @@ class Page {
 			return TRUE;
 		} else {
 			header('Content-Type: text/plain; charset=utf-8');
-			echo "\n\t", 'Error: method '.$sExt.' incomplete', "\n";
+			echo "\n\t", 'Error: method "'.$sExt.'" incomplete', "\n";
 			return FALSE;
 		}
 	}
