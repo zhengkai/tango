@@ -94,7 +94,6 @@ class Tango {
 		}
 
 		self::_start();
-		Page::set('html', TRUE);
 
 		if (self::$_bOB) {
 			self::shutdown();

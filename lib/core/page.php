@@ -99,6 +99,8 @@ class Page {
 		}
 		self::$_bParse = TRUE;
 
+		Page::set('html', TRUE);
+
 		$sExt = self::$_aExt['ext'];
 
 		if ($sExt === 'html') {
