@@ -12,12 +12,22 @@ class DB {
 	protected $_bDebug;
 	protected $_lColumnNeedConvert;
 
-	static protected $_lInstance = [];
+	protected static $_lInstance = [];
 	protected $_aConfig = [];
 
 	protected $_oPDO = FALSE;
 
-	static public $lTypeNeedConvert = [];
+	protected static $_bEnable = TRUE;
+
+	public static $lTypeNeedConvert = [];
+
+	public static function setLogOn() {
+		self::$_bEnable = TRUE;
+	}
+
+	public static function setLogOff() {
+		self::$_bEnable = FALSE;
+	}
 
 	public static function getInstance($sName) {
 
@@ -159,16 +169,19 @@ class DB {
 			throw new TangoException('empty $sQuery', 3);
 		}
 
-		if ($aConfig['debug'] && $this->_sName != '_debug') {
-			\Tango\Core\Log::debug('query', $sQuery);
-		}
+		if (self::$_bEnable && $this->_sName != '_debug') {
 
-		if ($aConfig['collection'] && $this->_sName != '_debug') {
-			\Tango\Core\Log::collection('db', [
-				'query' => $sQuery,
-				'param' => $aParam,
-				'type' => $sType,
-			]);
+			if ($aConfig['debug']) {
+				\Tango\Core\Log::debug('query', $sQuery);
+			}
+
+			if ($aConfig['collection']) {
+				\Tango\Core\Log::collection('db', [
+					'query' => $sQuery,
+					'param' => $aParam,
+					'type' => $sType,
+				]);
+			}
 		}
 
 		do {

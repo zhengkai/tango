@@ -1,5 +1,6 @@
 <?php
 namespace Tango\Drive;
+use Tango\Core\TangoException;
 
 /*
 
@@ -84,7 +85,7 @@ class DBEnum {
 		return $iAI;
 	}
 
-	public function getAll() {
+	public function getAll($sRowName = FALSE) {
 
 		if ($this->_bGetAll) {
 			return $this->_lPool;
@@ -95,9 +96,16 @@ class DBEnum {
 
 		$sQuery = 'SELECT * FROM `'.$this->_sDBTable.'` LIMIT '.$iLimitOver;
 		$this->_lPool = array_map(
-			function ($aRow) {
+			function ($aRow) use ($sRowName) {
 				if (!is_array($aRow)) {
 					return $aRow;
+				}
+				if ($sRowName) {
+					if (!array_key_exists($sRowName, $aRow)) {
+						$sError = 'unknown rowname '.$sRowName;
+						throw new TangoException($sError, 3);
+					}
+					return $aRow[$sRowName];
 				}
 				return array_values($aRow)[1];
 			},
