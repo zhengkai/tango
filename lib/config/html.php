@@ -2,4 +2,5 @@
 return [
 	'js' => [],
 	'css' => [],
+	'title' => 'Tango'
 ];

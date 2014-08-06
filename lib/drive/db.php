@@ -4,18 +4,30 @@ namespace Tango\Drive;
 use Tango\Core\Config;
 use Tango\Core\TangoException;
 
+Config::setFileDefault('db', dirname(__DIR__).'/config/db.php');
+
 class DB {
 
 	protected $_sName;
 	protected $_bDebug;
 	protected $_lColumnNeedConvert;
 
-	static protected $_lInstance = [];
+	protected static $_lInstance = [];
 	protected $_aConfig = [];
 
 	protected $_oPDO = FALSE;
 
-	static public $lTypeNeedConvert = [];
+	protected static $_bEnable = TRUE;
+
+	public static $lTypeNeedConvert = [];
+
+	public static function setLogOn() {
+		self::$_bEnable = TRUE;
+	}
+
+	public static function setLogOff() {
+		self::$_bEnable = FALSE;
+	}
 
 	public static function getInstance($sName) {
 
@@ -151,8 +163,25 @@ class DB {
 	 */
 	public function _query($sQuery, array $aParam = [], $sType) {
 
+		$aConfig = Config::get('db')['log'];
+
 		if (empty($sQuery)) {
 			throw new TangoException('empty $sQuery', 3);
+		}
+
+		if (self::$_bEnable && $this->_sName != '_debug') {
+
+			if ($aConfig['debug']) {
+				\Tango\Core\Log::debug('query', $sQuery);
+			}
+
+			if ($aConfig['collection']) {
+				\Tango\Core\Log::collection('db', [
+					'query' => $sQuery,
+					'param' => $aParam,
+					'type' => $sType,
+				]);
+			}
 		}
 
 		do {
@@ -169,7 +198,9 @@ class DB {
 				if ($sType === 'exec') {
 					$iAffected = $oResult->rowCount();
 				}
+
 			} else {
+
 				if ($sType === 'exec') {
 					$iAffected = $this->_oPDO->exec($sQuery);
 				} else {
@@ -177,6 +208,7 @@ class DB {
 				}
 				$aError = $this->_oPDO->errorInfo();
 			}
+
 		} while ($this->_connectSmart($aError));
 
 		return $sType === 'exec' ? $iAffected : $oResult ;
@@ -189,6 +221,33 @@ class DB {
 		}
 		return (int)$this->_oPDO->lastInsertId();
 	}
+
+	// public genAI(sTable) {{{
+	/**
+	 * auto increment id generator
+	 *
+	 * @param mixed $sTable
+	 * @access public
+	 * @return integer
+
+CREATE TABLE IF NOT EXISTS `id_gen` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=binary AUTO_INCREMENT=1 ;
+
+	 */
+	public function genAI($sTable) {
+		$sTable = '`'.addslashes($sTable).'`';
+		$sQuery = 'INSERT INTO '.$sTable.' SET id = NULL';
+		$iID = $this->getInsertID($sQuery);
+		// if ($iID && !mt_rand(0, 10000)) {
+		if ($iID && !($iID % 1000)) {
+			$sQuery = 'DELETE FROM '.$sTable;
+			$this->exec($sQuery);
+		}
+		return $iID;
+	}
+	// }}}
 
 	public function getAll($sQuery, array $aParam = [], $bByKey = TRUE) {
 
@@ -273,6 +332,103 @@ class DB {
 		return current($aRow);
 	}
 	// }}}
+
+	public function page(array $aParam) {
+
+		$aReturn = [[], 0, 1];
+
+		$lReturn =& $aReturn[0];
+		$iCount  =& $aReturn[1];
+		$iPage   =& $aReturn[2];
+
+		$aParam += [
+			'select' => '*',
+			'table' => '',
+			'where' => '',
+			'order_asc' => FALSE,
+			'order_by' =>  '',
+			'page' => 1,
+			'number_per_page' => 20,
+		];
+
+		$iPage = $aParam['page'];
+		if ($iPage < 1) {
+			$iPage = 1;
+		}
+
+		if ($aParam['where']) {
+			$aParam['where'] = 'WHERE '.$aParam['where'];
+		}
+
+		$sQuery = sprintf('SELECT count(*) FROM %s %s', $aParam['table'], $aParam['where']);
+		$iCount = $this->getSingle($sQuery) ?: 0;
+
+		if (!$iCount) {
+			$iPage = 1;
+			return $aReturn;
+		}
+
+		$sLimit = $aParam['number_per_page'];
+
+		if ($iCount <= $aParam['number_per_page']) {
+
+			$iPage = 1;
+
+		} else {
+
+			$iPageMax = (int)ceil($iCount / $aParam['number_per_page']);
+			if ($iPage > $iPageMax) {
+				$iPage = $iPageMax;
+			}
+
+			if ($iPage <= ceil($iPageMax / 2)) {
+				$sLimit = (($iPage - 1) * $aParam['number_per_page']).', '.$aParam['number_per_page'];
+			} else {
+				if (!$aParam['order_by']) {
+					$aParam['order_by'] = 'NULL';
+				}
+				$aParam['order_asc'] = !$aParam['order_asc'];
+
+				$bReverseResult = TRUE;
+
+				$iFill = $iCount % $aParam['number_per_page'];
+				if ($iPage == $iPageMax) {
+					$sLimit = $iFill;
+				} else {
+					$sLimit = (($iPageMax - $iPage - 1) * $aParam['number_per_page'] + $iFill).', '.$aParam['number_per_page'];
+				}
+			}
+		}
+
+		$sOrder = '';
+		if ($aParam['order_by']) {
+			$sOrder = 'ORDER BY '.$aParam['order_by'].' '
+				.($aParam['order_asc'] ? 'ASC' : 'DESC');
+		}
+
+		$sQuery = sprintf(
+			'SELECT %s FROM %s %s %s LIMIT %s',
+			$aParam['select'],
+			$aParam['table'],
+			$aParam['where'],
+			$sOrder,
+			$sLimit
+		);
+
+		$lReturn = $this->getAll($sQuery, [], FALSE) ?: [];
+		if (!empty($bReverseResult)) {
+			$lReturn = array_reverse($lReturn);
+		}
+
+		return [$lReturn, $iCount, $iPage];
+	}
+
+	public function cloneTableStructure($sTableSource, $sTableTarget) {
+		$aRow = $this->getRow('SHOW CREATE TABLE `'.$sTableSource.'`');
+		$s = $aRow['Create Table'];
+		$s = preg_replace('#CREATE TABLE `'.$sTableSource.'` \(#', 'CREATE TABLE `'.$sTableTarget.'` (', $s);
+		return $this->_query($s, [], 'exec');
+	}
 }
 
 // 类的 static 数组在定义时无法包含匿名函数，只能使用曲线方法

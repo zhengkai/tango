@@ -13,15 +13,34 @@ class Tango {
 
 	static protected $_sExt  = 'html';
 
+	static protected $_bTplCalled = FALSE;
+
 	static protected $_bInit = FALSE;
+
+	static protected $_bShutdown = FALSE;
 
 	static protected $_bOB = TRUE; // output buffering
 	static protected $_iAI = 0;
 
+	static protected $_bDebug;
+	static protected $_sScriptID;
+
+	static public function getScriptID() {
+		if (!is_null(self::$_sScriptID)) {
+			return $_sScriptID;
+		}
+		self::$_sScriptID = uniqid().sprintf('%07x', mt_rand(0, 0xfffffff));
+		return self::$_sScriptID;
+	}
+
 	static public function isDebug() {
+		if (!is_null(self::$_bDebug)) {
+			return self::$_bDebug;
+		}
 		$aConfig = Config::get('tango');
-		return $aConfig['debug']['enable']
+		self::$_bDebug = $aConfig['debug']['enable']
 			&& in_array($_SERVER["REMOTE_ADDR"], $aConfig['debug']['allow_ip']);
+		return self::$_bDebug;
 	}
 
 	static public function isInit() {
@@ -55,7 +74,7 @@ class Tango {
 					case 'post':
 						break;
 					default:
-						if (self::$_bOutbuffer) {
+						if (self::$_bOB) {
 							Page::set($sExt, TRUE);
 						}
 						break 2;
@@ -70,21 +89,43 @@ class Tango {
 		$_SERVER['SCRIPT_FILENAME'] = $sFile;
 
 		if (self::$_bOB) {
-			register_shutdown_function([__CLASS__, 'tpl']);
-			Page::set('html', TRUE);
+			register_shutdown_function([__CLASS__, 'shutdown']);
 			ob_start();
 		}
 
-		return $sFile;
+		self::_start();
+
+		if (self::$_bOB) {
+			self::shutdown();
+		}
 	}
 
-	static public function tpl() {
-		$s = ob_get_clean();
-		if ($s) {
-			echo $s;
-			return;
-		}
+	static protected function _start() {
 
+		$T =& self::$T;
+		$D =& self::$D;
+		$_IN =& self::$IN;
+
+		require $_SERVER['SCRIPT_FILENAME'];
+	}
+
+	static public function shutdown() {
+
+		if (self::$_bShutdown) { // run once only
+			return FALSE;
+		}
+		self::$_bShutdown = TRUE;
+
+		if ($aError = error_get_last()) {
+			ob_clean();
+			TangoException::handler(new \ErrorException($aError['message'], 0, 1, $aError['file'], $aError['line']), FALSE);
+		} else {
+			$s = ob_get_clean();
+			if ($s) {
+				echo $s;
+				return;
+			}
+		}
 		Page::parse();
 	}
 

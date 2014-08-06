@@ -31,41 +31,56 @@ class TangoException extends \Exception {
 	static public function handler(\Exception $e, $bSend = TRUE) {
 		$s = "Uncaught exception: ".$e->getMessage();
 
-		$lTrace = $e->getTrace();
+		$aTrace = [];
 
-		$aTrace = current($lTrace);
-
-		if (get_class($e) === __CLASS__) {
-			if (!self::$_iDepth && !empty($lTrace[0]['class'])) {
-				$sClass = $lTrace[0]['class'];
-				foreach ($lTrace as $aRow) {
-					if (empty($aRow['class']) || $aRow['class'] !== $sClass) {
-						$aTrace = $aPrev;
-						break;
+		switch ((string)get_class($e)) {
+			case __CLASS__:
+				$lTrace = $e->getTrace();
+				$aTrace = current($lTrace);
+				if (!self::$_iDepth && !empty($lTrace[0]['class'])) {
+					$sClass = $lTrace[0]['class'];
+					foreach ($lTrace as $aRow) {
+						if (empty($aRow['class']) || $aRow['class'] !== $sClass) {
+							$aTrace = $aPrev;
+							break;
+						}
+						$aPrev = $aRow;
 					}
-					$aPrev = $aRow;
+				} else {
+					$aSelect =& $lTrace[self::$_iDepth - 1];
+					if ($aSelect) {
+						$aTrace = $aSelect;
+					}
 				}
-			} else {
-				$aSelect =& $lTrace[self::$_iDepth - 1];
-				if ($aSelect) {
-					$aTrace = $aSelect;
-				}
-			}
+				break;
+			case 'ErrorException':
+			default:
+				$aTrace['file'] = $e->getFile();
+				$aTrace['line'] = $e->getLine();
+				break;
 		}
 
 		$aTrace += [
+
 			'file' => '',
-			'line' => '',
+			'line' => 0,
+
+			'type'   => '',
+			'class'  => '',
+			'function' => '',
+
+			'args'   => '',
 		];
 
-		$sHash = hash('crc32', $_SERVER["REMOTE_PORT"]."\n".microtime(TRUE)."\n".$e->getMessage()."\n".Tango::getAI());
+		$aServer = $_SERVER + [
+			'REMOTE_PORT' => 0,
+			'REQUEST_URI' => '',
+		];
+		$bCli = PHP_SAPI === 'cli';
+
+		$sHash = hash('crc32', ($bCli ? posix_getpid() : $_SERVER["REMOTE_PORT"])."\n".sprintf('%.16f', microtime(TRUE))."\n".$e->getMessage()."\n".Tango::getAI());
 
 		$sHashType = hash('crc32', json_encode($aTrace, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-
-		$aTrace += [
-			'type' => '',
-			'class' => '',
-		];
 
 		$aConfig = Config::get('exception');
 		if ($aConfig['timezone']) {
@@ -105,13 +120,14 @@ class TangoException extends \Exception {
 
 		$s = '['.$sTime.'] ['.$sHash.'.'.$sHashType.']'."\n\n"
 			.$sMsg."\n\n"
-			.$sFunc.'('.$sArg.")\n"
-			.'on file '.$aTrace['file'].' ['.$aTrace['line'].']'."\n"
-			.'uri '.$_SERVER['REQUEST_URI'];
+			.($sFunc ? $sFunc.'('.$sArg.")\n" : '')
+			.'on file '.$aTrace['file'].' ['.$aTrace['line'].']'
+			.($bCli ? '' : "\n".'uri '.$_SERVER['REQUEST_URI']);
 
 		self::$_sLastError = $s;
 
 		try {
+			Page::reset();
 			Page::error('http500');
 		} catch(\Exception $e) {}
 
@@ -121,8 +137,7 @@ class TangoException extends \Exception {
 	}
 
 	static public function errorHandler($iError, $sMsg, $sFile, $sLine) {
-		// error_log(print_r(debug_backtrace(), 1));
-		throw new TangoException($sMsg, 2);
-		return false;
+		self::handler(new TangoException($sMsg, 2), FALSE);
+		return FALSE;
 	}
 }

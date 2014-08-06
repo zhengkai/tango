@@ -60,6 +60,10 @@ class Filter {
 			}
 
 			switch ($sType) {
+				case 'time':
+					$sValue = iconv('UTF-8', 'UTF-8//IGNORE', trim($mValue));
+					$mValue = strtotime($sValue) ?: 0;
+					break;
 				case 'str':
 					$sValue = iconv('UTF-8', 'UTF-8//IGNORE', trim($mValue));
 					if (strlen($mValue) > 1024) {
@@ -89,7 +93,15 @@ class Filter {
 					}
 					break;
 				case 'json';
-					$mValue = json_decode($mValue, TRUE, 5);
+					if (!is_string($mValue) || strlen($mValue) > 10000000) {
+						$mValue = NULL;
+						break;
+					}
+					$mValue = trim($mValue);
+					json_decode($mValue, TRUE, 5);
+					if (json_last_error()) {
+						$mValue = NULL;
+					}
 					break;
 				case 'email';
 					if (!preg_match(self::$_pEmail, $mValue)) {
@@ -102,10 +114,10 @@ class Filter {
 			}
 
 			$_IN[$sKey] = $mValue;
-
-			$_POST = [];
-			$_GET = [];
-			$_REQUEST = [];
 		}
+
+		$_POST = [];
+		$_GET = [];
+		$_REQUEST = [];
 	}
 }

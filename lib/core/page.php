@@ -27,17 +27,37 @@ class Page {
 
 	static protected $_bParse = FALSE;
 
+	static protected $_bWellDone = FALSE;
+
+	static public function isWellDone() {
+		return self::$_bWellDone;
+	}
+
+	static public function reset() {
+		self::$_bParse = FALSE;
+	}
+
 	static public function error($sError) {
 		if (self::$_bParse) {
 			throw new TangoException('Page has been sent');
 		}
 		Tango::$T['error'] = $sError;
-		exit;
+		return;
+	}
+
+	static public function debugGate() {
+		if (!Tango::isDebug()) {
+			self::error('http404');
+			return FALSE;
+		}
+		return TRUE;
 	}
 
 	static public function set($sExt, $bTry = FALSE) {
-		if ($bTry && self::$_aExt) {
-			trigger_error('ext exists');
+		if (self::$_aExt) {
+			if (!$bTry) {
+				trigger_error('ext exists');
+			}
 			return FALSE;
 		}
 		if (!isset(self::$_lExt[$sExt])) {
@@ -59,7 +79,7 @@ class Page {
 		return self::$_aExt;
 	}
 
-	static public function noParse() {
+	static public function stopParse() {
 		self::$_bParse = TRUE;
 	}
 
@@ -78,6 +98,8 @@ class Page {
 			return FALSE;
 		}
 		self::$_bParse = TRUE;
+
+		Page::set('html', TRUE);
 
 		$sExt = self::$_aExt['ext'];
 
@@ -104,6 +126,7 @@ class Page {
 			}
 
 			HTML::run();
+
 			return TRUE;
 		}
 
@@ -114,7 +137,7 @@ class Page {
 			return TRUE;
 		} else {
 			header('Content-Type: text/plain; charset=utf-8');
-			echo "\n\t", 'Error: method '.$sExt.' incomplete', "\n";
+			echo "\n\t", 'Error: method "'.$sExt.'" incomplete', "\n";
 			return FALSE;
 		}
 	}

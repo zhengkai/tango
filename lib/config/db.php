@@ -6,6 +6,10 @@ return [
 		'dsn' => 'unix_socket=/var/run/mysqld/mysqld.sock',
 		'debug' => FALSE,
 	],
+	'log' => [
+		'collection' => FALSE,
+		'debug' => FALSE,
+	],
 	'server' => [
 	],
 ];

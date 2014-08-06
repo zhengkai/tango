@@ -17,7 +17,7 @@ class HTML {
 	static protected $_lCSS = [];
 	static protected $_sAddMeta = '';
 
-	static protected $_sTitle = 'Tango';
+	static protected $_sTitle = '';
 
 	static protected $_bRobotsIndex = TRUE;
 	static protected $_bRobotsFollow = TRUE;
@@ -33,9 +33,35 @@ class HTML {
 
 		$T = self::escape($T);
 
+		$s = '';
+
+		$bError = FALSE;
 		ob_start();
-		require self::getTpl('main');
-		$s = trim(ob_get_clean());
+		try {
+			include self::getTpl('main');
+			$s = trim(ob_get_clean());
+		} catch(\Exception $e) {
+			ob_clean();
+			$bError = TRUE;
+			TangoException::handler($e);
+		}
+
+		if (!$bError) {
+			$aError = error_get_last();
+			if ($aError) {
+				// $bError = !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE]);
+				$bError = TRUE;
+			}
+		}
+
+		if ($bError) {
+			Tango::$T['error'] = 'http500';
+			HTML::setTpl('main', '/error/500');
+
+			ob_start();
+			include self::getTpl('main');
+			$s = trim(ob_get_clean());
+		}
 
 		Layout::run($s);
 	}
@@ -43,6 +69,7 @@ class HTML {
 	static public function setFollow($bFollow) {
 		self::$_bRobotsFollow = (bool)$bFollow;
 	}
+
 	static public function setIndex($bIndex) {
 		self::$_bRobotsIndex = (bool)$bIndex;
 	}
@@ -76,7 +103,8 @@ class HTML {
 	}
 
 	static public function getTitle() {
-		return self::$_sTitle;
+		return (self::$_sTitle ? self::$_sTitle.' - ' : '')
+			.Config::get('html')['title'];
 	}
 
 	static public function getMeta() {
@@ -116,6 +144,49 @@ class HTML {
 
 	static public function addCSS($sFile) {
 		self::$_lCSS[] = $sFile;
+	}
+
+	static public function colorGradient($fRate, $sColorA, $sColorB = '#FFFFFF') {
+
+		$lColorA = self::_colorRGB($sColorA);
+		$lColorB = self::_colorRGB($sColorB);
+
+		$sReturn = '';
+		foreach (range(0, 2) as $i) {
+			$iColor = $lColorB[$i] + ($lColorA[$i] - $lColorB[$i]) / 2 * $fRate;
+			$sReturn .= sprintf('%02s', dechex(round($iColor)));
+		}
+
+		return '#'.$sReturn;
+	}
+
+	static protected function _colorRGB($sColor) {
+		$sError = 'unknown color "'.$sColor.'"';
+		$sColor = strtolower($sColor);
+
+		$sColorOrig = $sColor;
+
+		$sColor = preg_replace('/^#/', '', $sColor);
+		if (strlen($sColor) > 6 || !preg_match('#^[0-9a-f]+$#', $sColor)) {
+			throw new TangoException($sError);
+		}
+
+		switch (strlen($sColor)) {
+			case 3:
+				$lColor = str_split($sColor, 1);
+				$sColor = $lColor[0].$lColor[0].$lColor[1].$lColor[1].$lColor[2].$lColor[2];
+				break;
+			case 6:
+				break;
+			default:
+				throw new TangoException($sError);
+				break;
+		}
+
+		$lColor = str_split($sColor, 2);
+		$lColor = array_map('hexdec', $lColor);
+
+		return $lColor;
 	}
 
 	/**
