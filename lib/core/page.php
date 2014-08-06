@@ -105,9 +105,7 @@ class Page {
 
 		if ($sExt === 'html') {
 
-			if (($aError = error_get_last())
-				&& !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE])
-			) {
+			if ($aError = Tango::getStopError()) {
 				Tango::$T['error'] = 'http500';
 			}
 

@@ -25,6 +25,14 @@ class Tango {
 	static protected $_bDebug;
 	static protected $_sScriptID;
 
+	static protected $_lErrorStopCode = [
+		E_ERROR,
+		E_CORE_ERROR,
+		E_COMPILE_ERROR,
+		E_USER_ERROR,
+		E_RECOVERABLE_ERROR,
+	];
+
 	static public function getScriptID() {
 		if (!is_null(self::$_sScriptID)) {
 			return $_sScriptID;
@@ -96,7 +104,7 @@ class Tango {
 		self::_start();
 
 		if (self::$_bOB) {
-			self::shutdown();
+			self::_end();
 		}
 	}
 
@@ -109,14 +117,9 @@ class Tango {
 		require $_SERVER['SCRIPT_FILENAME'];
 	}
 
-	static public function shutdown() {
+	static public function _end() {
 
-		if (self::$_bShutdown) { // run once only
-			return FALSE;
-		}
-		self::$_bShutdown = TRUE;
-
-		if ($aError = error_get_last()) {
+		if ($aError = self::getStopError()) {
 			ob_clean();
 			TangoException::handler(new \ErrorException($aError['message'], 0, 1, $aError['file'], $aError['line']), FALSE);
 		} else {
@@ -127,6 +130,31 @@ class Tango {
 			}
 		}
 		Page::parse();
+	}
+
+	static public function getStopError() {
+		$aError = error_get_last();
+		if (!$aError) {
+			return FALSE;
+		}
+		if (!self::isStopError($aError['type'])) {
+			return FALSE;
+		}
+		return $aError;
+	}
+
+	static public function isStopError($iError) {
+		return in_array($iError, self::$_lErrorStopCode);
+	}
+
+	static public function shutdown() {
+
+		if (self::$_bShutdown) { // run once only
+			return FALSE;
+		}
+		self::$_bShutdown = TRUE;
+
+		self::_end();
 	}
 
 	static public function getAI() {

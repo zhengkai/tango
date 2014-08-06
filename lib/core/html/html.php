@@ -47,14 +47,13 @@ class HTML {
 		}
 
 		if (!$bError) {
-			$aError = error_get_last();
-			if ($aError) {
-				// $bError = !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE]);
+			if ($aError = Tango::getStopError()) {
 				$bError = TRUE;
 			}
 		}
 
 		if ($bError) {
+
 			Tango::$T['error'] = 'http500';
 			HTML::setTpl('main', '/error/500');
 

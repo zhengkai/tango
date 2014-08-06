@@ -3,6 +3,7 @@ namespace Tango\Drive;
 
 use Tango\Core\Config;
 use Tango\Core\TangoException;
+use Tango\Core\Log;
 
 Config::setFileDefault('db', dirname(__DIR__).'/config/db.php');
 
@@ -172,11 +173,11 @@ class DB {
 		if (self::$_bEnable && $this->_sName != '_debug') {
 
 			if ($aConfig['debug']) {
-				\Tango\Core\Log::debug('query', $sQuery);
+				Log::debug('query', $sQuery);
 			}
 
 			if ($aConfig['collection']) {
-				\Tango\Core\Log::collection('db', [
+				Log::collection('db', [
 					'query' => $sQuery,
 					'param' => $aParam,
 					'type' => $sType,
@@ -238,10 +239,9 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 	 */
 	public function genAI($sTable) {
 		$sTable = '`'.addslashes($sTable).'`';
-		$sQuery = 'INSERT INTO '.$sTable.' SET id = NULL';
+		$sQuery = 'INSERT INTO '.$sTable.' () VALUES ()';
 		$iID = $this->getInsertID($sQuery);
-		// if ($iID && !mt_rand(0, 10000)) {
-		if ($iID && !($iID % 1000)) {
+		if ($iID && ($iID % 1000 == 0)) {
 			$sQuery = 'DELETE FROM '.$sTable;
 			$this->exec($sQuery);
 		}

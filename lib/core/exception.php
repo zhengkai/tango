@@ -137,7 +137,9 @@ class TangoException extends \Exception {
 	}
 
 	static public function errorHandler($iError, $sMsg, $sFile, $sLine) {
-		self::handler(new TangoException($sMsg, 2), FALSE);
+		if (Tango::isStopError($iError)) {
+			self::handler(new TangoException($sMsg, 2), FALSE);
+		}
 		return FALSE;
 	}
 }
