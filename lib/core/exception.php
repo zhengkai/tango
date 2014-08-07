@@ -132,7 +132,7 @@ class TangoException extends \Exception {
 		} catch(\Exception $e) {}
 
 		if ($bSend) {
-			error_log("\n\n".$s, 3, ini_get('error_log'));
+			error_log("\n".$s."\n", 3, ini_get('error_log'));
 		}
 	}
 
