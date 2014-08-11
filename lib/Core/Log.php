@@ -4,7 +4,7 @@ namespace Tango\Core;
 use Tango\Core\TangoException;
 use Tango\Drive\DB;
 
-Config::setFileDefault('log', dirname(__DIR__).'/config/log.php');
+Config::setFileDefault('log', dirname(__DIR__).'/Config/log.php');
 
 settype($_SERVER['SERVER_ADDR'], 'string');
 settype($_SERVER['REMOTE_ADDR'], 'string');

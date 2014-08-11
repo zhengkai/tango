@@ -1,7 +1,7 @@
 <?php
 namespace Tango\Core;
 
-Config::setFileDefault('exception', dirname(__DIR__).'/config/exception.php');
+Config::setFileDefault('exception', dirname(__DIR__).'/Config/exception.php');
 
 class TangoException extends \Exception {
 

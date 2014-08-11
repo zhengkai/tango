@@ -1,6 +1,8 @@
 <?php
 namespace Tango\Core;
 
+use Tango\Page\HTML;
+
 class Page {
 
 	static protected $_aExt = FALSE;

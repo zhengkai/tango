@@ -12,7 +12,9 @@
 		}
 	],
     "autoload": {
-		"classmap": ["lib/"]
+		"psr-4": {
+			"Tango\\": "lib/"
+		}
     },
 	"require": {
 		"php": ">=5.4.0"

@@ -1,7 +1,7 @@
 <?php
 namespace Tango\Core;
 
-Config::setFileDefault('tango', dirname(__DIR__).'/config/tango.php');
+Config::setFileDefault('tango', dirname(__DIR__).'/Config/tango.php');
 
 class Tango {
 
@@ -126,6 +126,7 @@ class Tango {
 			$s = ob_get_clean();
 			if ($s) {
 				echo $s;
+				self::$_bShutdown = TRUE;
 				return;
 			}
 		}

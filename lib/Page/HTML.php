@@ -1,7 +1,10 @@
 <?php
-namespace Tango\Core;
+namespace Tango\Page;
 
-Config::setFileDefault('html', dirname(dirname(__DIR__)).'/config/html.php');
+use \Tango\Core\Tango;
+use \Tango\Core\Config;
+
+Config::setFileDefault('html', dirname(__DIR__).'/Config/html.php');
 
 class HTML {
 

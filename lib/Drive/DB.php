@@ -5,7 +5,7 @@ use Tango\Core\Config;
 use Tango\Core\TangoException;
 use Tango\Core\Log;
 
-Config::setFileDefault('db', dirname(__DIR__).'/config/db.php');
+Config::setFileDefault('db', dirname(__DIR__).'/Config/db.php');
 
 class DB {
 

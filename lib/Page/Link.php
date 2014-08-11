@@ -1,5 +1,5 @@
 <?php
-namespace Tango\Core;
+namespace Tango\Page;
 
 class Link {
 
