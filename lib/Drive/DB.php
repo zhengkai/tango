@@ -429,6 +429,24 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 		$s = preg_replace('#CREATE TABLE `'.$sTableSource.'` \(#', 'CREATE TABLE `'.$sTableTarget.'` (', $s);
 		return $this->_query($s, [], 'exec');
 	}
+
+	public function repairTable($sTable) {
+		$sQuery = 'REPAIR TABLE `'.addslashes($sTable).'`';
+		$oResult = $this->_oPDO->prepare($sQuery);
+		return $oResult->execute();
+	}
+
+	public function optimizeTable($sTable) {
+		$sQuery = 'OPTIMIZE TABLE `'.addslashes($sTable).'`';
+		$oResult = $this->_oPDO->prepare($sQuery);
+		return $oResult->execute();
+	}
+
+	public function emptyTable($sTable) {
+		$sQuery = 'TRUNCATE `'.addslashes($sTable).'`';
+		$oResult = $this->_oPDO->prepare($sQuery);
+		return $oResult->execute();
+	}
 }
 
 // 类的 static 数组在定义时无法包含匿名函数，只能使用曲线方法
