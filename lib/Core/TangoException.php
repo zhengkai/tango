@@ -33,31 +33,30 @@ class TangoException extends \Exception {
 
 		$aTrace = [];
 
-		switch ((string)get_class($e)) {
-			case __CLASS__:
-				$lTrace = $e->getTrace();
-				$aTrace = current($lTrace);
-				if (!self::$_iDepth && !empty($lTrace[0]['class'])) {
-					$sClass = $lTrace[0]['class'];
-					foreach ($lTrace as $aRow) {
-						if (empty($aRow['class']) || $aRow['class'] !== $sClass) {
-							$aTrace = $aPrev;
-							break;
-						}
-						$aPrev = $aRow;
+		if (is_a($e, __CLASS__)) {
+
+			$lTrace = $e->getTrace();
+			$aTrace = current($lTrace);
+			if (!self::$_iDepth && !empty($lTrace[0]['class'])) {
+				$sClass = $lTrace[0]['class'];
+				foreach ($lTrace as $aRow) {
+					if (empty($aRow['class']) || $aRow['class'] !== $sClass) {
+						$aTrace = $aPrev;
+						break;
 					}
-				} else {
-					$aSelect =& $lTrace[self::$_iDepth - 1];
-					if ($aSelect) {
-						$aTrace = $aSelect;
-					}
+					$aPrev = $aRow;
 				}
-				break;
-			case 'ErrorException':
-			default:
-				$aTrace['file'] = $e->getFile();
-				$aTrace['line'] = $e->getLine();
-				break;
+			} else {
+				$aSelect =& $lTrace[self::$_iDepth - 1];
+				if ($aSelect) {
+					$aTrace = $aSelect;
+				}
+			}
+
+		} else {
+
+			$aTrace['file'] = $e->getFile();
+			$aTrace['line'] = $e->getLine();
 		}
 
 		$aTrace += [
