@@ -47,11 +47,17 @@ class Debug {
 		return self::$_bEnable = TRUE;
 	}
 
-	static public function add($sType, $sMessage, $bHead = FALSE) {
+	static public function add($sType, $sMessage = NULL, $bHead = FALSE) {
+		if ($sMessage === NULL) {
+			return FALSE;
+		}
 		self::_file($sType, $sMessage, $bHead, FILE_APPEND | LOCK_EX);
 	}
 
-	static public function dump($sType, $sMessage, $bHead = FALSE) {
+	static public function dump($sType, $sMessage = NULL, $bHead = FALSE) {
+		if ($sMessage === NULL) {
+			return FALSE;
+		}
 		self::_file($sType, $sMessage, $bHead, LOCK_EX);
 	}
 
