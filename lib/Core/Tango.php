@@ -17,6 +17,8 @@ class Tango {
 
 	static protected $_bInit = FALSE;
 
+	static protected $_fTimeController;
+
 	static protected $_bShutdown = FALSE;
 
 	static protected $_bOB = TRUE; // output buffering
@@ -32,6 +34,10 @@ class Tango {
 		E_USER_ERROR,
 		E_RECOVERABLE_ERROR,
 	];
+
+	static public function getTimeController() {
+		return self::$_fTimeController;
+	}
 
 	static public function getScriptID() {
 		if (!is_null(self::$_sScriptID)) {
@@ -115,6 +121,10 @@ class Tango {
 		$_IN =& self::$IN;
 
 		require $_SERVER['SCRIPT_FILENAME'];
+
+		if (!self::$_fTimeController) {
+			self::$_fTimeController = microtime(TRUE);
+		}
 	}
 
 	static public function _end() {
