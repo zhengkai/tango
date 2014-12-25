@@ -16,7 +16,7 @@ class DB {
 	protected static $_lInstance = [];
 	protected $_aConfig = [];
 
-	protected $_oPDO = FALSE;
+	protected $_oPDO;
 
 	protected static $_bEnable = TRUE;
 
@@ -66,6 +66,7 @@ class DB {
 			'password' => $aServer['password'],
 			'option' => [
 				\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+				\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
 			],
 		];
 
@@ -73,6 +74,10 @@ class DB {
 	}
 
 	protected function _connect() {
+
+		if ($this->_oPDO) {
+			return FALSE;
+		}
 
 		$sName = $this->_sName;
 		$sDSN = $this->_aConfig['dsn'];
@@ -164,6 +169,8 @@ class DB {
 	 */
 	public function _query($sQuery, array $aParam = [], $sType) {
 
+		// trigger_error($sType.' : '.$sQuery);
+
 		$aConfig = Config::get('db')['log'];
 
 		if (empty($sQuery)) {
@@ -186,6 +193,13 @@ class DB {
 		}
 
 		do {
+
+			$aError = $this->_oPDO->errorInfo();
+			if ($aError[1]) {
+				$this->_oPDO = NULL;
+				$this->_connect();
+			}
+
 			if ($aParam) {
 
 				$aOption = [];
@@ -310,6 +324,8 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 			self::_ColumnConvertScan($oResult);
 			$aRow = self::_ColumnConvertDo($aRow);
 		}
+
+		$oResult->closeCursor();
 
 		return $aRow;
 	}
