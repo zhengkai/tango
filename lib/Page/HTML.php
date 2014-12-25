@@ -1,7 +1,10 @@
 <?php
-namespace Tango\Core;
+namespace Tango\Page;
 
-Config::setFileDefault('html', dirname(dirname(__DIR__)).'/config/html.php');
+use \Tango\Core\Tango;
+use \Tango\Core\Config;
+
+Config::setFileDefault('html', dirname(__DIR__).'/Config/html.php');
 
 class HTML {
 
@@ -47,14 +50,13 @@ class HTML {
 		}
 
 		if (!$bError) {
-			$aError = error_get_last();
-			if ($aError) {
-				// $bError = !in_array($aError['type'], [E_NOTICE, E_USER_NOTICE]);
+			if ($aError = Tango::getStopError()) {
 				$bError = TRUE;
 			}
 		}
 
 		if ($bError) {
+
 			Tango::$T['error'] = 'http500';
 			HTML::setTpl('main', '/error/500');
 

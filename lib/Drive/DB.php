@@ -3,8 +3,9 @@ namespace Tango\Drive;
 
 use Tango\Core\Config;
 use Tango\Core\TangoException;
+use Tango\Core\Log;
 
-Config::setFileDefault('db', dirname(__DIR__).'/config/db.php');
+Config::setFileDefault('db', dirname(__DIR__).'/Config/db.php');
 
 class DB {
 
@@ -15,7 +16,7 @@ class DB {
 	protected static $_lInstance = [];
 	protected $_aConfig = [];
 
-	protected $_oPDO = FALSE;
+	protected $_oPDO;
 
 	protected static $_bEnable = TRUE;
 
@@ -65,6 +66,7 @@ class DB {
 			'password' => $aServer['password'],
 			'option' => [
 				\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+				\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
 			],
 		];
 
@@ -72,6 +74,10 @@ class DB {
 	}
 
 	protected function _connect() {
+
+		if ($this->_oPDO) {
+			return FALSE;
+		}
 
 		$sName = $this->_sName;
 		$sDSN = $this->_aConfig['dsn'];
@@ -163,6 +169,8 @@ class DB {
 	 */
 	public function _query($sQuery, array $aParam = [], $sType) {
 
+		// trigger_error($sType.' : '.$sQuery);
+
 		$aConfig = Config::get('db')['log'];
 
 		if (empty($sQuery)) {
@@ -172,11 +180,11 @@ class DB {
 		if (self::$_bEnable && $this->_sName != '_debug') {
 
 			if ($aConfig['debug']) {
-				\Tango\Core\Log::debug('query', $sQuery);
+				Log::debug('query', $sQuery);
 			}
 
 			if ($aConfig['collection']) {
-				\Tango\Core\Log::collection('db', [
+				Log::collection('db', [
 					'query' => $sQuery,
 					'param' => $aParam,
 					'type' => $sType,
@@ -185,6 +193,13 @@ class DB {
 		}
 
 		do {
+
+			$aError = $this->_oPDO->errorInfo();
+			if ($aError[1]) {
+				$this->_oPDO = NULL;
+				$this->_connect();
+			}
+
 			if ($aParam) {
 
 				$aOption = [];
@@ -238,10 +253,9 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 	 */
 	public function genAI($sTable) {
 		$sTable = '`'.addslashes($sTable).'`';
-		$sQuery = 'INSERT INTO '.$sTable.' SET id = NULL';
+		$sQuery = 'INSERT INTO '.$sTable.' () VALUES ()';
 		$iID = $this->getInsertID($sQuery);
-		// if ($iID && !mt_rand(0, 10000)) {
-		if ($iID && !($iID % 1000)) {
+		if ($iID && ($iID % 1000 == 0)) {
 			$sQuery = 'DELETE FROM '.$sTable;
 			$this->exec($sQuery);
 		}
@@ -310,6 +324,8 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 			self::_ColumnConvertScan($oResult);
 			$aRow = self::_ColumnConvertDo($aRow);
 		}
+
+		$oResult->closeCursor();
 
 		return $aRow;
 	}
@@ -428,6 +444,24 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 		$s = $aRow['Create Table'];
 		$s = preg_replace('#CREATE TABLE `'.$sTableSource.'` \(#', 'CREATE TABLE `'.$sTableTarget.'` (', $s);
 		return $this->_query($s, [], 'exec');
+	}
+
+	public function repairTable($sTable) {
+		$sQuery = 'REPAIR TABLE `'.addslashes($sTable).'`';
+		$oResult = $this->_oPDO->prepare($sQuery);
+		return $oResult->execute();
+	}
+
+	public function optimizeTable($sTable) {
+		$sQuery = 'OPTIMIZE TABLE `'.addslashes($sTable).'`';
+		$oResult = $this->_oPDO->prepare($sQuery);
+		return $oResult->execute();
+	}
+
+	public function emptyTable($sTable) {
+		$sQuery = 'TRUNCATE `'.addslashes($sTable).'`';
+		$oResult = $this->_oPDO->prepare($sQuery);
+		return $oResult->execute();
 	}
 }
 

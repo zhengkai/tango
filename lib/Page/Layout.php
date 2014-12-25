@@ -1,7 +1,9 @@
 <?php
-namespace Tango\Core;
+namespace Tango\Page;
 
-Config::setFileDefault('layout', dirname(dirname(__DIR__)).'/config/layout.php');
+use \Tango\Core\Config;
+
+Config::setFileDefault('layout', dirname(__DIR__).'/Config/layout.php');
 
 class Layout {
 

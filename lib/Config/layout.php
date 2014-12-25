@@ -1,5 +1,5 @@
 <?php
-namespace Tango\Core;
+use Tango\Page\HTML;
 
 return [
 	'default' => function($s) {

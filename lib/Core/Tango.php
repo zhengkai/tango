@@ -1,7 +1,7 @@
 <?php
 namespace Tango\Core;
 
-Config::setFileDefault('tango', dirname(__DIR__).'/config/tango.php');
+Config::setFileDefault('tango', dirname(__DIR__).'/Config/tango.php');
 
 class Tango {
 
@@ -17,6 +17,8 @@ class Tango {
 
 	static protected $_bInit = FALSE;
 
+	static protected $_fTimeController;
+
 	static protected $_bShutdown = FALSE;
 
 	static protected $_bOB = TRUE; // output buffering
@@ -24,6 +26,18 @@ class Tango {
 
 	static protected $_bDebug;
 	static protected $_sScriptID;
+
+	static protected $_lErrorStopCode = [
+		E_ERROR,
+		E_CORE_ERROR,
+		E_COMPILE_ERROR,
+		E_USER_ERROR,
+		E_RECOVERABLE_ERROR,
+	];
+
+	static public function getTimeController() {
+		return self::$_fTimeController;
+	}
 
 	static public function getScriptID() {
 		if (!is_null(self::$_sScriptID)) {
@@ -96,7 +110,7 @@ class Tango {
 		self::_start();
 
 		if (self::$_bOB) {
-			self::shutdown();
+			self::_end();
 		}
 	}
 
@@ -107,6 +121,41 @@ class Tango {
 		$_IN =& self::$IN;
 
 		require $_SERVER['SCRIPT_FILENAME'];
+
+		if (!self::$_fTimeController) {
+			self::$_fTimeController = microtime(TRUE);
+		}
+	}
+
+	static public function _end() {
+
+		if ($aError = self::getStopError()) {
+			ob_clean();
+			TangoException::handler(new \ErrorException($aError['message'], 0, 1, $aError['file'], $aError['line']), FALSE);
+		} else {
+			$s = ob_get_clean();
+			if ($s) {
+				echo $s;
+				self::$_bShutdown = TRUE;
+				return;
+			}
+		}
+		Page::parse();
+	}
+
+	static public function getStopError() {
+		$aError = error_get_last();
+		if (!$aError) {
+			return FALSE;
+		}
+		if (!self::isStopError($aError['type'])) {
+			return FALSE;
+		}
+		return $aError;
+	}
+
+	static public function isStopError($iError) {
+		return in_array($iError, self::$_lErrorStopCode);
 	}
 
 	static public function shutdown() {
@@ -116,17 +165,7 @@ class Tango {
 		}
 		self::$_bShutdown = TRUE;
 
-		if ($aError = error_get_last()) {
-			ob_clean();
-			TangoException::handler(new \ErrorException($aError['message'], 0, 1, $aError['file'], $aError['line']), FALSE);
-		} else {
-			$s = ob_get_clean();
-			if ($s) {
-				echo $s;
-				return;
-			}
-		}
-		Page::parse();
+		self::_end();
 	}
 
 	static public function getAI() {
