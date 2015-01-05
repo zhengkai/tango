@@ -142,6 +142,10 @@ class Page {
 		}
 	}
 
+	static protected function _parseText() {
+		echo Tango::$T['output'];
+		return TRUE;
+	}
 	static protected function _parseJson() {
 		echo json_encode(Tango::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 		return TRUE;
