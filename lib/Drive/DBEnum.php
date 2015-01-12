@@ -40,7 +40,7 @@ class DBEnum {
 			return FALSE;
 		}
 		if (array_key_exists($iKey, $this->_lPool)) {
-			return $this->_lPool;
+			return $this->_lPool[$iKey];
 		}
 		$sQuery = 'SELECT * FROM `'.$this->_sDBTable.'` WHERE id = '.$iKey;
 		if (!$aRow = $this->_oDB->getRow($sQuery)) {
