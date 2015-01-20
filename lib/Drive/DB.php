@@ -17,6 +17,8 @@ class DB {
 	protected $_aConfig = [];
 
 	protected $_oPDO;
+	protected $_aAutoCreateTable;
+	protected $_iErrorLast;
 
 	protected static $_bEnable = TRUE;
 
@@ -30,7 +32,24 @@ class DB {
 		self::$_bEnable = FALSE;
 	}
 
-	public static function getInstance($sName) {
+	/**
+	 * 如果下一条是 INSERT 语句，这个函数设置可以保证 INSERT 时如果表不存在，
+	 * 会自动创建表（基于已存在的表结构复制）
+	 *
+	 * @param string $sSource 原始表名
+	 * @param string $sTarget 要复制的目标表名
+	 * @access public
+	 * @return void
+	 */
+	public function setAutoCreateTable($sSource, $sTarget) {
+		$this->_aAutoCreateTable = ['source' => $sSource, 'target' => $sTarget];
+	}
+
+	public static function getInstance($sName, $bReset = FALSE) {
+
+		if ($bReset) {
+			self::$_lInstance[$sName] = NULL;
+		}
 
 		if (!$oDB =& self::$_lInstance[$sName]) {
 
@@ -102,14 +121,42 @@ class DB {
 
 	/*
 	 * 自动重连
+	 *
+	 * 返回值 true 表示重新执行 query
 	 */
 	protected function _connectSmart($aError) {
-		if ($aError[1] == 2006) {
-			$this->_connect();
-			return TRUE;
-		} else if ($aError[1]) {
-			throw new TangoException('PDO '.$aError[1].': '.$aError[2]);
+
+		$iError =& $aError[1];
+		if (!$iError) {
+			return FALSE;
 		}
+
+		$iError = intval($iError);
+
+		if ($this->_iErrorLast != $iError) { // 不能连续报相同错误，否则终止
+			$this->_iErrorLast = $iError;
+
+			// 42S02 table doesn't exist
+			if ($iError == 1146 && $this->_aAutoCreateTable) {
+				$this->_oPDO = NULL;
+				$this->_connect();
+				$this->cloneTableStructure(
+					$this->_aAutoCreateTable['source'],
+					$this->_aAutoCreateTable['target']
+				);
+				$this->_aAutoCreateTable = NULL;
+				return TRUE;
+			}
+			$this->_aAutoCreateTable = NULL;
+
+			// HY000 lost connect (MySQL server has gone away)
+			if ($iError == 2006) {
+				$this->_connect();
+				return TRUE;
+			}
+		}
+
+		throw new TangoException('PDO '.$aError[1].': '.$aError[2]);
 		return FALSE;
 	}
 
@@ -191,6 +238,9 @@ class DB {
 				]);
 			}
 		}
+
+		$this->_connect();
+		$this->_iErrorLast = NULL;
 
 		do {
 
@@ -440,9 +490,14 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 	}
 
 	public function cloneTableStructure($sTableSource, $sTableTarget) {
+
 		$aRow = $this->getRow('SHOW CREATE TABLE `'.$sTableSource.'`');
 		$s = $aRow['Create Table'];
-		$s = preg_replace('#CREATE TABLE `'.$sTableSource.'` \(#', 'CREATE TABLE `'.$sTableTarget.'` (', $s);
+		$s = preg_replace(
+			'#CREATE TABLE `'.$sTableSource.'` \(#',
+			'CREATE TABLE IF NOT EXISTS `'.$sTableTarget.'` (',
+			$s
+		);
 		return $this->_query($s, [], 'exec');
 	}
 
