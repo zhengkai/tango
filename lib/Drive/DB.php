@@ -42,7 +42,10 @@ class DB {
 	 * @return void
 	 */
 	public function setAutoCreateTable($sSource, $sTarget) {
-		$this->_aAutoCreateTable = ['source' => $sSource, 'target' => $sTarget];
+		$this->_aAutoCreateTable = [
+			'source' => $sSource,
+			'target' => $sTarget,
+		];
 	}
 
 	public static function getInstance($sName, $bReset = FALSE) {
