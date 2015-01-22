@@ -517,7 +517,7 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 	}
 
 	public function emptyTable($sTable) {
-		$sQuery = 'TRUNCATE `'.addslashes($sTable).'`';
+		$sQuery = 'TRUNCATE TABLE `'.addslashes($sTable).'`';
 		$oResult = $this->_oPDO->prepare($sQuery);
 		return $oResult->execute();
 	}
