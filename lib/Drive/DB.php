@@ -92,6 +92,7 @@ class DB {
 			'option' => [
 				\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
 				\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
+				\PDO::ATTR_EMULATE_PREPARES => isset($aServer['pdo_prepare']) ? (bool)$aServer['pdo_prepare'] : true,
 			],
 		];
 
@@ -210,15 +211,12 @@ class DB {
 		return $this->_query($sQuery, $aParam, 'exec');
 	}
 
-	// public _query(sQuery,array aParam=[],sType) {{{
 	/**
-	 * _query
-	 *
-	 * @param mixed $sQuery
+	 * @param $sQuery
 	 * @param array $aParam
-	 * @param string $sType 'query' or 'exec'
-	 * @access public
+	 * @param $sType
 	 * @return mixed
+	 * @throws TangoException
 	 */
 	public function _query($sQuery, array $aParam = [], $sType) {
 
@@ -290,7 +288,6 @@ class DB {
 
 		return $sType === 'exec' ? $iAffected : $oResult ;
 	}
-	// }}}
 
 	public function getInsertID($sQuery, array $aParam = []) {
 		if (!$this->_query($sQuery, $aParam, 'exec')) {
@@ -299,7 +296,6 @@ class DB {
 		return (int)$this->_oPDO->lastInsertId();
 	}
 
-	// public genAI(sTable) {{{
 	/**
 	 * auto increment id generator
 	 *
@@ -307,10 +303,10 @@ class DB {
 	 * @access public
 	 * @return integer
 
-CREATE TABLE IF NOT EXISTS `id_gen` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=binary AUTO_INCREMENT=1 ;
+		CREATE TABLE IF NOT EXISTS `id_gen` (
+		  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+		  PRIMARY KEY (`id`)
+		) ENGINE=MyISAM DEFAULT CHARSET=binary AUTO_INCREMENT=1 ;
 
 	 */
 	public function genAI($sTable) {
@@ -323,7 +319,6 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 		}
 		return $iID;
 	}
-	// }}}
 
 	public function getAll($sQuery, array $aParam = [], $bByKey = TRUE) {
 
@@ -367,7 +362,6 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 		return $aData;
 	}
 
-	// public getRow(sQuery,array aParam=[]) {{{
 	/**
 	 * 只取第一行
 	 *
@@ -391,9 +385,7 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 
 		return $aRow;
 	}
-	// }}}
 
-	// public getSingle(sQuery,array aParam=[]) {{{
 	/**
 	 *
 	 * 只取第一行的第一个字段
@@ -409,7 +401,6 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 		}
 		return current($aRow);
 	}
-	// }}}
 
 	public function page(array $aParam) {
 
