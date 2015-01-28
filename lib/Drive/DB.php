@@ -5,7 +5,7 @@ use Tango\Core\Config;
 use Tango\Core\TangoException;
 use Tango\Core\Log;
 
-Config::setFileDefault('db', dirname(__DIR__).'/Config/db.php');
+Config::setFileDefault('db', dirname(__DIR__) . '/Config/db.php');
 
 class DB {
 
@@ -16,6 +16,9 @@ class DB {
 	protected static $_lInstance = [];
 	protected $_aConfig = [];
 
+	/**
+	 * @var \PDO
+	 */
 	protected $_oPDO;
 	protected $_aAutoCreateTable;
 	protected $_iErrorLast;
@@ -62,7 +65,7 @@ class DB {
 			$aConfig = Config::get('db');
 			$aServer =& $aConfig['server'][$sName];
 			if (!is_array($aServer)) {
-				throw new TangoException('unknown server "'.$sName.'"');
+				throw new TangoException('unknown server "' . $sName . '"');
 			}
 
 			$aServer += $aConfig['default'];
@@ -86,7 +89,7 @@ class DB {
 		$this->_bDebug = (bool)$aServer['debug'];
 
 		$this->_aConfig = [
-			'dsn' => 'mysql:'.$aServer['dsn'].';dbname='.$aServer['dbname'].';charset=utf8',
+			'dsn' => 'mysql:' . $aServer['dsn'] . ';dbname=' . $aServer['dbname'] . ';charset=utf8',
 			'user' => $aServer['user'],
 			'password' => $aServer['password'],
 			'option' => [
@@ -119,11 +122,12 @@ class DB {
 
 		} catch (\Exception $e) {
 
-			$sError = 'MySQL Connect fail, Database "'.$sName.'"'."\n"
-				.$e->getMessage()."\n"
-				.'DSN '.$sDSN;
+			$sError = 'MySQL Connect fail, Database "' . $sName . '"' . "\n"
+				. $e->getMessage() . "\n"
+				. 'DSN ' . $sDSN;
 			throw new TangoException($sError, 2);
 		}
+		return TRUE;
 	}
 
 	/*
@@ -163,11 +167,10 @@ class DB {
 			}
 		}
 
-		throw new TangoException('PDO '.$aError[1].': '.$aError[2]);
-		return FALSE;
+		throw new TangoException('PDO ' . $aError[1] . ': ' . $aError[2]);
 	}
 
-	protected function _ColumnConvertScan($oResult) {
+	protected function _ColumnConvertScan(\PDOStatement $oResult) {
 
 		// 转换变量类型 确定要转换的字段
 		$iCount = $oResult->columnCount();
@@ -246,6 +249,8 @@ class DB {
 		$this->_connect();
 		$this->_iErrorLast = NULL;
 
+		$iAffected = 0;
+		$oResult = NULL;
 		do {
 
 			$aError = $this->_oPDO->errorInfo();
@@ -286,7 +291,7 @@ class DB {
 
 		} while ($this->_connectSmart($aError));
 
-		return $sType === 'exec' ? $iAffected : $oResult ;
+		return $sType === 'exec' ? $iAffected : $oResult;
 	}
 
 	public function getInsertID($sQuery, array $aParam = []) {
@@ -303,18 +308,18 @@ class DB {
 	 * @access public
 	 * @return integer
 
-		CREATE TABLE IF NOT EXISTS `id_gen` (
-		  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-		  PRIMARY KEY (`id`)
-		) ENGINE=MyISAM DEFAULT CHARSET=binary AUTO_INCREMENT=1 ;
+	CREATE TABLE IF NOT EXISTS `id_gen` (
+	 * `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+	 * PRIMARY KEY (`id`)
+	 * ) ENGINE=MyISAM DEFAULT CHARSET=binary AUTO_INCREMENT=1 ;
 
 	 */
 	public function genAI($sTable) {
-		$sTable = '`'.addslashes($sTable).'`';
-		$sQuery = 'INSERT INTO '.$sTable.' () VALUES ()';
+		$sTable = '`' . addslashes($sTable) . '`';
+		$sQuery = 'INSERT INTO ' . $sTable . ' () VALUES ()';
 		$iID = $this->getInsertID($sQuery);
 		if ($iID && ($iID % 1000 == 0)) {
-			$sQuery = 'DELETE FROM '.$sTable;
+			$sQuery = 'DELETE FROM ' . $sTable;
 			$this->exec($sQuery);
 		}
 		return $iID;
@@ -335,9 +340,8 @@ class DB {
 		if ($bByKey && $iColumnCount == 1) {
 			$bByKey = FALSE;
 		}
-		if ($bByKey) {
-			$aKey = [];
-		}
+		$aKey = [];
+
 		$bPeelArray = ($iColumnCount == ($bByKey ? 2 : 1));
 		foreach ($aData as $iRowKey => $aRow) {
 
@@ -364,11 +368,10 @@ class DB {
 
 	/**
 	 * 只取第一行
-	 *
-	 * @param mixed $sQuery
+	 * @param $sQuery
 	 * @param array $aParam
-	 * @access public
-	 * @return void
+	 * @return mixed
+	 * @throws TangoException
 	 */
 	public function getRow($sQuery, array $aParam = []) {
 
@@ -387,13 +390,10 @@ class DB {
 	}
 
 	/**
-	 *
 	 * 只取第一行的第一个字段
-	 *
-	 * @param mixed $sQuery
+	 * @param $sQuery
 	 * @param array $aParam
-	 * @access public
-	 * @return void
+	 * @return bool|mixed
 	 */
 	public function getSingle($sQuery, array $aParam = []) {
 		if (!$aRow = $this->getRow($sQuery, $aParam)) {
@@ -407,15 +407,15 @@ class DB {
 		$aReturn = [[], 0, 1];
 
 		$lReturn =& $aReturn[0];
-		$iCount  =& $aReturn[1];
-		$iPage   =& $aReturn[2];
+		$iCount =& $aReturn[1];
+		$iPage =& $aReturn[2];
 
 		$aParam += [
 			'select' => '*',
 			'table' => '',
 			'where' => '',
 			'order_asc' => FALSE,
-			'order_by' =>  '',
+			'order_by' => '',
 			'page' => 1,
 			'number_per_page' => 20,
 		];
@@ -426,7 +426,7 @@ class DB {
 		}
 
 		if ($aParam['where']) {
-			$aParam['where'] = 'WHERE '.$aParam['where'];
+			$aParam['where'] = 'WHERE ' . $aParam['where'];
 		}
 
 		$sQuery = sprintf('SELECT count(*) FROM %s %s', $aParam['table'], $aParam['where']);
@@ -451,7 +451,7 @@ class DB {
 			}
 
 			if ($iPage <= ceil($iPageMax / 2)) {
-				$sLimit = (($iPage - 1) * $aParam['number_per_page']).', '.$aParam['number_per_page'];
+				$sLimit = (($iPage - 1) * $aParam['number_per_page']) . ', ' . $aParam['number_per_page'];
 			} else {
 				if (!$aParam['order_by']) {
 					$aParam['order_by'] = 'NULL';
@@ -464,15 +464,15 @@ class DB {
 				if ($iPage == $iPageMax) {
 					$sLimit = $iFill;
 				} else {
-					$sLimit = (($iPageMax - $iPage - 1) * $aParam['number_per_page'] + $iFill).', '.$aParam['number_per_page'];
+					$sLimit = (($iPageMax - $iPage - 1) * $aParam['number_per_page'] + $iFill) . ', ' . $aParam['number_per_page'];
 				}
 			}
 		}
 
 		$sOrder = '';
 		if ($aParam['order_by']) {
-			$sOrder = 'ORDER BY '.$aParam['order_by'].' '
-				.($aParam['order_asc'] ? 'ASC' : 'DESC');
+			$sOrder = 'ORDER BY ' . $aParam['order_by'] . ' '
+				. ($aParam['order_asc'] ? 'ASC' : 'DESC');
 		}
 
 		$sQuery = sprintf(
@@ -494,28 +494,28 @@ class DB {
 
 	public function cloneTableStructure($sTableSource, $sTableTarget) {
 
-		$aRow = $this->getRow('SHOW CREATE TABLE `'.$sTableSource.'`');
+		$aRow = $this->getRow('SHOW CREATE TABLE `' . $sTableSource . '`');
 		$s = $aRow['Create Table'];
 		$s = preg_replace(
-			'#CREATE TABLE `'.$sTableSource.'` \(#',
-			'CREATE TABLE IF NOT EXISTS `'.$sTableTarget.'` (',
+			'#CREATE TABLE `' . $sTableSource . '` \(#',
+			'CREATE TABLE IF NOT EXISTS `' . $sTableTarget . '` (',
 			$s
 		);
 		return $this->_query($s, [], 'exec');
 	}
 
 	public function repairTable($sTable) {
-		$sQuery = 'REPAIR TABLE `'.addslashes($sTable).'`';
+		$sQuery = 'REPAIR TABLE `' . addslashes($sTable) . '`';
 		return $this->exec($sQuery);
 	}
 
 	public function optimizeTable($sTable) {
-		$sQuery = 'OPTIMIZE TABLE `'.addslashes($sTable).'`';
+		$sQuery = 'OPTIMIZE TABLE `' . addslashes($sTable) . '`';
 		return $this->exec($sQuery);
 	}
 
 	public function emptyTable($sTable) {
-		$sQuery = 'TRUNCATE TABLE `'.addslashes($sTable).'`';
+		$sQuery = 'TRUNCATE TABLE `' . addslashes($sTable) . '`';
 		return $this->exec($sQuery);
 	}
 }
@@ -541,7 +541,7 @@ DB::$lTypeNeedConvert = [
 			return FALSE;
 		}
 
-		return function($sValue) {
+		return function ($sValue) {
 			return $sValue === 'Y';
 		};
 	}
