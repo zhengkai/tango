@@ -20,6 +20,9 @@ class DB {
 	protected $_aAutoCreateTable;
 	protected $_iErrorLast;
 
+	protected $_sPrevPrepareQuery;
+	protected $_oPrevPrepare;
+
 	protected static $_bEnable = TRUE;
 
 	public static $lTypeNeedConvert = [];
@@ -255,12 +258,18 @@ class DB {
 
 			if ($aParam) {
 
-				$aOption = [];
-				if (key($aParam) !== 0) {
-					$aOption[\PDO::ATTR_CURSOR] = \PDO::CURSOR_FWDONLY;
+				if ($this->_sPrevPrepareQuery === $sQuery) {
+					$oResult = $this->_oPrevPrepare;
+				} else {
+					$this->_sPrevPrepareQuery = $sQuery;
+					$aOption = [];
+					if (key($aParam) !== 0) {
+						$aOption[\PDO::ATTR_CURSOR] = \PDO::CURSOR_FWDONLY;
+					}
+					$oResult = $this->_oPDO->prepare($sQuery, $aOption);
+					$this->_oPrevPrepare = $oResult;
 				}
 
-				$oResult = $this->_oPDO->prepare($sQuery, $aOption);
 				$oResult->execute($aParam);
 				$aError = $oResult->errorInfo();
 				if ($sType === 'exec') {
@@ -506,20 +515,17 @@ CREATE TABLE IF NOT EXISTS `id_gen` (
 
 	public function repairTable($sTable) {
 		$sQuery = 'REPAIR TABLE `'.addslashes($sTable).'`';
-		$oResult = $this->_oPDO->prepare($sQuery);
-		return $oResult->execute();
+		return $this->exec($sQuery);
 	}
 
 	public function optimizeTable($sTable) {
 		$sQuery = 'OPTIMIZE TABLE `'.addslashes($sTable).'`';
-		$oResult = $this->_oPDO->prepare($sQuery);
-		return $oResult->execute();
+		return $this->exec($sQuery);
 	}
 
 	public function emptyTable($sTable) {
 		$sQuery = 'TRUNCATE TABLE `'.addslashes($sTable).'`';
-		$oResult = $this->_oPDO->prepare($sQuery);
-		return $oResult->execute();
+		return $this->exec($sQuery);
 	}
 }
 
