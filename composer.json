@@ -7,7 +7,7 @@
 		{
 			"name": "Zheng Kai",
 			"email": "zhengkai@gmail.com",
-			"homepage": "http://soulogic.com",
+			"homepage": "https://soulogic.com/",
 			"role": "Developer"
 		}
 	],
@@ -17,9 +17,9 @@
 		}
     },
 	"require": {
-		"php": ">=5.4.0"
+		"php": ">=5.5.0"
 	},
     "require-dev": {
-        "phpunit/phpunit": "3.7.*"
+        "phpunit/phpunit": "4.5.*"
     }
 }

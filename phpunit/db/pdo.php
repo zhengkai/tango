@@ -1,8 +1,6 @@
 <?php
 use Tango\Drive\DB;
 
-\Tango\Core\Config::setFile('db', __DIR__.'/config.php');
-
 class DBTest extends PHPUnit_Framework_TestCase {
 
 	protected $_i = 0;
