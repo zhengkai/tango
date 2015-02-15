@@ -143,6 +143,7 @@ class Page {
 	}
 
 	static protected function _parseText() {
+		Tango::$T += ['output' => ''];
 		echo Tango::$T['output'];
 		return TRUE;
 	}
