@@ -1,9 +1,9 @@
 <?php
 return [
 	'default' => [
-		'user' => 'tango',
-		'password' => 'tango',
-		'dsn' => 'unix_socket=/var/run/mysqld/mysqld.sock',
+		'user' => 'travis',
+		'password' => '',
+		'dsn' => 'host=localhost',
 	],
 	'server' => [
 		'test' => [
