@@ -285,7 +285,7 @@ abstract class DBEnumBase {
 
 	protected static function _preloadWithHash() {
 
-		$lRowName = [static::$_sKeyID, static::$_sKeyHash] + static::$_lKeySearch;
+		$lRowName = array_merge([static::$_sKeyID, static::$_sKeyHash], static::$_lKeySearch);
 
 		$sQuery = sprintf(
 			'SELECT %s FROM %s LIMIT %d',
@@ -301,9 +301,17 @@ abstract class DBEnumBase {
 			// var_dump(array_map('bin2hex', static::$_lPool));
 		} catch (TangoException $e) {
 			throw new TangoException(
-				'preload failed, maybe RowName not match '
+				static::$_sDB.'.'.static::$_sDBTable.' '
+				.'preload failed, maybe RowName not match '
 				. '(' . static::$_sKeyID . ', ' . static::$_sKeyHash . ')'
+				.$sQuery
 			);
+		}
+
+		foreach (static::$_lPool as $aRow) {
+			$iID = array_shift($aRow);
+			unset($aRow[static::$_sKeyHash]);
+			static::$_lPoolForName[$iID] = $aRow;
 		}
 	}
 }
