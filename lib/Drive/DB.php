@@ -506,17 +506,17 @@ class DB {
 
 	public function repairTable($sTable) {
 		$sQuery = 'REPAIR TABLE `' . addslashes($sTable) . '`';
-		return $this->exec($sQuery);
+		return $this->query($sQuery);
 	}
 
 	public function optimizeTable($sTable) {
 		$sQuery = 'OPTIMIZE TABLE `' . addslashes($sTable) . '`';
-		return $this->exec($sQuery);
+		return $this->query($sQuery);
 	}
 
 	public function emptyTable($sTable) {
 		$sQuery = 'TRUNCATE TABLE `' . addslashes($sTable) . '`';
-		return $this->exec($sQuery);
+		return $this->query($sQuery);
 	}
 }
 
