@@ -309,9 +309,9 @@ class DB {
 	 * @return integer
 
 	CREATE TABLE IF NOT EXISTS `id_gen` (
-	 * `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-	 * PRIMARY KEY (`id`)
-	 * ) ENGINE=MyISAM DEFAULT CHARSET=binary AUTO_INCREMENT=1 ;
+		`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+		PRIMARY KEY (`id`)
+	) ENGINE=MyISAM DEFAULT CHARSET=binary AUTO_INCREMENT=1;
 
 	 */
 	public function genAI($sTable) {
