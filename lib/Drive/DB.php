@@ -167,7 +167,7 @@ class DB {
 			}
 		}
 
-		throw new TangoException('PDO ' . $aError[1] . ': ' . $aError[2]);
+		throw new DBException('PDO ' . $aError[1] . ': ' . $aError[2]);
 	}
 
 	protected function _ColumnConvertScan(\PDOStatement $oResult) {
