@@ -141,6 +141,7 @@ class DB {
 		if (!$iError) {
 			return FALSE;
 		}
+		$this->_oPDO = NULL;
 
 		$iError = intval($iError);
 
@@ -149,7 +150,6 @@ class DB {
 
 			// 42S02 table doesn't exist
 			if ($iError == 1146 && $this->_aAutoCreateTable) {
-				$this->_oPDO = NULL;
 				$this->_connect();
 				$this->cloneTableStructure(
 					$this->_aAutoCreateTable['source'],
