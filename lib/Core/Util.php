@@ -87,9 +87,8 @@ class Util {
 	 *
 	 * -1.4B = -1
 	 * 123 = 123
-	 * 1KB = 1024
+	 * 9MB = 9437184
 	 * 5KiB = 5000
-	 * 10MB = 10485760
 	 * 15P = 16888498602639360
 	 * 1.5 K = 1536
 	 * -1.2 GiB = -1200000000
@@ -104,16 +103,16 @@ class Util {
 			return FALSE;
 		}
 		$aMatch = [];
-		if (!preg_match('#(\-?\d+(\.\d+)?)((\ )?(K|M|G|T|P|G|E|Z|Y)?(iB|B)?)?$#', $sNum, $aMatch)) {
-			echo 'fail', "\n";
+		if (!preg_match('#(\-?\d+(\.\d+)?)\ ?(K|M|G|T|P|G|E|Z|Y)?(iB|B)?$#', $sNum, $aMatch)) {
 			return FALSE;
 		}
 		$aMatch += [
-			'', '', '', '', '', '', 'B',
+			'', '', '', '', 'B',
 		];
+
 		$iNum = $aMatch[1];
-		$sUnit = $aMatch[5];
-		$iUnitBase = $aMatch[6] === 'B' ? 1024 : 1000;
+		$sUnit = $aMatch[3];
+		$iUnitBase = $aMatch[4] === 'B' ? 1024 : 1000;
 
 		if ($sUnit) {
 			$iUnit = strpos('KMGTPGEZY', $sUnit) + 1;
