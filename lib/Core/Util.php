@@ -78,4 +78,49 @@ class Util {
 		}
 		return json_encode($mData, $iArg);
 	}
+
+	// public convertDigitalUnit(sNum) {{{
+	/**
+	 * convertDigitalUnit
+	 *
+	 * 将带有资讯计量单位到数字转成整数，下面是一些转换结果可供参考
+	 *
+	 * -1.4B = -1
+	 * 123 = 123
+	 * 1KB = 1024
+	 * 5KiB = 5000
+	 * 10MB = 10485760
+	 * 15P = 16888498602639360
+	 * 1.5 K = 1536
+	 * -1.2 GiB = -1200000000
+	 *
+	 * @param mixed $sNum
+	 * @static
+	 * @access public
+	 * @return void
+	 */
+	public static function convertDigitalUnit($sNum) {
+		if (!is_string($sNum)) {
+			return FALSE;
+		}
+		$aMatch = [];
+		if (!preg_match('#(\-?\d+(\.\d+)?)((\ )?(K|M|G|T|P|G|E|Z|Y)?(iB|B)?)?$#', $sNum, $aMatch)) {
+			echo 'fail', "\n";
+			return FALSE;
+		}
+		$aMatch += [
+			'', '', '', '', '', '', 'B',
+		];
+		$iNum = $aMatch[1];
+		$sUnit = $aMatch[5];
+		$iUnitBase = $aMatch[6] === 'B' ? 1024 : 1000;
+
+		if ($sUnit) {
+			$iUnit = strpos('KMGTPGEZY', $sUnit) + 1;
+			$iNum *= pow($iUnitBase, $iUnit);
+		}
+
+		return intval(round($iNum));
+	}
+	// }}}
 }
