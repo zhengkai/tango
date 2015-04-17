@@ -518,6 +518,16 @@ class DB {
 		$sQuery = 'TRUNCATE TABLE `' . addslashes($sTable) . '`';
 		return $this->query($sQuery);
 	}
+
+	public function getIndexSize() {
+
+		$sQuery = 'SHOW TABLE STATUS';
+		$lTable = $this->getAll($sQuery);
+		$lIndex = array_column($lTable, 'Index_length');
+		$iIndex = array_sum($lIndex);
+
+		return $iIndex;
+	}
 }
 
 // 类的 static 数组在定义时无法包含匿名函数，只能使用曲线方法
