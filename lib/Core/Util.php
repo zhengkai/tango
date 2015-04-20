@@ -96,7 +96,7 @@ class Util {
 	 * @param mixed $sNum
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return bool|int
 	 */
 	public static function convertDigitalUnit($sNum) {
 		if (!is_string($sNum)) {
