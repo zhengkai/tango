@@ -22,6 +22,10 @@
 		<target>doc</target>
 	</transformer>
 
+	<transformations>
+		<template name="responsive-twig" />
+	</transformations>
+
 	<files>
 		<directory>lib</directory>
 	</files>

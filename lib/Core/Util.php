@@ -53,7 +53,9 @@ class Util {
 
 		foreach ($lLockFile as $sLockFile) {
 
-			$hFile = fopen($sLockFile, 'a+');
+			$iMask = umask(0);
+			$hFile = fopen($sLockFile, 'a', 0666);
+			umask($iMask);
 			if (!$hFile) {
 				$bLock = FALSE;
 				break;
