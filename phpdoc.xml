@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdoc>
+
+	<title>Tango Framework</title>
+
+	<encoding>utf8</encoding>
+
+	<markers>
+		<item>TODO</item>
+		<item>FIXME</item>
+	</markers>
+
+	<extensions>
+		<extension>php</extension>
+	</extensions>
+
+	<parser>
+		<target>doc</target>
+	</parser>
+
+	<transformer>
+		<target>doc</target>
+	</transformer>
+
+	<files>
+		<directory>lib</directory>
+	</files>
+</phpdoc>
