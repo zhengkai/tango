@@ -29,7 +29,6 @@ class TangoException extends \Exception {
 	}
 
 	static public function handler(\Exception $e, $bSend = TRUE) {
-		$s = "Uncaught exception: ".$e->getMessage();
 
 		$aTrace = [];
 
@@ -39,6 +38,7 @@ class TangoException extends \Exception {
 			$aTrace = current($lTrace);
 			if (!self::$_iDepth && !empty($lTrace[0]['class'])) {
 				$sClass = $lTrace[0]['class'];
+				$aPrev = null;
 				foreach ($lTrace as $aRow) {
 					if (empty($aRow['class']) || $aRow['class'] !== $sClass) {
 						$aTrace = $aPrev;
@@ -71,10 +71,6 @@ class TangoException extends \Exception {
 			'args'   => '',
 		];
 
-		$aServer = $_SERVER + [
-			'REMOTE_PORT' => 0,
-			'REQUEST_URI' => '',
-		];
 		$bCli = PHP_SAPI === 'cli';
 
 		$sHash = hash('crc32', ($bCli ? posix_getpid() : $_SERVER["REMOTE_PORT"])."\n".sprintf('%.16f', microtime(TRUE))."\n".$e->getMessage()."\n".Tango::getAI());
@@ -83,7 +79,7 @@ class TangoException extends \Exception {
 
 		$aConfig = Config::get('exception');
 		if ($aConfig['timezone']) {
-			$oTime = new DateTime('now', $aConfig['timezone']);
+			$oTime = new \DateTime('now', $aConfig['timezone']);
 			$sTime = $oTime->format($aConfig['time_format']);
 		} else {
 			$sTime = date($aConfig['time_format']);
@@ -133,6 +129,7 @@ class TangoException extends \Exception {
 		if ($bSend) {
 			error_log("\n".$s."\n", 3, ini_get('error_log'));
 		}
+		return $s;
 	}
 
 	static public function errorHandler($iError, $sMsg, $sFile, $sLine) {
