@@ -28,5 +28,12 @@
 
 	<files>
 		<directory>lib</directory>
+		<ignore>lib/config/*</ignore>
+		<ignore>lib/Addon/*</ignore>
+		<ignore>lib/Drive/MC.php</ignore>
+		<ignore>lib/Drive/Riak.php</ignore>
+		<ignore>lib/Drive/RiakLoopQuery.php</ignore>
+		<ignore>lib/Page/Link.php</ignore>
+		<ignore>lib/Page/Widget.php</ignore>
 	</files>
 </phpdoc>

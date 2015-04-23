@@ -1,4 +1,13 @@
 <?php
+/*
+ * This file is part of the Tango Framework.
+ *
+ * (c) Zheng Kai <zhengkai@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Tango\Drive;
 
 use Tango\Core\Config;
@@ -7,6 +16,19 @@ use Tango\Core\Log;
 
 Config::setFileDefault('db', dirname(__DIR__) . '/Config/db.php');
 
+/**
+ * MySQL 操作类
+ *
+ * 主要特性有：
+ * 智能化处理返回的数组
+ * 减少连接数
+ * 只在第一次做操作时开始连接
+ * 自动重连
+ * 简化常见操作
+ *
+ * @package Drive
+ * @author Zheng Kai <zhengkai@gmail.com>
+ */
 class DB {
 
 	protected $_sName;
@@ -26,16 +48,16 @@ class DB {
 	protected $_sPrevPrepareQuery;
 	protected $_oPrevPrepare;
 
-	protected static $_bEnable = TRUE;
+	protected static $_bLog = TRUE;
 
 	public static $lTypeNeedConvert = [];
 
 	public static function setLogOn() {
-		self::$_bEnable = TRUE;
+		self::$_bLog = TRUE;
 	}
 
 	public static function setLogOff() {
-		self::$_bEnable = FALSE;
+		self::$_bLog = FALSE;
 	}
 
 	/**
@@ -79,6 +101,14 @@ class DB {
 		return $oDB;
 	}
 
+	/**
+	 * 返回原始 PDO 类，方便直接操作
+	 *
+	 * http://php.net/manual/en/class.pdo.php
+	 *
+	 * @access public
+	 * @return void
+	 */
 	public function pdo() {
 		return $this->_oPDO;
 	}
@@ -206,10 +236,26 @@ class DB {
 		return $aRow;
 	}
 
+	/**
+	 * query 操作（SELECT/SHOW 等）
+	 *
+	 * @param mixed $sQuery
+	 * @param array $aParam
+	 * @access public
+	 * @return void
+	 */
 	public function query($sQuery, array $aParam = []) {
 		return $this->_query($sQuery, $aParam, 'query');
 	}
 
+	/**
+	 * exec 操作（INSERT、UPDATE、DELETE 等）
+	 *
+	 * @param mixed $sQuery
+	 * @param array $aParam
+	 * @access public
+	 * @return void
+	 */
 	public function exec($sQuery, array $aParam = []) {
 		return $this->_query($sQuery, $aParam, 'exec');
 	}
@@ -221,23 +267,21 @@ class DB {
 	 * @return mixed
 	 * @throws TangoException
 	 */
-	public function _query($sQuery, array $aParam = [], $sType) {
-
-		// trigger_error($sType.' : '.$sQuery);
-
-		$aConfig = Config::get('db')['log'];
+	protected function _query($sQuery, array $aParam = [], $sType) {
 
 		if (empty($sQuery)) {
 			throw new TangoException('empty $sQuery', 3);
 		}
 
-		if (self::$_bEnable && $this->_sName != '_debug') {
+		if (self::$_bLog && $this->_sName != '_debug') {
 
-			if ($aConfig['debug']) {
+			$aConfigLog = Config::get('db')['log'];
+
+			if ($aConfigLog['debug']) {
 				Log::debug('query', $sQuery);
 			}
 
-			if ($aConfig['collection']) {
+			if ($aConfigLog['collection']) {
 				Log::collection('db', [
 					'query' => $sQuery,
 					'param' => $aParam,
@@ -294,6 +338,14 @@ class DB {
 		return $sType === 'exec' ? $iAffected : $oResult;
 	}
 
+	/**
+	 * 对于有 auto increment 字段的 INSERT 的语句，返回其自增值
+	 *
+	 * @param mixed $sQuery
+	 * @param array $aParam
+	 * @access public
+	 * @return integer
+	 */
 	public function getInsertID($sQuery, array $aParam = []) {
 		if (!$this->_query($sQuery, $aParam, 'exec')) {
 			return FALSE;
@@ -325,6 +377,15 @@ class DB {
 		return $iID;
 	}
 
+	/**
+	 * 最常用的方法，获取所有记录，返回为一维或二维数组
+	 *
+	 * @param mixed $sQuery
+	 * @param array $aParam
+	 * @param mixed $bByKey
+	 * @access public
+	 * @return array
+	 */
 	public function getAll($sQuery, array $aParam = [], $bByKey = TRUE) {
 
 		$oResult = $this->_query($sQuery, $aParam, 'query');
@@ -492,6 +553,14 @@ class DB {
 		return [$lReturn, $iCount, $iPage];
 	}
 
+	/**
+	 * 复制表结构、创建新表
+	 *
+	 * @param mixed $sTableSource
+	 * @param mixed $sTableTarget
+	 * @access public
+	 * @return void
+	 */
 	public function cloneTableStructure($sTableSource, $sTableTarget) {
 
 		$aRow = $this->getRow('SHOW CREATE TABLE `' . $sTableSource . '`');
@@ -501,24 +570,51 @@ class DB {
 			'CREATE TABLE IF NOT EXISTS `' . $sTableTarget . '` (',
 			$s
 		);
-		return $this->_query($s, [], 'exec');
+		return (int)$this->_query($s, [], 'exec');
 	}
 
+	/**
+	 * 修复表
+	 *
+	 * @param mixed $sTable
+	 * @access public
+	 * @return void
+	 */
 	public function repairTable($sTable) {
 		$sQuery = 'REPAIR TABLE `' . addslashes($sTable) . '`';
-		return $this->query($sQuery);
+		return $this->getRow($sQuery);
 	}
 
+	/**
+	 * 优化表
+	 *
+	 * @param mixed $sTable
+	 * @access public
+	 * @return void
+	 */
 	public function optimizeTable($sTable) {
 		$sQuery = 'OPTIMIZE TABLE `' . addslashes($sTable) . '`';
-		return $this->query($sQuery);
+		return $this->getRow($sQuery);
 	}
 
+	/**
+	 * 清空表
+	 *
+	 * @param mixed $sTable
+	 * @access public
+	 * @return void
+	 */
 	public function emptyTable($sTable) {
 		$sQuery = 'TRUNCATE TABLE `' . addslashes($sTable) . '`';
-		return $this->query($sQuery);
+		return $this->getRow($sQuery);
 	}
 
+	/**
+	 * 返回当前库占用的索引
+	 *
+	 * @access public
+	 * @return integer
+	 */
 	public function getIndexSize() {
 
 		$sQuery = 'SHOW TABLE STATUS';
