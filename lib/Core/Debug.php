@@ -8,7 +8,7 @@ class Debug {
 	static $_bEnable;
 	static $_sDebugPath;
 
-	static public function _init() {
+	public static function _init() {
 
 		if (self::$_bEnable !== NULL) {
 			return self::$_bEnable;
@@ -47,21 +47,21 @@ class Debug {
 		return self::$_bEnable = TRUE;
 	}
 
-	static public function add($sType, $sMessage = NULL, $bHead = FALSE) {
+	public static function add($sType, $sMessage = NULL, $bHead = FALSE) {
 		if ($sMessage === NULL) {
 			return FALSE;
 		}
 		self::_file($sType, $sMessage, $bHead, FILE_APPEND | LOCK_EX);
 	}
 
-	static public function dump($sType, $sMessage = NULL, $bHead = FALSE) {
+	public static function dump($sType, $sMessage = NULL, $bHead = FALSE) {
 		if ($sMessage === NULL) {
 			return FALSE;
 		}
 		self::_file($sType, $sMessage, $bHead, LOCK_EX);
 	}
 
-	static public function _file($sType, $sMessage, $bHead, $iFlag) {
+	public static function _file($sType, $sMessage, $bHead, $iFlag) {
 
 		if (!self::_init()) {
 			return FALSE;

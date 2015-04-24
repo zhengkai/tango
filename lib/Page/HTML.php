@@ -8,7 +8,7 @@ Config::setFileDefault('html', dirname(__DIR__).'/Config/html.php');
 
 class HTML {
 
-	static protected $_lTpl = [
+	protected static $_lTpl = [
 		'head'  => '/head',
 		'foot'  => '/foot',
 		'nav'   => '/nav',
@@ -16,16 +16,16 @@ class HTML {
 		'main'  => '',
 	];
 
-	static protected $_lJS = [];
-	static protected $_lCSS = [];
-	static protected $_sAddMeta = '';
+	protected static $_lJS = [];
+	protected static $_lCSS = [];
+	protected static $_sAddMeta = '';
 
-	static protected $_sTitle = '';
+	protected static $_sTitle = '';
 
-	static protected $_bRobotsIndex = TRUE;
-	static protected $_bRobotsFollow = TRUE;
+	protected static $_bRobotsIndex = TRUE;
+	protected static $_bRobotsFollow = TRUE;
 
-	static public function run() {
+	public static function run() {
 
 		if (!self::$_lTpl['main']) {
 			self::$_lTpl['main'] = substr($_SERVER['SCRIPT_NAME'], 0, -4);
@@ -68,15 +68,15 @@ class HTML {
 		Layout::run($s);
 	}
 
-	static public function setFollow($bFollow) {
+	public static function setFollow($bFollow) {
 		self::$_bRobotsFollow = (bool)$bFollow;
 	}
 
-	static public function setIndex($bIndex) {
+	public static function setIndex($bIndex) {
 		self::$_bRobotsIndex = (bool)$bIndex;
 	}
 
-	static public function setTpl($lTpl, $sValue = NULL) {
+	public static function setTpl($lTpl, $sValue = NULL) {
 
 		if (is_string($lTpl)) {
 			$lTpl = [$lTpl => $sValue];
@@ -92,24 +92,24 @@ class HTML {
 		}
 	}
 
-	static public function getTpl($sTpl) {
+	public static function getTpl($sTpl) {
 		return self::_getFile(self::$_lTpl[$sTpl].'.php');
 	}
 
-	static protected function _getFile($sFile) {
+	protected static function _getFile($sFile) {
 		return SITE_ROOT.'/tpl'.$sFile;
 	}
 
-	static public function setTitle($sTitle) {
+	public static function setTitle($sTitle) {
 		self::$_sTitle = $sTitle;
 	}
 
-	static public function getTitle() {
+	public static function getTitle() {
 		return (self::$_sTitle ? self::$_sTitle.' - ' : '')
 			.Config::get('html')['title'];
 	}
 
-	static public function getMeta() {
+	public static function getMeta() {
 		$sReturn = '';
 
 		// nofollow, noindex
@@ -136,19 +136,19 @@ class HTML {
 		return $sReturn;
 	}
 
-	static public function addMeta($s) {
+	public static function addMeta($s) {
 		self::$_sAddMeta = trim($s);
 	}
 
-	static public function addJS($sFile) {
+	public static function addJS($sFile) {
 		self::$_lJS[] = $sFile;
 	}
 
-	static public function addCSS($sFile) {
+	public static function addCSS($sFile) {
 		self::$_lCSS[] = $sFile;
 	}
 
-	static public function colorGradient($fRate, $sColorA, $sColorB = '#FFFFFF') {
+	public static function colorGradient($fRate, $sColorA, $sColorB = '#FFFFFF') {
 
 		$lColorA = self::_colorRGB($sColorA);
 		$lColorB = self::_colorRGB($sColorB);
@@ -162,7 +162,7 @@ class HTML {
 		return '#'.$sReturn;
 	}
 
-	static protected function _colorRGB($sColor) {
+	protected static function _colorRGB($sColor) {
 		$sError = 'unknown color "'.$sColor.'"';
 		$sColor = strtolower($sColor);
 
@@ -194,7 +194,7 @@ class HTML {
 	/**
 	 * 递归对数组进行 HTML 转义（包括 key 和 value）
 	 */
-	static public function escape($mInput) {
+	public static function escape($mInput) {
 
 		if (is_string($mInput)) {
 			//$mRow = preg_replace("/\\p{C}|\\p{M}/u", "", $mRow);
@@ -219,11 +219,11 @@ class HTML {
 		return $lReturn;
 	}
 
-	static public function test($s = 'abc') {
+	public static function test($s = 'abc') {
 		self::_test();
 	}
 
-	static public function _test() {
+	public static function _test() {
 		throw new TangoException('something error', 2);
 	}
 }

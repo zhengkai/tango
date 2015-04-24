@@ -10,7 +10,7 @@ use Tango\Core\Log;
 class Riak {
 
 	protected $_sName;
-	static protected $_lInstance = [];
+	protected static $_lInstance = [];
 
 	protected $_iCURLError = 0;
 	protected $_iJSONError = 0;

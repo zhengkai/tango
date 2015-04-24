@@ -11,13 +11,13 @@ abstract class DBEnumBase {
 	static private $_sKeyID = 'id';
 	static private $_lKeySearch = ['game', 'region'];
 
-	static protected $_sKeyHash = '';
-	static protected $_sHashAlgo = 'sha1'; // http://php.net/manual/en/function.hash-algos.php
+	protected static $_sKeyHash = '';
+	protected static $_sHashAlgo = 'sha1'; // http://php.net/manual/en/function.hash-algos.php
 
 	static private $_lPool = [];
 	static private $_lPoolForName = [];
 	static private $_lPoolForSort = [];
-	static protected $_iPoolMax = 1000;
+	protected static $_iPoolMax = 1000;
 
 	static private $_bPreLoad = TRUE; // 预读，第一次加载的时候是否 SELECT LIMIT 1000
 

@@ -5,8 +5,8 @@ Config::setFileDefault('exception', dirname(__DIR__).'/Config/exception.php');
 
 class TangoException extends \Exception {
 
-	static protected $_iDepth = 1;
-	static protected $_sLastError = '';
+	protected static $_iDepth = 1;
+	protected static $_sLastError = '';
 
 	public function __construct($sMessage, $iDepth = 0, $iCode = 0) {
 
@@ -19,16 +19,16 @@ class TangoException extends \Exception {
 		parent::__construct($sMessage, $iCode);
 	}
 
-	static public function getLastError() {
+	public static function getLastError() {
 		return self::$_sLastError;
 	}
 
-	static public function register() {
+	public static function register() {
 		set_exception_handler([__CLASS__, 'handler']);
 		set_error_handler([__CLASS__, 'errorHandler']);
 	}
 
-	static public function handler(\Exception $e, $bSend = TRUE) {
+	public static function handler(\Exception $e, $bSend = TRUE) {
 
 		$aTrace = [];
 
@@ -132,7 +132,7 @@ class TangoException extends \Exception {
 		return $s;
 	}
 
-	static public function errorHandler($iError, $sMsg, $sFile, $sLine) {
+	public static function errorHandler($iError, $sMsg, $sFile, $sLine) {
 		if (Tango::isStopError($iError)) {
 			self::handler(new TangoException($sMsg, 2), FALSE);
 		}

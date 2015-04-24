@@ -18,9 +18,9 @@ namespace Tango\Core;
 
 class Filter {
 
-	static protected $_bCheck = FALSE;
+	protected static $_bCheck = FALSE;
 
-	static protected $_pEmail = '#^[0-9a-z]([\+\.\-_0-9a-z][0-9a-z]+)*[0-9a-z]?@[0-9a-z]([\.\-_0-9a-z][0-9a-z]+)\.[a-z]{2,}$#i';
+	protected static $_pEmail = '#^[0-9a-z]([\+\.\-_0-9a-z][0-9a-z]+)*[0-9a-z]?@[0-9a-z]([\.\-_0-9a-z][0-9a-z]+)\.[a-z]{2,}$#i';
 	// not the full regexp, it is too crazy
 	// http://www.ex-parrot.com/~pdw/Mail-RFC822-Address.html
 
@@ -32,7 +32,7 @@ class Filter {
      *      字符串会被
      *      需要注意默认的 int 不允许有负值，否则请使用 signedInt
 	 */
-	static public function run($sMethod = "GET", $lRule = []) {
+	public static function run($sMethod = "GET", $lRule = []) {
 
 		if (self::$_bCheck) {
 			throw new TangoException('filter checked');

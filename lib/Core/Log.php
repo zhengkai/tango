@@ -24,7 +24,7 @@ class Log {
 	static $_iAI;
 	static $_iStep = 0;
 
-	static public function init() {
+	public static function init() {
 
 		if (self::$_bEnable !== NULL) {
 			return self::$_bEnable;
@@ -63,7 +63,7 @@ class Log {
 		return self::$_bEnable = TRUE;
 	}
 
-	static public function debug($sType, $sMessage, $bHead = FALSE) {
+	public static function debug($sType, $sMessage, $bHead = FALSE) {
 
 		if (!self::init()) {
 			return FALSE;
@@ -101,11 +101,11 @@ class Log {
 		return file_put_contents($sFile, $sMessage, FILE_APPEND | LOCK_EX);
 	}
 
-	static public function getType() {
+	public static function getType() {
 		return self::$_lType;
 	}
 
-	static public function collection($sType, array $aMessage) {
+	public static function collection($sType, array $aMessage) {
 
 		self::$_iStep++;
 		if (self::$_iStep > 1000) {

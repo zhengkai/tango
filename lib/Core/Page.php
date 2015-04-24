@@ -5,8 +5,8 @@ use Tango\Page\HTML;
 
 class Page {
 
-	static protected $_aExt = FALSE;
-	static protected $_lExt = [
+	protected static $_aExt = FALSE;
+	protected static $_lExt = [
 		'html' => [
 			'mime' => 'text/html',
 		],
@@ -27,19 +27,19 @@ class Page {
 		],
 	];
 
-	static protected $_bParse = FALSE;
+	protected static $_bParse = FALSE;
 
-	static protected $_bWellDone = FALSE;
+	protected static $_bWellDone = FALSE;
 
-	static public function isWellDone() {
+	public static function isWellDone() {
 		return self::$_bWellDone;
 	}
 
-	static public function reset() {
+	public static function reset() {
 		self::$_bParse = FALSE;
 	}
 
-	static public function error($sError) {
+	public static function error($sError) {
 		if (self::$_bParse) {
 			throw new TangoException('Page has been sent');
 		}
@@ -47,7 +47,7 @@ class Page {
 		return;
 	}
 
-	static public function debugGate() {
+	public static function debugGate() {
 		if (!Tango::isDebug()) {
 			self::error('http404');
 			return FALSE;
@@ -55,7 +55,7 @@ class Page {
 		return TRUE;
 	}
 
-	static public function set($sExt, $bTry = FALSE) {
+	public static function set($sExt, $bTry = FALSE) {
 		if (self::$_aExt) {
 			if (!$bTry) {
 				trigger_error('ext exists');
@@ -77,15 +77,15 @@ class Page {
 		return TRUE;
 	}
 
-	static public function get() {
+	public static function get() {
 		return self::$_aExt;
 	}
 
-	static public function stopParse() {
+	public static function stopParse() {
 		self::$_bParse = TRUE;
 	}
 
-	static public function jump($sURL) {
+	public static function jump($sURL) {
 		if (self::$_bParse) {
 			throw new TangoException('jump before parse');
 		}
@@ -94,7 +94,7 @@ class Page {
 		exit;
 	}
 
-	static public function parse() {
+	public static function parse() {
 
 		if (self::$_bParse) {
 			return FALSE;
@@ -142,12 +142,12 @@ class Page {
 		}
 	}
 
-	static protected function _parseText() {
+	protected static function _parseText() {
 		Tango::$T += ['output' => ''];
 		echo Tango::$T['output'];
 		return TRUE;
 	}
-	static protected function _parseJson() {
+	protected static function _parseJson() {
 		echo json_encode(Tango::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 		return TRUE;
 	}

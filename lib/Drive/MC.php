@@ -7,7 +7,7 @@ Config::setFileDefault('memcache', dirname(__DIR__).'/Config/memcache.php');
 
 class MC extends \Memcached {
 
-	static protected $_lInstance = [];
+	protected static $_lInstance = [];
 
 	public static function getInstance($sName = 'default') {
 		$o =& self::$_lInstance[$sName];

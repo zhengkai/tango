@@ -20,10 +20,10 @@ class Config {
 	/**
 	 * 已读取的配置信息
 	 */
-	static protected $_lStore = [];
+	protected static $_lStore = [];
 
-	static protected $_lFile = [];
-	static protected $_lFileDefault = [];
+	protected static $_lFile = [];
+	protected static $_lFileDefault = [];
 
 	/**
 	 * 设定“配置文件”的路径，只有在需要的时候才去读取配置
@@ -34,7 +34,7 @@ class Config {
 	 * @access public
 	 * @return void
 	 */
-	static public function setFile($sName, $sPath) {
+	public static function setFile($sName, $sPath) {
 		self::_setFile($sName, $sPath);
 	}
 
@@ -49,11 +49,11 @@ class Config {
 	 * @access public
 	 * @return void
 	 */
-	static public function setFileDefault($sName, $sPath) {
+	public static function setFileDefault($sName, $sPath) {
 		self::_setFile($sName, $sPath, TRUE);
 	}
 
-	static protected function _setFile($sName, $sPath, $bDefault = FALSE) {
+	protected static function _setFile($sName, $sPath, $bDefault = FALSE) {
 
 		$sVar = $bDefault ? '_lFileDefault' : '_lFile';
 		$sCurrentPath =& self::${$sVar}[$sName];
@@ -73,7 +73,7 @@ class Config {
 	 * @access public
 	 * @return array
 	 */
-	static public function get($sName) {
+	public static function get($sName) {
 		$aReturn =& self::$_lStore[$sName];
 
 		if (!$aReturn) {
@@ -100,7 +100,7 @@ class Config {
 	 * @access public
 	 * @return array
 	 */
-	static public function getFile($sName) {
+	public static function getFile($sName) {
 		$sFile        =& self::$_lFile[$sName];
 		$sFileDefault =& self::$_lFileDefault[$sName];
 		return [

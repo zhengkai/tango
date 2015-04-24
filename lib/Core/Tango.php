@@ -5,29 +5,29 @@ Config::setFileDefault('tango', dirname(__DIR__).'/Config/tango.php');
 
 class Tango {
 
-	static public $T = [];
-	static public $D = [];
-	static public $IN = [];
+	public static $T = [];
+	public static $D = [];
+	public static $IN = [];
 
-	static public $_lURLHook = [];
+	public static $_lURLHook = [];
 
-	static protected $_sExt  = 'html';
+	protected static $_sExt  = 'html';
 
-	static protected $_bTplCalled = FALSE;
+	protected static $_bTplCalled = FALSE;
 
-	static protected $_bInit = FALSE;
+	protected static $_bInit = FALSE;
 
-	static protected $_fTimeController;
+	protected static $_fTimeController;
 
-	static protected $_bShutdown = FALSE;
+	protected static $_bShutdown = FALSE;
 
-	static protected $_bOB = TRUE; // output buffering
-	static protected $_iAI = 0;
+	protected static $_bOB = TRUE; // output buffering
+	protected static $_iAI = 0;
 
-	static protected $_bDebug;
-	static protected $_sScriptID;
+	protected static $_bDebug;
+	protected static $_sScriptID;
 
-	static protected $_lErrorStopCode = [
+	protected static $_lErrorStopCode = [
 		E_ERROR,
 		E_CORE_ERROR,
 		E_COMPILE_ERROR,
@@ -35,11 +35,11 @@ class Tango {
 		E_RECOVERABLE_ERROR,
 	];
 
-	static public function getTimeController() {
+	public static function getTimeController() {
 		return self::$_fTimeController;
 	}
 
-	static public function getScriptID() {
+	public static function getScriptID() {
 		if (!is_null(self::$_sScriptID)) {
 			return $_sScriptID;
 		}
@@ -47,7 +47,7 @@ class Tango {
 		return self::$_sScriptID;
 	}
 
-	static public function isDebug() {
+	public static function isDebug() {
 		if (!is_null(self::$_bDebug)) {
 			return self::$_bDebug;
 		}
@@ -57,11 +57,11 @@ class Tango {
 		return self::$_bDebug;
 	}
 
-	static public function isInit() {
+	public static function isInit() {
 		return self::$_bInit;
 	}
 
-	static public function init() {
+	public static function init() {
 
 		if (self::$_bInit) {
 			die('ready inited');
@@ -114,7 +114,7 @@ class Tango {
 		}
 	}
 
-	static protected function _start() {
+	protected static function _start() {
 
 		$T =& self::$T;
 		$D =& self::$D;
@@ -127,7 +127,7 @@ class Tango {
 		}
 	}
 
-	static public function _end() {
+	public static function _end() {
 
 		if ($aError = self::getStopError()) {
 			ob_clean();
@@ -143,7 +143,7 @@ class Tango {
 		Page::parse();
 	}
 
-	static public function getStopError() {
+	public static function getStopError() {
 		$aError = error_get_last();
 		if (!$aError) {
 			return FALSE;
@@ -154,11 +154,11 @@ class Tango {
 		return $aError;
 	}
 
-	static public function isStopError($iError) {
+	public static function isStopError($iError) {
 		return in_array($iError, self::$_lErrorStopCode);
 	}
 
-	static public function shutdown() {
+	public static function shutdown() {
 
 		if (self::$_bShutdown) { // run once only
 			return FALSE;
@@ -168,7 +168,7 @@ class Tango {
 		self::_end();
 	}
 
-	static public function getAI() {
+	public static function getAI() {
 		return ++self::$_iAI;
 	}
 }
