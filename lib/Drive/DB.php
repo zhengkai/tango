@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * This file is part of the Tango Framework.
  *
  * (c) Zheng Kai <zhengkai@gmail.com>
