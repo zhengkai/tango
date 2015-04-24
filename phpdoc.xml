@@ -28,7 +28,7 @@
 
 	<files>
 		<directory>lib</directory>
-		<ignore>lib/config/*</ignore>
+		<ignore>lib/Config/*</ignore>
 		<ignore>lib/Addon/*</ignore>
 		<ignore>lib/Drive/MC.php</ignore>
 		<ignore>lib/Drive/Riak.php</ignore>

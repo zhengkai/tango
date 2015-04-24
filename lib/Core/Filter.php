@@ -1,4 +1,13 @@
 <?php
+/**
+ * This file is part of the Tango Framework.
+ *
+ * (c) Zheng Kai <zhengkai@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Tango\Core;
 
 /**
@@ -14,23 +23,30 @@ namespace Tango\Core;
  *  	"content" => "longString",
  *  ));
  *
+ * @package Tango
+ * @author Zheng Kai <zhengkai@gmail.com>
  */
 
 class Filter {
 
+	/** 用来控制只检查一次 */
 	protected static $_bCheck = FALSE;
 
+	/**
+	 * 判断邮箱合法性的正则
+	 *
+	 * not the full regexp, it is too crazy
+	 * http://www.ex-parrot.com/~pdw/Mail-RFC822-Address.html
+	 */
 	protected static $_pEmail = '#^[0-9a-z]([\+\.\-_0-9a-z][0-9a-z]+)*[0-9a-z]?@[0-9a-z]([\.\-_0-9a-z][0-9a-z]+)\.[a-z]{2,}$#i';
-	// not the full regexp, it is too crazy
-	// http://www.ex-parrot.com/~pdw/Mail-RFC822-Address.html
 
 	/**
-	 *  工作方法
+	 * 工作方法
 	 *
-     *  @parm $sMethod 字符串 POST 或 GET
-     *  @parm $lRule 数组，包含要获取的参数的 key 和实际类型，并进行转换
-     *      字符串会被
-     *      需要注意默认的 int 不允许有负值，否则请使用 signedInt
+     * @param string $sMethod "POST" 或 "GET"
+     * @param array $lRule 包含要获取的参数的 key 和实际类型，并进行转换
+	 *     字符串会被 utf8 编码过滤，不符合 utf8 编码的字符被丢弃
+     *     需要注意默认的 int 不允许有负值，否则请使用 signedInt
 	 */
 	public static function run($sMethod = "GET", $lRule = []) {
 

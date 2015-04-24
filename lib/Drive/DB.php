@@ -26,7 +26,7 @@ Config::setFileDefault('db', dirname(__DIR__) . '/Config/db.php');
  * 自动重连
  * 简化常见操作
  *
- * @package Drive
+ * @package Tango
  * @author Zheng Kai <zhengkai@gmail.com>
  */
 class DB {
@@ -39,9 +39,16 @@ class DB {
 	protected $_aConfig = [];
 
 	/**
-	 * @var \PDO
+	 * 原始 PDO 类
+	 *
+	 * @see \PDO
 	 */
 	protected $_oPDO;
+
+	/**
+	 * 如果定义了对照关系，会在表不存在的时候按指定表的结构来创建新表
+	 * @see setAutoCreateTable
+	 */
 	protected $_aAutoCreateTable;
 	protected $_iErrorLast;
 
@@ -52,10 +59,24 @@ class DB {
 
 	public static $lTypeNeedConvert = [];
 
+	/**
+	 * 开启 log
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function setLogOn() {
 		self::$_bLog = TRUE;
 	}
 
+	/**
+	 * 关闭 log
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function setLogOff() {
 		self::$_bLog = FALSE;
 	}
@@ -239,7 +260,7 @@ class DB {
 	/**
 	 * query 操作（SELECT/SHOW 等）
 	 *
-	 * @param mixed $sQuery
+	 * @param string $sQuery
 	 * @param array $aParam
 	 * @access public
 	 * @return void
@@ -251,7 +272,7 @@ class DB {
 	/**
 	 * exec 操作（INSERT、UPDATE、DELETE 等）
 	 *
-	 * @param mixed $sQuery
+	 * @param string $sQuery
 	 * @param array $aParam
 	 * @access public
 	 * @return void
@@ -261,7 +282,7 @@ class DB {
 	}
 
 	/**
-	 * @param $sQuery
+	 * @param string $sQuery
 	 * @param array $aParam
 	 * @param $sType
 	 * @return mixed
@@ -356,7 +377,7 @@ class DB {
 	/**
 	 * auto increment id generator
 	 *
-	 * @param mixed $sTable
+	 * @param string $sTable
 	 * @access public
 	 * @return integer
 
@@ -380,9 +401,9 @@ class DB {
 	/**
 	 * 最常用的方法，获取所有记录，返回为一维或二维数组
 	 *
-	 * @param mixed $sQuery
+	 * @param string $sQuery
 	 * @param array $aParam
-	 * @param mixed $bByKey
+	 * @param boolean $bByKey
 	 * @access public
 	 * @return array
 	 */
@@ -576,9 +597,9 @@ class DB {
 	/**
 	 * 修复表
 	 *
-	 * @param mixed $sTable
+	 * @param string $sTable
 	 * @access public
-	 * @return void
+	 * @return array
 	 */
 	public function repairTable($sTable) {
 		$sQuery = 'REPAIR TABLE `' . addslashes($sTable) . '`';
@@ -588,9 +609,9 @@ class DB {
 	/**
 	 * 优化表
 	 *
-	 * @param mixed $sTable
+	 * @param string $sTable
 	 * @access public
-	 * @return void
+	 * @return array
 	 */
 	public function optimizeTable($sTable) {
 		$sQuery = 'OPTIMIZE TABLE `' . addslashes($sTable) . '`';
@@ -600,9 +621,9 @@ class DB {
 	/**
 	 * 清空表
 	 *
-	 * @param mixed $sTable
+	 * @param string $sTable
 	 * @access public
-	 * @return void
+	 * @return array
 	 */
 	public function emptyTable($sTable) {
 		$sQuery = 'TRUNCATE TABLE `' . addslashes($sTable) . '`';

@@ -14,22 +14,26 @@ namespace Tango\Core;
  * 配置信息
  *
  * 注册配置文件的路径，在需要的时候再加载
+ *
+ * @package Tango
+ * @author Zheng Kai <zhengkai@gmail.com>
  */
 class Config {
 
-	/**
-	 * 已读取的配置信息
-	 */
+	/** 已读取的配置信息 */
 	protected static $_lStore = [];
 
+	/** 命名对应的文件列表 */
 	protected static $_lFile = [];
+
+	/** 命名对应的缺省文件列表 */
 	protected static $_lFileDefault = [];
 
 	/**
 	 * 设定“配置文件”的路径，只有在需要的时候才去读取配置
 	 *
-	 * @param mixed $sName 配置的命名空间
-	 * @param mixed $sPath 配置文件的路径
+	 * @param string $sName 配置的命名空间
+	 * @param string $sPath 配置文件的路径
 	 * @static
 	 * @access public
 	 * @return void
@@ -40,11 +44,14 @@ class Config {
 
 	/**
 	 * 设定“配置文件”的默认路径
-	 * 这个方法通常是在定义类的文件里出现，确保所有初始值已经有了，而避免找不到 key 出现 php notice
-	 * 可参考 ../Drive/DB.php
 	 *
-	 * @param mixed $sName 配置的命名空间
-	 * @param mixed $sPath 配置文件的路径
+	 * 这个方法通常是在定义类的文件里出现，确保所有初始值已经有了，而避免找不到 key 出现 php notice
+	 * 可以参考 Drive\DB.php 文件开头的用法
+	 *
+	 * @see \Tango\Drive\DB class
+	 *
+	 * @param string $sName 配置的命名空间
+	 * @param string $sPath 配置文件的路径
 	 * @static
 	 * @access public
 	 * @return void
@@ -53,13 +60,23 @@ class Config {
 		self::_setFile($sName, $sPath, TRUE);
 	}
 
+	/**
+	 * setFile 和 setFileDefault 的公共部分
+	 *
+	 * @param string $sName 配置的命名空间
+	 * @param string $sPath 配置文件的路径
+	 * @param boolean $bDefault 是否是缺省配置
+	 * @static
+	 * @access protected
+	 * @return void
+	 */
 	protected static function _setFile($sName, $sPath, $bDefault = FALSE) {
 
 		$sVar = $bDefault ? '_lFileDefault' : '_lFile';
 		$sCurrentPath =& self::${$sVar}[$sName];
 		if ($sCurrentPath) {
 			throw new TangoException('"'.$sName.'"'.($bDefault ? '(default)' : '').' define duplicate');
-			exit;
+			return FALSE;
 		}
 		$sCurrentPath = $sPath;
 		return TRUE;
@@ -68,7 +85,7 @@ class Config {
 	/**
 	 * 获取配置
 	 *
-	 * @param mixed $sName 配置的命名空间
+	 * @param string $sName 配置的命名空间
 	 * @static
 	 * @access public
 	 * @return array
@@ -95,7 +112,7 @@ class Config {
 	/**
 	 * 获取配置文件的路径
 	 *
-	 * @param mixed $sName 配置的命名空间
+	 * @param string $sName 配置的命名空间
 	 * @static
 	 * @access public
 	 * @return array
