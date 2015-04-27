@@ -31,11 +31,19 @@ Config::setFileDefault('db', dirname(__DIR__) . '/Config/db.php');
  */
 class DB {
 
+	/** 数据库alias */
 	protected $_sName;
+
+	/** debug 模式 */
 	protected $_bDebug;
+
+	/** 对于不同的 MySQL 字段做不同方式的处理 */
 	protected $_lColumnNeedConvert;
 
+	/** 保存不同的连接单例 */
 	protected static $_lInstance = [];
+
+	/** 连接信息 */
 	protected $_aConfig = [];
 
 	/**
@@ -97,6 +105,15 @@ class DB {
 		];
 	}
 
+	/**
+	 * 创建一个连接单例（相同的库只创建一个连接）
+	 *
+	 * @param string $sName 数据库alias
+	 * @param boolean $bReset 是否重置连接
+	 * @static
+	 * @access public
+	 * @return DB
+	 */
 	public static function getInstance($sName, $bReset = FALSE) {
 
 		if ($bReset) {

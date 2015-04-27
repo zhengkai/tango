@@ -1,16 +1,33 @@
 <?php
+/**
+ * This file is part of the Tango Framework.
+ *
+ * (c) Zheng Kai <zhengkai@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Tango\Core;
 
+/**
+ * 工具类函数
+ *
+ * @package Tango
+ * @author Zheng Kai <zhengkai@gmail.com>
+ */
 class Util {
 
-	// 因为 flock 方法在结束的时候会释放 lock，所以需要另存个地方
-	// 虽然在一个脚本里锁多个文件是个很奇怪的用法，但也还顺便支持了
+	/**
+	 * 因为 flock 方法在结束的时候会释放 lock，所以需要另存个地方，
+	 * 虽然在一个脚本里锁多个文件是个很奇怪的用法，但也还顺便支持了
+	 */
 	static $_lFlockPool = [];
 
 	/**
 	 * 非阻塞文件锁，可以用于限制并发数量
 	 *
-	 * @param mixed $sFile 文件名，多个文件的话需要包含 %d 用于 sprintf
+	 * @param string $sFile 文件名，多个文件的话需要包含 %d 用于 sprintf
 	 * @param int $iNum 并发数量，默认1
 	 * @static
 	 * @access public
@@ -73,6 +90,15 @@ class Util {
 		return $bLock;
 	}
 
+	/**
+	 * 略调整样式的 json_encode，显示网址和多字节字符更好一些
+	 *
+	 * @param mixed $mData
+	 * @param mixed $bPretty
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function json($mData, $bPretty = FALSE) {
 		$iArg = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
 		if ($bPretty) {
@@ -81,21 +107,18 @@ class Util {
 		return json_encode($mData, $iArg);
 	}
 
-	// public convertDigitalUnit(sNum) {{{
 	/**
-	 * convertDigitalUnit
-	 *
 	 * 将带有资讯计量单位到数字转成整数，下面是一些转换结果可供参考
 	 *
-	 * -1.4B = -1
-	 * 123 = 123
-	 * 9MB = 9437184
-	 * 5KiB = 5000
-	 * 15P = 16888498602639360
-	 * 1.5 K = 1536
-	 * -1.2 GiB = -1200000000
+	 * -1.4B = -1                 <br>
+	 * 123 = 123                  <br>
+	 * 9MB = 9437184              <br>
+	 * 5KiB = 5000                <br>
+	 * 15P = 16888498602639360    <br>
+	 * 1.5 K = 1536               <br>
+	 * -1.2 GiB = -1200000000     <br>
 	 *
-	 * @param mixed $sNum
+	 * @param string $sNum
 	 * @static
 	 * @access public
 	 * @return bool|int
@@ -104,8 +127,9 @@ class Util {
 		if (!is_string($sNum)) {
 			return FALSE;
 		}
+		$sNum = strtoupper($sNum);
 		$aMatch = [];
-		if (!preg_match('#(\-?\d+(\.\d+)?)\ ?(K|M|G|T|P|G|E|Z|Y)?(iB|B)?$#', $sNum, $aMatch)) {
+		if (!preg_match('#(\-?\d+(\.\d+)?)\ ?(K|M|G|T|P|G|E|Z|Y)?(IB|B)?$#', $sNum, $aMatch)) {
 			return FALSE;
 		}
 		$aMatch += [
@@ -123,5 +147,4 @@ class Util {
 
 		return intval(round($iNum));
 	}
-	// }}}
 }

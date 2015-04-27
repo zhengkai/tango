@@ -55,7 +55,6 @@ class Page {
 
 	/**
 	 * 是否已经处理完模板
-	 *
 	 * @static
 	 * @access public
 	 * @return boolean
@@ -78,7 +77,7 @@ class Page {
 	/**
 	 * 通用的错误页面
 	 *
-	 * @param mixed $sError
+	 * @param string $sError 简短的错误信息
 	 * @static
 	 * @access public
 	 * @return void
@@ -88,9 +87,15 @@ class Page {
 			throw new TangoException('Page has been sent');
 		}
 		Tango::$T['error'] = $sError;
-		return;
 	}
 
+	/**
+	 * 调试页面（如仅限 127.0.0.1 访问的页面）对于不符合要求的请求显示 404，使外部无法确认调试页面是否是该地址
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function debugGate() {
 		if (!Tango::isDebug()) {
 			self::error('http404');
@@ -102,8 +107,8 @@ class Page {
 	/**
 	 * 设置扩展名（输出类型）
 	 *
-	 * @param string $sExt
-	 * @param boolean $bTry
+	 * @param string $sExt 在 self::$_lExt 里列举的那些 key（html/json 等）
+	 * @param boolean $bTry 如果为 true，在失败的时候不报错
 	 * @static
 	 * @access public
 	 * @return void
@@ -155,7 +160,7 @@ class Page {
 	/**
 	 * 页面跳转
 	 *
-	 * @param string $sURL
+	 * @param string $sURL 将要跳转的 URL
 	 * @static
 	 * @access public
 	 * @return void
@@ -165,7 +170,7 @@ class Page {
 			throw new TangoException('jump before parse');
 		}
 		self::$_bParse = TRUE;
-		header('Location: '.$sURL);
+		header('Location: ' . $sURL);
 		exit;
 	}
 
