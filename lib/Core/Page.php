@@ -1,11 +1,31 @@
 <?php
+/**
+ * This file is part of the Tango Framework.
+ *
+ * (c) Zheng Kai <zhengkai@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Tango\Core;
 
 use Tango\Page\HTML;
 
+/**
+ * 页面输出
+ *
+ * 负责 Web 访问时的页面输出（HTML/JSON/etc）
+ *
+ * @package Tango
+ * @author Zheng Kai <zhengkai@gmail.com>
+ */
 class Page {
 
+	/** 当前的扩展名 */
 	protected static $_aExt = FALSE;
+
+	/** 可用的扩展名 */
 	protected static $_lExt = [
 		'html' => [
 			'mime' => 'text/html',
@@ -27,18 +47,42 @@ class Page {
 		],
 	];
 
+	/** 是否要做模板部分的处理 */
 	protected static $_bParse = FALSE;
 
+	/** 是否已经处理完模板 */
 	protected static $_bWellDone = FALSE;
 
+	/**
+	 * 是否已经处理完模板
+	 *
+	 * @static
+	 * @access public
+	 * @return boolean
+	 */
 	public static function isWellDone() {
 		return self::$_bWellDone;
 	}
 
+	/**
+	 * 在必要时重置输出（如 www 页出现异常后重新渲染显示 error 500 页面），通常情况下不需要用到
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function reset() {
 		self::$_bParse = FALSE;
 	}
 
+	/**
+	 * 通用的错误页面
+	 *
+	 * @param mixed $sError
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function error($sError) {
 		if (self::$_bParse) {
 			throw new TangoException('Page has been sent');
@@ -55,6 +99,15 @@ class Page {
 		return TRUE;
 	}
 
+	/**
+	 * 设置扩展名（输出类型）
+	 *
+	 * @param string $sExt
+	 * @param boolean $bTry
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function set($sExt, $bTry = FALSE) {
 		if (self::$_aExt) {
 			if (!$bTry) {
@@ -77,14 +130,36 @@ class Page {
 		return TRUE;
 	}
 
+	/**
+	 * 获取当前扩展名
+	 *
+	 * @static
+	 * @access public
+	 * @return array
+	 */
 	public static function get() {
 		return self::$_aExt;
 	}
 
+	/**
+	 * 不处理模板页
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function stopParse() {
 		self::$_bParse = TRUE;
 	}
 
+	/**
+	 * 页面跳转
+	 *
+	 * @param string $sURL
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function jump($sURL) {
 		if (self::$_bParse) {
 			throw new TangoException('jump before parse');
@@ -94,6 +169,13 @@ class Page {
 		exit;
 	}
 
+	/**
+	 * 处理模板页
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function parse() {
 
 		if (self::$_bParse) {
@@ -142,11 +224,26 @@ class Page {
 		}
 	}
 
+	/**
+	 * 如果扩展名是 txt 时的输出
+	 *
+	 * @static
+	 * @access protected
+	 * @return void
+	 */
 	protected static function _parseText() {
 		Tango::$T += ['output' => ''];
 		echo Tango::$T['output'];
 		return TRUE;
 	}
+
+	/**
+	 * 如果扩展名是 json 时的输出
+	 *
+	 * @static
+	 * @access protected
+	 * @return void
+	 */
 	protected static function _parseJson() {
 		echo json_encode(Tango::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 		return TRUE;
