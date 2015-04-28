@@ -1,13 +1,42 @@
 <?php
+/**
+ * This file is part of the Tango Framework.
+ *
+ * (c) Zheng Kai <zhengkai@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Tango\Core;
 
 Config::setFileDefault('exception', dirname(__DIR__).'/Config/exception.php');
 
+/**
+ * 异常，跟原始 Exception 的区别在于有“深度”的概念，以便更及时的判断错误内容
+ * 例如 MySQL 报 sql 语句为空，我们更想知道是哪里发送空 sql，
+ * 这个位置信息其实是在 trace 的第三行而非第一行
+ *
+ * @package Tango
+ * @author Zheng Kai <zhengkai@gmail.com>
+ */
 class TangoException extends \Exception {
 
+	/** 报告深度 */
 	protected static $_iDepth = 1;
+
+	/** 用于显示的报错信息 */
 	protected static $_sLastError = '';
 
+	/**
+	 * __construct
+	 *
+	 * @param string $sMessage 报错信息
+	 * @param int $iDepth 深度
+	 * @param int $iCode 错误代码
+	 * @access public
+	 * @return void
+	 */
 	public function __construct($sMessage, $iDepth = 0, $iCode = 0) {
 
 		$iDepth = (int)$iDepth;

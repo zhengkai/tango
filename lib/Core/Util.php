@@ -18,6 +18,9 @@ namespace Tango\Core;
  */
 class Util {
 
+	/** 在一个脚本内生成不重复的数字，计数器 */
+	protected static $_iAI = 0;
+
 	/**
 	 * 因为 flock 方法在结束的时候会释放 lock，所以需要另存个地方，
 	 * 虽然在一个脚本里锁多个文件是个很奇怪的用法，但也还顺便支持了
@@ -146,5 +149,16 @@ class Util {
 		}
 
 		return intval(round($iNum));
+	}
+
+	/**
+	 * 在一个脚本内生成不重复的数字
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
+	public static function getAI() {
+		return ++self::$_iAI;
 	}
 }

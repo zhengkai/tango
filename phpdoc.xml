@@ -30,10 +30,12 @@
 		<directory>lib</directory>
 		<ignore>lib/Config/*</ignore>
 		<ignore>lib/Addon/*</ignore>
+		<ignore>lib/Drive/DBEnum.php</ignore>
 		<ignore>lib/Drive/MC.php</ignore>
 		<ignore>lib/Drive/Riak.php</ignore>
 		<ignore>lib/Drive/RiakLoopQuery.php</ignore>
 		<ignore>lib/Page/Link.php</ignore>
 		<ignore>lib/Page/Widget.php</ignore>
+		<ignore>lib/Page/Layout.php</ignore>
 	</files>
 </phpdoc>

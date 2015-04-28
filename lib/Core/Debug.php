@@ -1,13 +1,38 @@
 <?php
+/**
+ * This file is part of the Tango Framework.
+ *
+ * (c) Zheng Kai <zhengkai@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Tango\Core;
 
 Config::setFileDefault('debug', dirname(__DIR__).'/Config/debug.php');
 
+/**
+ * Debug
+ *
+ * @package Tango
+ * @author Zheng Kai <zhengkai@gmail.com>
+ */
 class Debug {
 
-	static $_bEnable;
-	static $_sDebugPath;
+	/** 是否允许 debug */
+	protected static $_bEnable;
 
+	/** debug 文件保存路径 */
+	protected static $_sDebugPath;
+
+	/**
+	 * 初始化，读取配置，来决定是否 debug、如何 debug
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function _init() {
 
 		if (self::$_bEnable !== NULL) {
@@ -47,6 +72,16 @@ class Debug {
 		return self::$_bEnable = TRUE;
 	}
 
+	/**
+	 * 增加一条 debug 记录（追加）
+	 *
+	 * @param mixed $sType
+	 * @param mixed $sMessage
+	 * @param mixed $bHead
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function add($sType, $sMessage = NULL, $bHead = FALSE) {
 		if ($sMessage === NULL) {
 			return FALSE;
@@ -54,6 +89,16 @@ class Debug {
 		self::_file($sType, $sMessage, $bHead, FILE_APPEND | LOCK_EX);
 	}
 
+	/**
+	 * 保存一条 debug 记录（覆盖）
+	 *
+	 * @param mixed $sType
+	 * @param mixed $sMessage
+	 * @param mixed $bHead
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function dump($sType, $sMessage = NULL, $bHead = FALSE) {
 		if ($sMessage === NULL) {
 			return FALSE;
@@ -61,6 +106,17 @@ class Debug {
 		self::_file($sType, $sMessage, $bHead, LOCK_EX);
 	}
 
+	/**
+	 * 具体如何写文件
+	 *
+	 * @param mixed $sType
+	 * @param mixed $sMessage
+	 * @param mixed $bHead
+	 * @param mixed $iFlag
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function _file($sType, $sMessage, $bHead, $iFlag) {
 
 		if (!self::_init()) {

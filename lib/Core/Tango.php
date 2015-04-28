@@ -1,32 +1,56 @@
 <?php
+/**
+ * This file is part of the Tango Framework.
+ *
+ * (c) Zheng Kai <zhengkai@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Tango\Core;
 
 Config::setFileDefault('tango', dirname(__DIR__).'/Config/tango.php');
 
+/**
+ * 框架核心
+ *
+ * @package Tango
+ * @author Zheng Kai <zhengkai@gmail.com>
+ */
 class Tango {
 
+	/** www 传给 tpl 的变量，经过 HTML 过滤 */
 	public static $T = [];
+
+	/** www 传给 tpl 的变量，没有 HTML 过滤 */
 	public static $D = [];
+
+	/** 经过 \Tango\Core\Filter 过滤的输入参数（原 $_GET/$_POST） */
 	public static $IN = [];
 
-	public static $_lURLHook = [];
-
+	/** 页面扩展名（给 Page 用） */
 	protected static $_sExt  = 'html';
 
-	protected static $_bTplCalled = FALSE;
-
+	/** 确保只初始化一次 */
 	protected static $_bInit = FALSE;
 
+	/** 用于计算 www 的执行时间 */
 	protected static $_fTimeController;
 
+	/** 结束标志（第一次结束的时候会被 register_shutdown_function 函数激活、继续执行之后的 tpl） */
 	protected static $_bShutdown = FALSE;
 
-	protected static $_bOB = TRUE; // output buffering
-	protected static $_iAI = 0;
+	/** output buffering */
+	protected static $_bOB = TRUE; //
 
+	/** debug 模式 */
 	protected static $_bDebug;
+
+	/** 脚本标识 */
 	protected static $_sScriptID;
 
+	/** www 遇到哪些报错时不再继续解析 tpl */
 	protected static $_lErrorStopCode = [
 		E_ERROR,
 		E_CORE_ERROR,
@@ -35,10 +59,18 @@ class Tango {
 		E_RECOVERABLE_ERROR,
 	];
 
+	/**
+	 * 用于计算 www 的执行时间
+	 *
+	 * @static
+	 * @access public
+	 * @return integer
+	 */
 	public static function getTimeController() {
 		return self::$_fTimeController;
 	}
 
+	/** 生成脚本标识 */
 	public static function getScriptID() {
 		if (!is_null(self::$_sScriptID)) {
 			return $_sScriptID;
@@ -47,6 +79,13 @@ class Tango {
 		return self::$_sScriptID;
 	}
 
+	/**
+	 * 是否在 debug 模式
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function isDebug() {
 		if (!is_null(self::$_bDebug)) {
 			return self::$_bDebug;
@@ -57,10 +96,24 @@ class Tango {
 		return self::$_bDebug;
 	}
 
+	/**
+	 * 是否已初始化
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function isInit() {
 		return self::$_bInit;
 	}
 
+	/**
+	 * 初始化
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function init() {
 
 		if (self::$_bInit) {
@@ -114,6 +167,13 @@ class Tango {
 		}
 	}
 
+	/**
+	 * 加载 www
+	 *
+	 * @static
+	 * @access protected
+	 * @return void
+	 */
 	protected static function _start() {
 
 		$T =& self::$T;
@@ -127,6 +187,13 @@ class Tango {
 		}
 	}
 
+	/**
+	 * 页面结束（有错误抛异常，或者继续走 tpl）
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function _end() {
 
 		if ($aError = self::getStopError()) {
@@ -143,6 +210,13 @@ class Tango {
 		Page::parse();
 	}
 
+	/**
+	 * 要么错误严重返回错误信息，要么返回 false 表示可以继续执行
+	 *
+	 * @static
+	 * @access public
+	 * @return boolean|array
+	 */
 	public static function getStopError() {
 		$aError = error_get_last();
 		if (!$aError) {
@@ -154,10 +228,19 @@ class Tango {
 		return $aError;
 	}
 
+	/**
+	 * 是否判断错误级别是否需要中断脚本
+	 *
+	 * @param integer $iError
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function isStopError($iError) {
 		return in_array($iError, self::$_lErrorStopCode);
 	}
 
+	/** 结束标志（第一次结束的时候会被 register_shutdown_function 函数激活、继续执行之后的 tpl） */
 	public static function shutdown() {
 
 		if (self::$_bShutdown) { // run once only
@@ -166,9 +249,5 @@ class Tango {
 		self::$_bShutdown = TRUE;
 
 		self::_end();
-	}
-
-	public static function getAI() {
-		return ++self::$_iAI;
 	}
 }
