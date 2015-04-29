@@ -48,8 +48,7 @@ class DB {
 
 	/**
 	 * 原始 PDO 类
-	 *
-	 * @see \PDO
+	 * @var \PDO
 	 */
 	protected $_oPDO;
 
@@ -120,6 +119,7 @@ class DB {
 	 * @static
 	 * @access public
 	 * @return DB
+	 * @throws TangoException
 	 */
 	public static function getInstance($sName, $bReset = FALSE) {
 
@@ -152,7 +152,7 @@ class DB {
 	 * http://php.net/manual/en/class.pdo.php
 	 *
 	 * @access public
-	 * @return void
+	 * @return \PDO
 	 */
 	public function pdo() {
 		return $this->_oPDO;
@@ -192,6 +192,7 @@ class DB {
 	 *
 	 * @access protected
 	 * @return boolean
+	 * @throws TangoException
 	 */
 	protected function _connect() {
 
@@ -229,7 +230,7 @@ class DB {
 	 * @param array $aError 执行 query 后的报错信息
 	 * @access protected
 	 * @throws DBException
-	 * @return void
+	 * @return bool
 	 */
 	protected function _connectSmart($aError) {
 
@@ -303,7 +304,7 @@ class DB {
 	 *
 	 * @param array $aRow
 	 * @access protected
-	 * @return void
+	 * @return array
 	 */
 	protected function _ColumnConvertDo($aRow) {
 
@@ -320,7 +321,7 @@ class DB {
 	 * @param string $sQuery
 	 * @param array $aParam
 	 * @access public
-	 * @return void
+	 * @return mixed
 	 */
 	public function query($sQuery, array $aParam = []) {
 		return $this->_query($sQuery, $aParam, 'query');
@@ -545,6 +546,8 @@ class DB {
 
 	/**
 	 * @ignore
+	 * @param $aParam
+	 * @return array
 	 */
 	public function page(array $aParam) {
 
@@ -642,7 +645,7 @@ class DB {
 	 * @param mixed $sTableSource
 	 * @param mixed $sTableTarget
 	 * @access public
-	 * @return void
+	 * @return int
 	 */
 	public function cloneTableStructure($sTableSource, $sTableTarget) {
 

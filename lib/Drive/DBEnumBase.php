@@ -86,7 +86,8 @@ abstract class DBEnumBase {
 	 *
 	 * @static
 	 * @access protected
-	 * @return void
+	 * @return DB
+	 * @throws TangoException
 	 */
 	protected static function _getDB() {
 		if (!static::$_sDB || !static::$_sDBTable) {
@@ -100,7 +101,8 @@ abstract class DBEnumBase {
 	 *
 	 * @param mixed $iID
 	 * @access public
-	 * @return void
+	 * @return mixed
+	 * @throws TangoException
 	 */
 	public function getById($iID) {
 
