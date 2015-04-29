@@ -100,7 +100,7 @@ class Util {
 	 * @param mixed $bPretty
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return string
 	 */
 	public static function json($mData, $bPretty = FALSE) {
 		$iArg = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
@@ -156,7 +156,7 @@ class Util {
 	 *
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return int
 	 */
 	public static function getAI() {
 		return ++self::$_iAI;

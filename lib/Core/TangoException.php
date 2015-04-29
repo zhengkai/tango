@@ -37,7 +37,6 @@ class TangoException extends \Exception {
 	 * @param int $iDepth 深度
 	 * @param int $iCode 错误代码
 	 * @access public
-	 * @return void
 	 */
 	public function __construct($sMessage, $iDepth = 0, $iCode = 0) {
 
@@ -80,7 +79,7 @@ class TangoException extends \Exception {
 	 * @param boolean $bSend
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return string
 	 */
 	public static function handler(\Exception $e, $bSend = TRUE) {
 
@@ -198,7 +197,7 @@ class TangoException extends \Exception {
 	 * @param string $sLine
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return bool
 	 */
 	public static function errorHandler($iError, $sMsg, $sFile, $sLine) {
 		if (Tango::isStopError($iError)) {

@@ -332,7 +332,7 @@ class DB {
 	 * @param string $sQuery
 	 * @param array $aParam
 	 * @access public
-	 * @return void
+	 * @return mixed
 	 */
 	public function exec($sQuery, array $aParam = []) {
 		return $this->_query($sQuery, $aParam, 'exec');

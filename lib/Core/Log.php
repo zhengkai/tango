@@ -10,7 +10,6 @@
 
 namespace Tango\Core;
 
-use Tango\Core\TangoException;
 use Tango\Drive\DB;
 
 Config::setFileDefault('log', dirname(__DIR__).'/Config/log.php');
@@ -51,7 +50,7 @@ class Log {
 	 *
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return bool
 	 */
 	public static function init() {
 
@@ -96,11 +95,11 @@ class Log {
 	 * debug
 	 *
 	 * @param string $sType 日志类型，参见 getType()
-	 * @param array $aMessage 日志内容
+	 * @param array|string $sMessage 日志内容
 	 * @param boolean $bHead 是否加入统一的头信息
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return bool
 	 */
 	public static function debug($sType, $sMessage, $bHead = FALSE) {
 
@@ -158,7 +157,8 @@ class Log {
 	 * @param array $aMessage 日志内容
 	 * @static
 	 * @access public
-	 * @return void
+	 * @throws TangoException
+	 * @return bool
 	 */
 	public static function collection($sType, array $aMessage) {
 
@@ -197,6 +197,6 @@ class Log {
 			.'step = '.self::$_iStep.', '
 			.'type = '.$iType.', '
 			.'data = 0x'.bin2hex(gzcompress(json_encode($aMessage, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)));
-		$oDB->exec($sQuery);
+		return $oDB->exec($sQuery);
 	}
 }

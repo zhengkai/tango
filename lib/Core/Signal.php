@@ -24,7 +24,7 @@ class Signal {
 	/**
 	 * 用来接收信号，看是否是退出信号
 	 *
-	 * @param mixed $sSignal
+	 * @param mixed $iSignal
 	 * @static
 	 * @access public
 	 * @return void

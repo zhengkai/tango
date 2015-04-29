@@ -73,7 +73,7 @@ class Tango {
 	/** 生成脚本标识 */
 	public static function getScriptID() {
 		if (!is_null(self::$_sScriptID)) {
-			return $_sScriptID;
+			return self::$_sScriptID;
 		}
 		self::$_sScriptID = uniqid().sprintf('%07x', mt_rand(0, 0xfffffff));
 		return self::$_sScriptID;
@@ -84,7 +84,7 @@ class Tango {
 	 *
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return bool
 	 */
 	public static function isDebug() {
 		if (!is_null(self::$_bDebug)) {
@@ -101,7 +101,7 @@ class Tango {
 	 *
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return bool
 	 */
 	public static function isInit() {
 		return self::$_bInit;
@@ -181,9 +181,9 @@ class Tango {
 	 */
 	protected static function _start() {
 
-		$T =& self::$T;
-		$D =& self::$D;
-		$_IN =& self::$IN;
+//		$T =& self::$T;
+//		$D =& self::$D;
+//		$_IN =& self::$IN;
 
 		require $_SERVER['SCRIPT_FILENAME'];
 
@@ -239,7 +239,7 @@ class Tango {
 	 * @param integer $iError
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return bool
 	 */
 	public static function isStopError($iError) {
 		return in_array($iError, self::$_lErrorStopCode);
@@ -249,7 +249,7 @@ class Tango {
 	public static function shutdown() {
 
 		if (self::$_bShutdown) { // run once only
-			return FALSE;
+			return ;
 		}
 		self::$_bShutdown = TRUE;
 

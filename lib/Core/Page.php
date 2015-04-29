@@ -81,6 +81,7 @@ class Page {
 	 * @static
 	 * @access public
 	 * @return void
+	 * @throws TangoException
 	 */
 	public static function error($sError) {
 		if (self::$_bParse) {
@@ -164,6 +165,7 @@ class Page {
 	 * @static
 	 * @access public
 	 * @return void
+	 * @throws TangoException
 	 */
 	public static function jump($sURL) {
 		if (self::$_bParse) {
