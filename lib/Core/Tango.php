@@ -110,11 +110,16 @@ class Tango {
 	/**
 	 * 初始化
 	 *
+	 * @param boolean $bForce 为 ture 时即使在 cli 下也执行
 	 * @static
 	 * @access public
 	 * @return void
 	 */
-	public static function init() {
+	public static function init($bForce = FALSE) {
+
+		if (PHP_SAPI === 'cli' && !$bForce) {
+			return FALSE;
+		}
 
 		if (self::$_bInit) {
 			die('ready inited');

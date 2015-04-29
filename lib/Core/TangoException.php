@@ -127,7 +127,10 @@ class TangoException extends \Exception {
 
 		$bCli = PHP_SAPI === 'cli';
 
-		$sHash = hash('crc32', ($bCli ? posix_getpid() : $_SERVER["REMOTE_PORT"])."\n".sprintf('%.16f', microtime(TRUE))."\n".$e->getMessage()."\n".Tango::getAI());
+		$sHash = ($bCli ? posix_getpid() : $_SERVER["REMOTE_PORT"]) . "\n"
+			. sprintf('%.16f', microtime(TRUE)) . "\n"
+			. $e->getMessage() . "\n"
+			. Util::getAI();
 
 		$sHashType = hash('crc32', json_encode($aTrace, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 

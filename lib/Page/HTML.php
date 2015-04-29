@@ -268,7 +268,8 @@ class HTML {
 	}
 
 	/**
-	 * 给定两个颜色和过渡程度，返回中间色，可用在表格的不同数量显示不用程度颜色等位置
+	 * 给定两个颜色和过渡程度，返回中间色，
+	 * 可用在表格的不同数量显示不用程度颜色等场合
 	 *
 	 * @param float $fRate
 	 * @param string $sColorA
@@ -313,7 +314,9 @@ class HTML {
 		switch (strlen($sColor)) {
 			case 3:
 				$lColor = str_split($sColor, 1);
-				$sColor = $lColor[0].$lColor[0].$lColor[1].$lColor[1].$lColor[2].$lColor[2];
+				$sColor = $lColor[0] . $lColor[0]
+					. $lColor[1] . $lColor[1]
+					. $lColor[2] . $lColor[2];
 				break;
 			case 6:
 				break;
