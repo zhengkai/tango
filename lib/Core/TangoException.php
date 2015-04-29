@@ -13,7 +13,9 @@ namespace Tango\Core;
 Config::setFileDefault('exception', dirname(__DIR__).'/Config/exception.php');
 
 /**
- * 异常，跟原始 Exception 的区别在于有“深度”的概念，以便更及时的判断错误内容
+ * 异常
+ *
+ * 跟原始 Exception 的区别在于有“深度”的概念，以便更及时的判断错误内容
  * 例如 MySQL 报 sql 语句为空，我们更想知道是哪里发送空 sql，
  * 这个位置信息其实是在 trace 的第三行而非第一行
  *
@@ -48,15 +50,38 @@ class TangoException extends \Exception {
 		parent::__construct($sMessage, $iCode);
 	}
 
+	/**
+	 * 最后错误信息
+	 *
+	 * @static
+	 * @access public
+	 * @return string
+	 */
 	public static function getLastError() {
 		return self::$_sLastError;
 	}
 
+	/**
+	 * set_error_handler
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function register() {
 		set_exception_handler([__CLASS__, 'handler']);
 		set_error_handler([__CLASS__, 'errorHandler']);
 	}
 
+	/**
+	 * Exception Handler
+	 *
+	 * @param \Exception $e
+	 * @param boolean $bSend
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function handler(\Exception $e, $bSend = TRUE) {
 
 		$aTrace = [];
@@ -161,6 +186,17 @@ class TangoException extends \Exception {
 		return $s;
 	}
 
+	/**
+	 * Error Handler
+	 *
+	 * @param integer $iError
+	 * @param string $sMsg
+	 * @param string $sFile
+	 * @param string $sLine
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function errorHandler($iError, $sMsg, $sFile, $sLine) {
 		if (Tango::isStopError($iError)) {
 			self::handler(new TangoException($sMsg, 2), FALSE);

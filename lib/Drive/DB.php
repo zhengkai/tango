@@ -58,13 +58,20 @@ class DB {
 	 * @see setAutoCreateTable
 	 */
 	protected $_aAutoCreateTable;
+
+	/** 前一次的 PDO 报错 */
 	protected $_iErrorLast;
 
+	/** 一次 prepare 后可以多次 execute，这里保存那个 prepare 内容 */
 	protected $_sPrevPrepareQuery;
+
+	/** 一次 prepare 后可以多次 execute，这里保存那个 prepare 内容 */
 	protected $_oPrevPrepare;
 
+	/** 是否记 log */
 	protected static $_bLog = TRUE;
 
+	/** 对于不同的 MySQL 字段做不同方式的处理 */
 	public static $lTypeNeedConvert = [];
 
 	/**
@@ -151,6 +158,16 @@ class DB {
 		return $this->_oPDO;
 	}
 
+	/**
+	 * __construct
+	 *
+	 * 不应该直接 new，应通过 getInstance() 来获得
+	 *
+	 * @param array $aServer
+	 * @param string $sName
+	 * @access public
+	 * @return DB
+	 */
 	public function __construct($aServer, $sName) {
 
 		$this->_sName = $sName;
@@ -170,6 +187,12 @@ class DB {
 		$this->_connect();
 	}
 
+	/**
+	 * 连接 MySQL 数据库
+	 *
+	 * @access protected
+	 * @return boolean
+	 */
 	protected function _connect() {
 
 		if ($this->_oPDO) {
@@ -198,10 +221,15 @@ class DB {
 		return TRUE;
 	}
 
-	/*
+	/**
 	 * 自动重连
 	 *
 	 * 返回值 true 表示重新执行 query
+	 *
+	 * @param array $aError 执行 query 后的报错信息
+	 * @access protected
+	 * @throws DBException
+	 * @return void
 	 */
 	protected function _connectSmart($aError) {
 
@@ -238,9 +266,15 @@ class DB {
 		throw new DBException('PDO ' . $aError[1] . ': ' . $aError[2]);
 	}
 
+	/**
+	 * 转换变量类型 确定要转换的字段
+	 *
+	 * @param \PDOStatement $oResult
+	 * @access protected
+	 * @return void
+	 */
 	protected function _ColumnConvertScan(\PDOStatement $oResult) {
 
-		// 转换变量类型 确定要转换的字段
 		$iCount = $oResult->columnCount();
 		$lConvert = [];
 
@@ -264,9 +298,15 @@ class DB {
 		$this->_lColumnNeedConvert = $lConvert;
 	}
 
+	/**
+	 * 转换变量类型 执行转换
+	 *
+	 * @param array $aRow
+	 * @access protected
+	 * @return void
+	 */
 	protected function _ColumnConvertDo($aRow) {
 
-		// 转换变量类型 执行转换
 		foreach ($this->_lColumnNeedConvert as $sKey => $fnConvert) {
 			$aRow[$sKey] = $fnConvert($aRow[$sKey]);
 		}
@@ -299,6 +339,8 @@ class DB {
 	}
 
 	/**
+	 * 实际执行 exec/query 操作
+	 *
 	 * @param string $sQuery
 	 * @param array $aParam
 	 * @param $sType
@@ -501,6 +543,9 @@ class DB {
 		return current($aRow);
 	}
 
+	/**
+	 * @ignore
+	 */
 	public function page(array $aParam) {
 
 		$aReturn = [[], 0, 1];

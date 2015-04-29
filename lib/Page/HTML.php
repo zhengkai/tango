@@ -1,4 +1,13 @@
 <?php
+/**
+ * This file is part of the Tango Framework.
+ *
+ * (c) Zheng Kai <zhengkai@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Tango\Page;
 
 use \Tango\Core\Tango;
@@ -6,8 +15,15 @@ use \Tango\Core\Config;
 
 Config::setFileDefault('html', dirname(__DIR__).'/Config/html.php');
 
+/**
+ * HTML 页面输出相关
+ *
+ * @package Tango
+ * @author Zheng Kai <zhengkai@gmail.com>
+ */
 class HTML {
 
+	/** 默认模板路径 */
 	protected static $_lTpl = [
 		'head'  => '/head',
 		'foot'  => '/foot',
@@ -16,15 +32,31 @@ class HTML {
 		'main'  => '',
 	];
 
+	/** JS 列表 */
 	protected static $_lJS = [];
+
+	/** CSS 列表 */
 	protected static $_lCSS = [];
+
+	/** 除 CSS/JS 外的额外 <meta> 段内的信息 */
 	protected static $_sAddMeta = '';
 
+	/** 页面 <title> 内容 */
 	protected static $_sTitle = '';
 
+	/** 如设成 false 则会在页面强调不要让搜索引擎索引本页 */
 	protected static $_bRobotsIndex = TRUE;
+
+	/** 如设成 false 则会在页面强调不要让搜索引擎索引本页所指向的链接 */
 	protected static $_bRobotsFollow = TRUE;
 
+	/**
+	 * 默认渲染过程，不需要执行， \Tango\Core\Tango 会自动识别并执行
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function run() {
 
 		if (!self::$_lTpl['main']) {
@@ -68,14 +100,39 @@ class HTML {
 		Layout::run($s);
 	}
 
+	/**
+	 * 如设成 false 则会在页面强调不要让搜索引擎索引本页
+	 *
+	 * @param boolean $bIndex
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function setFollow($bFollow) {
 		self::$_bRobotsFollow = (bool)$bFollow;
 	}
 
+	/**
+	 * 如设成 false 则会在页面强调不要让搜索引擎索引本页所指向的链接
+	 *
+	 * @param boolean $bIndex
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function setIndex($bIndex) {
 		self::$_bRobotsIndex = (bool)$bIndex;
 	}
 
+	/**
+	 * 如果 tpl 跟 www 的名字不一致，需在这里定义
+	 *
+	 * @param string|array $lTpl
+	 * @param string $sValue
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function setTpl($lTpl, $sValue = NULL) {
 
 		if (is_string($lTpl)) {
@@ -92,23 +149,61 @@ class HTML {
 		}
 	}
 
+	/**
+	 * 获取 tpl 对应的文件
+	 *
+	 * @param string $sTpl
+	 * @static
+	 * @access public
+	 * @return string
+	 */
 	public static function getTpl($sTpl) {
 		return self::_getFile(self::$_lTpl[$sTpl].'.php');
 	}
 
+	/**
+	 * 获取 tpl 对应的文件（通过相对路径而非 tpl 的类别名）
+	 *
+	 * @param string $sTpl
+	 * @static
+	 * @access public
+	 * @return string
+	 */
 	protected static function _getFile($sFile) {
 		return SITE_ROOT.'/tpl'.$sFile;
 	}
 
+	/**
+	 * 设置 <title>
+	 *
+	 * @param string $sTitle
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function setTitle($sTitle) {
 		self::$_sTitle = $sTitle;
 	}
 
+	/**
+	 * 获取 <title>
+	 *
+	 * @static
+	 * @access public
+	 * @return string
+	 */
 	public static function getTitle() {
 		return (self::$_sTitle ? self::$_sTitle.' - ' : '')
 			.Config::get('html')['title'];
 	}
 
+	/**
+	 * 获取整个 <meta> 段
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function getMeta() {
 		$sReturn = '';
 
@@ -136,18 +231,52 @@ class HTML {
 		return $sReturn;
 	}
 
+	/**
+	 * 添加除 CSS/JS 外的额外 <meta> 段内的信息
+	 *
+	 * @param string $s
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function addMeta($s) {
 		self::$_sAddMeta = trim($s);
 	}
 
-	public static function addJS($sFile) {
-		self::$_lJS[] = $sFile;
+	/**
+	 * 添加 JS 路径
+	 *
+	 * @param string $sURL
+	 * @static
+	 * @access public
+	 * @return void
+	 */
+	public static function addJS($sURL) {
+		self::$_lJS[] = $sURL;
 	}
 
-	public static function addCSS($sFile) {
-		self::$_lCSS[] = $sFile;
+	/**
+	 * 添加 CSS 路径
+	 *
+	 * @param string $sURL
+	 * @static
+	 * @access public
+	 * @return void
+	 */
+	public static function addCSS($sURL) {
+		self::$_lCSS[] = $sURL;
 	}
 
+	/**
+	 * 给定两个颜色和过渡程度，返回中间色，可用在表格的不同数量显示不用程度颜色等位置
+	 *
+	 * @param float $fRate
+	 * @param string $sColorA
+	 * @param string $sColorB
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function colorGradient($fRate, $sColorA, $sColorB = '#FFFFFF') {
 
 		$lColorA = self::_colorRGB($sColorA);
@@ -162,6 +291,14 @@ class HTML {
 		return '#'.$sReturn;
 	}
 
+	/**
+	 * 将 HTML 颜色（如 #0099FF）转换为 RGB 三个整数的数组
+	 *
+	 * @param string $sColor
+	 * @static
+	 * @access protected
+	 * @return array
+	 */
 	protected static function _colorRGB($sColor) {
 		$sError = 'unknown color "'.$sColor.'"';
 		$sColor = strtolower($sColor);
@@ -193,6 +330,11 @@ class HTML {
 
 	/**
 	 * 递归对数组进行 HTML 转义（包括 key 和 value）
+	 *
+	 * @param string|array $mInput
+	 * @static
+	 * @access public
+	 * @return string|array
 	 */
 	public static function escape($mInput) {
 
@@ -217,13 +359,5 @@ class HTML {
 		}
 
 		return $lReturn;
-	}
-
-	public static function test($s = 'abc') {
-		self::_test();
-	}
-
-	public static function _test() {
-		throw new TangoException('something error', 2);
 	}
 }
