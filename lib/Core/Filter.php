@@ -47,6 +47,7 @@ class Filter {
      * @param array $lRule 包含要获取的参数的 key 和实际类型，并进行转换
 	 *     字符串会被 utf8 编码过滤，不符合 utf8 编码的字符被丢弃
      *     需要注意默认的 int 不允许有负值，否则请使用 signedInt
+	 * @throws TangoException
 	 */
 	public static function run($sMethod = "GET", $lRule = []) {
 

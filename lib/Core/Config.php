@@ -68,7 +68,8 @@ class Config {
 	 * @param boolean $bDefault 是否是缺省配置
 	 * @static
 	 * @access protected
-	 * @return void
+	 * @throws TangoException
+	 * @return bool
 	 */
 	protected static function _setFile($sName, $sPath, $bDefault = FALSE) {
 
@@ -76,7 +77,6 @@ class Config {
 		$sCurrentPath =& self::${$sVar}[$sName];
 		if ($sCurrentPath) {
 			throw new TangoException('"'.$sName.'"'.($bDefault ? '(default)' : '').' define duplicate');
-			return FALSE;
 		}
 		$sCurrentPath = $sPath;
 		return TRUE;

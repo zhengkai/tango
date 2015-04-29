@@ -118,7 +118,7 @@ class Tango {
 	public static function init($bForce = FALSE) {
 
 		if (PHP_SAPI === 'cli' && !$bForce) {
-			return FALSE;
+			return ;
 		}
 
 		if (self::$_bInit) {

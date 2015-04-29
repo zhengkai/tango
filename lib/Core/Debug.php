@@ -31,7 +31,7 @@ class Debug {
 	 *
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return bool
 	 */
 	public static function _init() {
 
@@ -84,7 +84,7 @@ class Debug {
 	 */
 	public static function add($sType, $sMessage = NULL, $bHead = FALSE) {
 		if ($sMessage === NULL) {
-			return FALSE;
+			return ;
 		}
 		self::_file($sType, $sMessage, $bHead, FILE_APPEND | LOCK_EX);
 	}
@@ -101,7 +101,7 @@ class Debug {
 	 */
 	public static function dump($sType, $sMessage = NULL, $bHead = FALSE) {
 		if ($sMessage === NULL) {
-			return FALSE;
+			return ;
 		}
 		self::_file($sType, $sMessage, $bHead, LOCK_EX);
 	}
@@ -115,7 +115,7 @@ class Debug {
 	 * @param mixed $iFlag
 	 * @static
 	 * @access public
-	 * @return void
+	 * @return bool
 	 */
 	public static function _file($sType, $sMessage, $bHead, $iFlag) {
 
