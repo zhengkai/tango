@@ -145,7 +145,7 @@ class Debug {
 		if ($bHead) {
 			$fTimeCost = sprintf('%.06f', microtime(TRUE) - $_SERVER['REQUEST_TIME_FLOAT']);
 			$sHead= $_SERVER['REQUEST_URI']."\n"
-				.date('Y-m-d H:i:s', NOW)."\n"
+				.date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME'])."\n"
 				.$fTimeCost."\n";
 			$sMessage = $sHead.$sMessage."\n";
 		}

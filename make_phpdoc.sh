@@ -15,3 +15,4 @@ fi
 
 \rm -r $doc_dir/*
 $phpdoc_bin
+\rm -r $doc_dir/phpdoc-cache-*

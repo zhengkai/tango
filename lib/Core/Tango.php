@@ -181,9 +181,9 @@ class Tango {
 	 */
 	protected static function _start() {
 
-//		$T =& self::$T;
-//		$D =& self::$D;
-//		$_IN =& self::$IN;
+		$T =& self::$T;
+		$D =& self::$D;
+		$_IN =& self::$IN;
 
 		require $_SERVER['SCRIPT_FILENAME'];
 
@@ -245,11 +245,17 @@ class Tango {
 		return in_array($iError, self::$_lErrorStopCode);
 	}
 
-	/** 结束标志（第一次结束的时候会被 register_shutdown_function 函数激活、继续执行之后的 tpl） */
+	/**
+	 * 结束标志（第一次结束的时候会被 register_shutdown_function 函数激活、继续执行之后的 tpl）
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
 	public static function shutdown() {
 
 		if (self::$_bShutdown) { // run once only
-			return ;
+			return;
 		}
 		self::$_bShutdown = TRUE;
 

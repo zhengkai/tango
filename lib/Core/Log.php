@@ -187,7 +187,7 @@ class Log {
 				'server_ip' => $_SERVER['SERVER_ADDR'],
 				'client_ip' => $_SERVER['REMOTE_ADDR'],
 				'uri' => $_SERVER['REQUEST_URI'],
-				'time' => NOW,
+				'time' => $_SERVER['REQUEST_TIME'],
 				'elapsed' => microtime(TRUE) - $_SERVER['REQUEST_TIME_FLOAT'],
 			];
 		}
