@@ -97,7 +97,7 @@ class Util {
 	 * 略调整样式的 json_encode，显示网址和多字节字符更好一些
 	 *
 	 * @param mixed $mData
-	 * @param mixed $bPretty
+	 * @param boolean $bPretty
 	 * @static
 	 * @access public
 	 * @return string
