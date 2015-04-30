@@ -82,7 +82,7 @@ class Filter {
 					$mValue = strtotime($sValue) ?: 0;
 					break;
 				case 'str':
-					$sValue = iconv('UTF-8', 'UTF-8//IGNORE', trim($mValue));
+					$mValue = iconv('UTF-8', 'UTF-8//IGNORE', trim($mValue));
 					if (strlen($mValue) > 1024) {
 						$mValue = '';
 					}
