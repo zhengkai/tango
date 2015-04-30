@@ -6,8 +6,10 @@ php:
   - hhvm
 
 before_script:
+  - composer self-update
   - composer update
   - mysql < phpunit/db/create_table.sql
 
 script: 
   - phpunit -c phpunit/phpunit.xml.dist
+  - ./make_phpdoc.sh
