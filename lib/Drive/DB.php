@@ -649,6 +649,10 @@ class DB {
 	 */
 	public function cloneTableStructure($sTableSource, $sTableTarget) {
 
+		if (!$sTableSource || !$sTableTarget) {
+			throw new TangoException('empty table name');
+		}
+
 		$aRow = $this->getRow('SHOW CREATE TABLE `' . $sTableSource . '`');
 		$s = $aRow['Create Table'];
 		$s = preg_replace(
@@ -667,6 +671,9 @@ class DB {
 	 * @return array
 	 */
 	public function repairTable($sTable) {
+		if (!$sTable) {
+			throw new TangoException('empty table name');
+		}
 		$sQuery = 'REPAIR TABLE `' . addslashes($sTable) . '`';
 		return $this->getRow($sQuery);
 	}
@@ -679,6 +686,9 @@ class DB {
 	 * @return array
 	 */
 	public function optimizeTable($sTable) {
+		if (!$sTable) {
+			throw new TangoException('empty table name');
+		}
 		$sQuery = 'OPTIMIZE TABLE `' . addslashes($sTable) . '`';
 		return $this->getRow($sQuery);
 	}
@@ -691,6 +701,9 @@ class DB {
 	 * @return array
 	 */
 	public function emptyTable($sTable) {
+		if (!$sTable) {
+			throw new TangoException('empty table name');
+		}
 		$sQuery = 'TRUNCATE TABLE `' . addslashes($sTable) . '`';
 		return $this->getRow($sQuery);
 	}
