@@ -10,3 +10,5 @@
 
 /vendor
 /composer.lock
+
+/phpunit/flock/lockname_test.*

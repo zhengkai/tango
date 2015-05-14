@@ -76,7 +76,9 @@ class Config {
 		$sVar = $bDefault ? '_lFileDefault' : '_lFile';
 		$sCurrentPath =& self::${$sVar}[$sName];
 		if ($sCurrentPath) {
-			throw new TangoException('"'.$sName.'"'.($bDefault ? '(default)' : '').' define duplicate');
+			if (!$bDefault || $sPath !== $sCurrentPath) {
+				throw new TangoException('"'.$sName.'"'.($bDefault ? '(default)' : '').' define duplicate');
+			}
 		}
 		$sCurrentPath = $sPath;
 		return TRUE;

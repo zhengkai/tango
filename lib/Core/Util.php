@@ -10,6 +10,8 @@
 
 namespace Tango\Core;
 
+Config::setFileDefault('tango', dirname(__DIR__).'/Config/tango.php');
+
 /**
  * 工具类函数
  *
@@ -18,8 +20,14 @@ namespace Tango\Core;
  */
 class Util {
 
+	/** 限制 flock 的最大数目 */
+	protected static $_iFlockMax = 20;
+
 	/** 在一个脚本内生成不重复的数字，计数器 */
 	protected static $_iAI = 0;
+
+	/** 临时文件所在目录 */
+	protected static $_sTmpPath;
 
 	/**
 	 * 因为 flock 方法在结束的时候会释放 lock，所以需要另存个地方，
@@ -28,69 +36,94 @@ class Util {
 	static $_lFlockPool = [];
 
 	/**
+	 * tango 框架的 tmp 目录
+	 *
+	 * 可以通过更改 Config::get('tango')['tmp_dir']
+	 * 来覆盖系统默认（sys_get_temp_dir()）的目录
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
+	public static function getTmpPath() {
+		if (!self::$_sTmpPath) {
+			$sTmpPath = Config::get('tango')['tmp_dir'];
+			self::$_sTmpPath = rtrim($sTmpPath, '/') . '/';
+		}
+		return self::$_sTmpPath;
+	}
+
+	/**
 	 * 非阻塞文件锁，可以用于限制并发数量
 	 *
-	 * @param string $sFile 文件名，多个文件的话需要包含 %d 用于 sprintf
 	 * @param int $iNum 并发数量，默认1
+	 * @param string $sFile 文件名，多个文件的话需要包含 %d 用于 sprintf
 	 * @static
 	 * @access public
 	 * @return boolean 是否锁成功
 	 */
-	public static function flock($sFile = NULL, $iNum = 1) {
+	public static function flock($iNum = 1, $sFile = NULL) {
 
-		$iNum = max($iNum, 1);
-		$iNum = min($iNum, 20);
+		if (!is_int($iNum) && !is_string($sFile)) {
+			// 兼容老版本，当时二者是反的，并且 $sFile 必填
+			list($iNum, $sFile) = [$sFile ?: 1, $iNum];
+		}
+
+		$iNum = (int)max($iNum, 1);
+		$iNum = min($iNum, self::$_iFlockMax);
 
 		if (!$sFile) {
-			$sFile = sprintf('/tmp/tango_%s.lock', sha1($_SERVER['SCRIPT_FILENAME']));
+			$sFile = sprintf(
+				self::getTmpPath() . 'tango_%s.lock',
+				pathinfo($_SERVER['SCRIPT_FILENAME'])['filename']
+			);
 		}
 
 		$sKeyPool = sha1($sFile);
 
-		if ($iNum > 1) {
-
-			if (strpos($sFile, '%d') === FALSE) {
+		if (strpos($sFile, '%d') === FALSE) {
+			if (substr($sFile, -5) === '.lock') {
+				$sFile = substr($sFile, 0, -5) . '.%d.lock';
+			} else {
 				$sFile .= '.%d';
 			}
-
-			$lLockFile = array_map(function ($i) use ($sFile) {
-				return sprintf($sFile, $i);
-			}, range(1, $iNum));
-
-		} else {
-
-			$lLockFile = [$sFile];
 		}
+
+		$lNum = range(1, $iNum);
+		shuffle($lNum); // 将锁定文件的文件名顺序打乱，以保证有多个文件时，冲突几率最小
+		$lLockFile = array_map(function ($i) use ($sFile) {
+			return sprintf($sFile, $i);
+		}, $lNum);
 
 		$bLock = FALSE;
 
-		$aPool =& static::$_lFlockPool[$sKeyPool];
-		if ($aPool) {
-			return $aPool['lock'];
+		$aPool =& self::$_lFlockPool[$sKeyPool];
+		if (!$aPool || empty($aPool['filename'])) {
+
+			$aPool = [
+				'handle' => FALSE,
+				'filename' => FALSE,
+			];
+
+			foreach ($lLockFile as $sLockFile) {
+
+				$iMask = umask(0);
+				$hFile = fopen($sLockFile, 'a', 0666);
+				umask($iMask);
+				if (!$hFile) {
+					break;
+				}
+
+				if (flock($hFile, LOCK_EX | LOCK_NB)) {
+					$aPool['handle'] = $hFile;
+					$aPool['filename'] = $sLockFile;
+					// 必须把 handle 保存在静态变量里，不然函数执行完 handle 变量被回收，也就解锁了……
+					break;
+				}
+			}
 		}
 
-		$aPool = [];
-
-		foreach ($lLockFile as $sLockFile) {
-
-			$iMask = umask(0);
-			$hFile = fopen($sLockFile, 'a', 0666);
-			umask($iMask);
-			if (!$hFile) {
-				$bLock = FALSE;
-				break;
-			}
-
-			if (flock($hFile, LOCK_EX | LOCK_NB)) {
-				$bLock = TRUE;
-				$aPool['file'] = $hFile;
-				break;
-			}
-		}
-
-		$aPool['lock'] = $bLock;
-
-		return $bLock;
+		return $aPool['filename'] ?: FALSE;
 	}
 
 	/**

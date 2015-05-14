@@ -11,6 +11,7 @@
         <testsuite name="Project Tango">
 			<file>db/pdo.php</file>
 			<file>db/enum.php</file>
+			<file>flock/test.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
