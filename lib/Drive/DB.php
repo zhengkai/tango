@@ -183,8 +183,6 @@ class DB {
 				\PDO::ATTR_EMULATE_PREPARES => isset($aServer['pdo_prepare']) ? (bool)$aServer['pdo_prepare'] : true,
 			],
 		];
-
-		$this->_connect();
 	}
 
 	/**
