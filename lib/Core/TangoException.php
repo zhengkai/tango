@@ -130,6 +130,7 @@ class TangoException extends \Exception {
 			. sprintf('%.16f', microtime(TRUE)) . "\n"
 			. $e->getMessage() . "\n"
 			. Util::getAI();
+		$sHash = hash('crc32', $sHash);
 
 		$sHashType = hash('crc32', json_encode($aTrace, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
