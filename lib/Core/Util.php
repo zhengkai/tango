@@ -41,16 +41,23 @@ class Util {
 	 * 可以通过更改 Config::get('tango')['tmp_dir']
 	 * 来覆盖系统默认（sys_get_temp_dir()）的目录
 	 *
+	 * @param null|string $sPath 根据开头是否有 / 来判定是返回原地址，或者加上默认目录再返回
 	 * @static
 	 * @access public
 	 * @return void
 	 */
-	public static function getTmpPath() {
+	public static function getTmpPath($sPath = NULL) {
+
+		if (substr($sPath, 0, 1) === '/') {
+			return $sPath;
+		}
+
 		if (!self::$_sTmpPath) {
 			$sTmpPath = Config::get('tango')['tmp_dir'];
 			self::$_sTmpPath = rtrim($sTmpPath, '/') . '/';
 		}
-		return self::$_sTmpPath;
+
+		return self::$_sTmpPath . $sPath;
 	}
 
 	/**
@@ -74,7 +81,7 @@ class Util {
 
 		if (!$sFile) {
 			$sFile = sprintf(
-				self::getTmpPath() . 'tango_%s.lock',
+				self::getTmpPath('tango_%s.lock'),
 				pathinfo($_SERVER['SCRIPT_FILENAME'])['filename']
 			);
 		}

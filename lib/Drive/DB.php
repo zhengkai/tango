@@ -226,21 +226,25 @@ class DB {
 	 * 返回值 true 表示重新执行 query
 	 *
 	 * @param array $aError 执行 query 后的报错信息
+	 * @param string $sQuery
+	 * @param array $aParam
 	 * @access protected
 	 * @throws DBException
 	 * @return bool
 	 */
-	protected function _connectSmart($aError) {
+	protected function _connectSmart(array $aError, $sQuery, array $aParam) {
 
-		$iError =& $aError[1];
-		if (!$iError) {
+		if ($aError[0] === '00000') {
 			return FALSE;
 		}
+
 		$this->_oPDO = NULL;
 
-		$iError = intval($iError);
+		$sError = $aError[0];
+		$iError = intval($aError[1]);
 
-		if ($this->_iErrorLast != $iError) { // 不能连续报相同错误，否则终止
+		if ($iError && $this->_iErrorLast != $iError) { // 不能连续报相同错误，否则终止
+
 			$this->_iErrorLast = $iError;
 
 			// 42S02 table doesn't exist
@@ -262,7 +266,21 @@ class DB {
 			}
 		}
 
-		throw new DBException('PDO ' . $aError[1] . ': ' . $aError[2]);
+		$sErrorShow = $iError ? $iError . ': '. $aError[2] : $sError;
+
+		if (Config::get('db')['log']['debug']) {
+
+			$sMsg = 'query = ' . $sQuery . "\n"
+				. ($aParam ? 'param = ' . json_encode($aParam, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n" : '')
+				. 'error = ' . $sErrorShow;
+			Log::debug('db_error', $sMsg, TRUE);
+		}
+
+		if ($iError) {
+			throw new DBException('PDO ' . $sErrorShow);
+		}
+
+		return FALSE;
 	}
 
 	/**
@@ -412,7 +430,7 @@ class DB {
 				$aError = $this->_oPDO->errorInfo();
 			}
 
-		} while ($this->_connectSmart($aError));
+		} while ($this->_connectSmart($aError, $sQuery, $aParam));
 
 		return $sType === 'exec' ? $iAffected : $oResult;
 	}

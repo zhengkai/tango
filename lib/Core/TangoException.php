@@ -10,7 +10,7 @@
 
 namespace Tango\Core;
 
-Config::setFileDefault('exception', dirname(__DIR__).'/Config/exception.php');
+Config::setFileDefault('log',   dirname(__DIR__).'/Config/log.php');
 
 /**
  * 异常
@@ -124,23 +124,20 @@ class TangoException extends \Exception {
 			'args'   => '',
 		];
 
+		$fTime = microtime(TRUE);
+
 		$bCli = PHP_SAPI === 'cli';
 
 		$sHash = ($bCli ? posix_getpid() : $_SERVER["REMOTE_PORT"]) . "\n"
-			. sprintf('%.16f', microtime(TRUE)) . "\n"
+			. sprintf('%.16f', $fTime) . "\n"
 			. $e->getMessage() . "\n"
 			. Util::getAI();
 		$sHash = hash('crc32', $sHash);
 
 		$sHashType = hash('crc32', json_encode($aTrace, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-		$aConfig = Config::get('exception');
-		if ($aConfig['timezone']) {
-			$oTime = new \DateTime('now', $aConfig['timezone']);
-			$sTime = $oTime->format($aConfig['time_format']);
-		} else {
-			$sTime = date($aConfig['time_format']);
-		}
+		$sTime = date(Config::get('log')['time_format'], $fTime);
+		$sTime .= substr(sprintf('%.03f' ,$fTime), -4);
 
 		$sFunc = $aTrace['class'].$aTrace['type'].$aTrace['function'];
 		$iArgLenLimit = 80 - 3 - strlen($sFunc);

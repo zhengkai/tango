@@ -64,7 +64,9 @@ class Log {
 			return self::$_bEnable = FALSE;
 		}
 
-		$sPath = rtrim(trim($aConfig['debug_path']), '/');
+		$sPath = trim($aConfig['debug_path']);
+		$sPath = Util::getTmpPath($sPath);
+		$sPath = rtrim($sPath, '/');
 		if (!$sPath) {
 			return self::$_bEnable = FALSE;
 		}
@@ -86,7 +88,7 @@ class Log {
 			}
 		}
 
-		self::$_sDebugPath = $sPath;
+		self::$_sDebugPath = $sPath . '/';
 
 		return self::$_bEnable = TRUE;
 	}
@@ -111,14 +113,9 @@ class Log {
 			return FALSE;
 		}
 
-		$aConfig = Config::get('log');
+		$sFile = self::$_sDebugPath . $sType;
 
-		$sFile = self::$_sDebugPath.'/'.$sType;
-		if (disk_free_space(self::$_sDebugPath) < $aConfig['disk_free_space']) {
-			return FALSE;
-		}
-
-		if (file_exists($sFile) && (filesize($sFile) > $aConfig['max_size'] || !is_writable($sFile))) {
+		if (!self::_prepareWriteFile($sFile)) {
 			return FALSE;
 		}
 
@@ -127,16 +124,57 @@ class Log {
 		}
 
 		if ($bHead) {
-			$fTimeCost = sprintf('%.06f', microtime(TRUE) - $_SERVER['REQUEST_TIME_FLOAT']);
-			$sHead= $_SERVER['REQUEST_URI']."\n"
-				.date('Y-m-d H:i:s', time())."\n"
-				.$fTimeCost."\n";
+
+			$fTime = microtime(TRUE);
+
+			$sTime = date(Config::get('log')['time_format'], $fTime);
+			$sTime .= substr(sprintf('%.03f' ,$fTime), -4);
+
+			$fTimeCost = sprintf('%.06f', $fTime - $_SERVER['REQUEST_TIME_FLOAT']);
+			$sHead = '[' . $sTime . '] [' . $fTimeCost . '] ' . "\n"
+				. ($_SERVER['REQUEST_URI'] ?: $_SERVER['SCRIPT_FILENAME'])."\n"
+				. "\n";
 			$sMessage = $sHead.$sMessage."\n";
 		}
 
 		$sMessage .= "\n";
 
 		return file_put_contents($sFile, $sMessage, FILE_APPEND | LOCK_EX);
+	}
+
+	/**
+	 * 检查是否可以往某个地址写 log（磁盘满了、文件过大、文件写保护等检查）
+	 *
+	 * @param string $sFile
+	 * @static
+	 * @access protected
+	 * @return boolean
+	 */
+	protected static function _prepareWriteFile($sFile) {
+
+		$aConfig = Config::get('log');
+
+		$sSpaceCheck = $sFile;
+
+		if (file_exists($sFile)) {
+			if (!is_writable($sFile)) {
+				return FALSE;
+			}
+			if (filesize($sFile) > $aConfig['max_size']) {
+				return FALSE;
+			}
+		} else {
+			$sSpaceCheck = dirname($sFile);
+		}
+
+		if (disk_free_space($sSpaceCheck) < $aConfig['disk_free_space']) {
+			echo 'disk_free_space = ' . $sFile . ' ';
+			var_dump(disk_free_space($sFile));
+			echo "\n";
+			return FALSE;
+		}
+
+		return TRUE;
 	}
 
 	/**
