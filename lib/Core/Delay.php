@@ -35,6 +35,7 @@ class Delay {
 	 */
 	public static function add(callable $func) {
 		self::$_lPool[] = $func;
+		Tango::setEndTrigger('Delay');
 	}
 
 	/**
