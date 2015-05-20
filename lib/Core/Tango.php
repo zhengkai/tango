@@ -213,6 +213,11 @@ class Tango {
 			}
 		}
 		Page::parse();
+
+		if (function_exists('fastcgi_finish_request')) {
+			fastcgi_finish_request();
+		}
+		Delay::run();
 	}
 
 	/**
