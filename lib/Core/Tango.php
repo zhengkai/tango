@@ -238,10 +238,10 @@ class Tango {
 		if (function_exists('fastcgi_finish_request')) {
 			fastcgi_finish_request();
 		}
-		if (self::$_lEndTrigger['mongo']) {
+		if (self::$_lEndTrigger['Mongo']) {
 			\Tango\Drive\Mongo::save();
 		}
-		if (self::$_lEndTrigger['delay']) {
+		if (self::$_lEndTrigger['Delay']) {
 			Delay::run();
 		}
 	}
