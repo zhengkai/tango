@@ -206,7 +206,8 @@ class Util {
 			}
 			$iNum = $iNum / 1024;
 		}
-		return ($iNum < 10 ? sprintf('%.01f', $iNum) : (int)round($iNum)) . ' ' . $sUnit;
+		return ($iNum < 10 ? sprintf('%.01f', $iNum) : (int)round($iNum))
+			. ($sUnit ? ' ' . $sUnit : '');
 	}
 
 	/**
