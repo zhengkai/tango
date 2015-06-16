@@ -37,5 +37,6 @@
 		<ignore>lib/Page/Link.php</ignore>
 		<ignore>lib/Page/Widget.php</ignore>
 		<ignore>lib/Page/Layout.php</ignore>
+		<ignore>lib/Drive/Mongo.php</ignore>
 	</files>
 </phpdoc>
