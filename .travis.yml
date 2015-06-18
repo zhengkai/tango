@@ -6,8 +6,6 @@ php:
   - hhvm
 
 before_script:
-  - composer self-update
-  - composer update 2>/dev/null
   - mysql < phpunit/db/create_table.sql
 
 script: 
