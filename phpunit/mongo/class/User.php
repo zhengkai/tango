@@ -7,8 +7,6 @@ class User extends Tango\Drive\Mongo {
 
 	protected static $_sKeyType = 'int';
 	protected static $_mKey = '_id';
-	protected static $_sConfig = 'user';
-	protected static $_aConfig;
 
 	protected static $_bSharding = FALSE;
 
@@ -34,17 +32,5 @@ class User extends Tango\Drive\Mongo {
 			$v = 3;
 		}
 		return $a;
-	}
-
-	/**
-	 * 为测试内部的 _getDiff 而设
-	 *
-	 * @param array $a
-	 * @param array $b
-	 * @access public
-	 * @return array
-	 */
-	public static function getDiff(array $a, array $b) {
-		return self::_getDiff($a, $b);
 	}
 }

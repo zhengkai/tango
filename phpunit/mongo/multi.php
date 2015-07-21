@@ -2,12 +2,57 @@
 use Tango\Drive\DB;
 
 require_once __DIR__ . '/class/User.php';
+require_once __DIR__ . '/class/IdGen.php';
+require_once __DIR__ . '/class/Map.php';
 
 class MongoTest extends PHPUnit_Framework_TestCase {
 
+	public function testConfig() {
+
+		$aConfig = User::debugConfig()['current'];
+		$this->assertEquals($aConfig, [
+			'collection' => 'user',
+			'debug' => FALSE,
+			'db' => 'tango_phpunit_test',
+			'capacity' => 10000,
+			'max_capacity' => 30000,
+			'pool' => [
+				'127.0.0.1:12306',
+				'127.0.0.1:12307',
+				'127.0.0.1:12308',
+			],
+		]);
+
+		$aConfig = IdGen::debugConfig()['current'];
+		$this->assertEquals($aConfig, [
+			'collection' => 'id_gen',
+			'debug' => FALSE,
+			'db' => 'tango_phpunit_test',
+			'capacity' => 0,
+			'max_capacity' => 0,
+			'pool' => [
+				'127.0.0.1:12306',
+			],
+		]);
+
+		$aConfig = Map::debugConfig()['current'];
+		$this->assertEquals($aConfig, [
+			'collection' => 'map',
+			'debug' => FALSE,
+			'db' => 'tango_phpunit_test',
+			'capacity' => 10000,
+			'max_capacity' => 30000,
+			'pool' => [
+				'127.0.0.1:12306',
+				'127.0.0.1:12307',
+				'127.0.0.1:12308',
+			],
+		]);
+	}
+
 	public function testInit() {
 
-		$iUser = 101;
+		$iUser = 10001;
 
 		$o = new User($iUser);
 
@@ -42,6 +87,7 @@ class MongoTest extends PHPUnit_Framework_TestCase {
 		];
 
 		$this->assertEquals($aResult, $aCheck);
+
 	}
 
 	public function testUpdate() {
@@ -162,7 +208,7 @@ class MongoTest extends PHPUnit_Framework_TestCase {
 		];
 
 		$f = microtime(TRUE);
-		$diff = User::getDiff($a, $b);
+		$diff = User::debugDiff($a, $b);
 		/*
 		$f = microtime(TRUE) - $f;
 		echo "\n", sprintf('%.9f', $f), "\n";
@@ -179,12 +225,52 @@ class MongoTest extends PHPUnit_Framework_TestCase {
 
 		$aResult = $o->debugGet();
 
-		echo json($aResult), "\n";
+		// echo json($aResult), "\n";
 
 		$o->debugClose();
 
 		$aGet = $o->get();
 		$aGet += ['v' => FALSE];
 		$this->assertSame($aGet['v'], 3);
+	}
+
+	public function testPool() {
+
+		foreach ([10010, 5, 29999, 100, 10500, 9999, 21000] as $iUser) {
+			$o = new User($iUser);
+
+			$aConfig = $o->debugConfig();
+			$sDB = $aConfig['current']['db'];
+
+			$this->assertSame($sDB, 'tango_phpunit_test');
+
+			$o->debugConn()->dropDB($sDB);
+
+			$o->get();
+			$o->save();
+		}
+
+		$l = User::debugPool();
+
+		$iPoolCount = count($aConfig['current']['pool']);
+
+		$this->assertSame($iPoolCount, count($l['conn']));
+
+		array_map(function ($o) use ($iPoolCount, $sDB) {
+
+			$this->assertSame($iPoolCount, count($o->getHosts()));
+			$this->assertSame($iPoolCount, count($o->getConnections()));
+
+			$lDB = array_column($o->listDBs()['databases'], 'name');
+
+			$this->assertContains($sDB, $lDB);
+
+		}, $l['conn']);
+
+		$this->assertSame($l['conf'], [
+			'127.0.0.1:12307',
+			'127.0.0.1:12306',
+			'127.0.0.1:12308',
+		]);
 	}
 }

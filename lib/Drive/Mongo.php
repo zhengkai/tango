@@ -26,7 +26,7 @@ Config::setFileDefault('mongo', dirname(__DIR__) . '/Config/mongo.php');
 class Mongo {
 
 	/** MongoClient */
-	private static $_oConn;
+	private $_oConn;
 
 	/** 数组连接池 */
 	protected static $_lPoolConn = [];
@@ -50,10 +50,10 @@ class Mongo {
 	protected $_mID;
 
 	/** Mongo 连接名（取自配置文件） */
-	private static $_sConfig;
+	protected $_sConfig;
 
 	/** config */
-	private static $_aConfig;
+	protected static $_lConfig;
 
 	/** sharding */
 	private static $_bSharding = FALSE;
@@ -70,16 +70,7 @@ class Mongo {
 	 */
 	public function __construct($mID) {
 
-		if (!static::$_aConfig) {
-			$aConfigFull = Config::get('mongo');
-
-			$aConfig =& $aConfigFull['server'][static::$_sConfig];
-			if (!is_array($aConfig)) {
-				throw new TangoException('mongo server config "' . static::$_sConfig . '"');
-			}
-			$aConfig += $aConfigFull['default'];
-			static::$_aConfig = $aConfig;
-		}
+		self::_getConfig();
 
 		switch (static::$_sKeyType) {
 			case 'int':
@@ -91,14 +82,66 @@ class Mongo {
 				break;
 		}
 
-		$this->_mID = $mID;
+		$this->_sConfig = get_called_class();
 
-		$this->_conn();
+		$this->_mID = $mID;
+	}
+
+	protected static function _getConfig() {
+
+		$sConfig = get_called_class();
+
+		$aConfig =& static::$_lConfig[$sConfig];
+		if ($aConfig) {
+			return $aConfig;
+		}
+
+		$aConfigFull = Config::get('mongo');
+
+		$aGet =& $aConfigFull['server'][$sConfig];
+		if (!is_array($aGet)) {
+			throw new TangoException('mongo server config "' . $sConfig . '"');
+		}
+
+		$aGet += $aConfigFull['default'];
+
+		$sCustom =& $aGet['custom'];
+		if ($sCustom && is_string($sCustom)) {
+
+			$aCustom =& $aConfigFull['custom'][$sCustom];
+
+			if (!is_array($aCustom)) {
+				throw new TangoException('mongo server config custom "' . $sCustom . '"');
+			}
+
+			$aGet += $aCustom;
+		}
+
+		unset($aGet['custom']);
+		$aGet += [
+			'capacity' => 0,
+			'pool' => [],
+			'max_capacity' => 0,
+		];
+
+		if (!$aGet['pool'] || !is_array($aGet['pool'])) {
+			throw new TangoException('mongo config "' . $sConfig . '" empty pool');
+		}
+
+		if ($aGet['capacity']) {
+			if (static::$_sKeyType != 'int') {
+				throw new TangoException('mongo config "' . $sConfig . '" enabled sharding but no int key');
+			}
+			$aGet['max_capacity'] = $aGet['capacity'] * count($aGet['pool']);
+		}
+
+		$aConfig = $aGet;
+		return $aConfig;
 	}
 
 	public function get() {
 
-		$v =& static::$_lPoolDataChange[static::$_sConfig][$this->_mID];
+		$v =& self::$_lPoolDataChange[$this->_sConfig][$this->_mID];
 
 		if (!is_array($v)) {
 
@@ -111,7 +154,7 @@ class Mongo {
 				unset($aOrig[static::$_mKey]);
 			}
 
-			static::$_lPoolData[static::$_sConfig][$this->_mID] = $aOrig;
+			self::$_lPoolData[$this->_sConfig][$this->_mID] = $aOrig;
 
 			if ($bNeedInit) {
 				$v = $this->_init();
@@ -126,7 +169,8 @@ class Mongo {
 	}
 
 	public function update($aUpdate) {
-		$v =& static::$_lPoolDataChange[static::$_sConfig][$this->_mID];
+
+		$v =& self::$_lPoolDataChange[$this->_sConfig][$this->_mID];
 		if (!is_array($v)) {
 			$this->get();
 		}
@@ -134,8 +178,9 @@ class Mongo {
 	}
 
 	public function save() {
-		$aUpdate =& static::$_lPoolDataChange[static::$_sConfig][$this->_mID];
-		$aOrig   =& static::$_lPoolData[static::$_sConfig][$this->_mID];
+
+		$aUpdate =& self::$_lPoolDataChange[$this->_sConfig][$this->_mID];
+		$aOrig   =& self::$_lPoolData[$this->_sConfig][$this->_mID];
 
 		if ($aUpdate === $aOrig) {
 			return FALSE;
@@ -150,6 +195,27 @@ class Mongo {
 			$aOP,
 			['upsert' => TRUE]
 		);
+	}
+
+	/**
+	 * 保存所有改动（所有继承自该类的）
+	 *
+	 * @static
+	 * @access public
+	 * @return int 改动条数
+	 */
+	public static function saveAll() {
+		$i = 0;
+		foreach (self::$_lPoolDataChange as $sConfig => $lPool) {
+			foreach ($lPool as $mID => $aChange) {
+				if ($aChange === self::$_lPoolData[$sConfig][$mID]) {
+					$o = new $sConfig();
+					$o->save();
+					$i++;
+				}
+			}
+		}
+		return $i;
 	}
 
 	/**
@@ -271,35 +337,54 @@ class Mongo {
 	 */
 	protected function _conn() {
 
-		if (!static::$_oConn) {
-
-			$aConfig = static::$_aConfig;
-			unset($aConfig['db']);
-			unset($aConfig['collection']);
-			unset($aConfig['debug']);
-			ksort($aConfig);
-
-			$iKey = array_search($aConfig, self::$_lPoolConnConf);
-			if (!is_int($iKey)) {
-				$iKey = count(self::$_lPoolConnConf);
-				self::$_lPoolConnConf[$iKey] = $aConfig;
-
-				self::$_lPoolConn[$iKey] = new \MongoClient($aConfig['server']);
-			}
-
-			static::$_oConn =& self::$_lPoolConn[$iKey];
+		if ($this->_oConn) {
+			return $this->_oConn;
 		}
-		return static::$_oConn;
+
+		$aConfig = static::_getConfig();
+
+		if ($aConfig['capacity'] > 0) {
+			$iShardingID = (int)floor(($this->_mID - 1) / $aConfig['capacity']);
+			if ($this->_mID > $aConfig['max_capacity']) {
+				throw new TangoException(
+					'mongo ' . get_class() . ' sharding id overflow '
+					. $iShardingID . '/' . count($aConfig['pool'])
+				);
+			}
+		} else {
+			$iShardingID = 0;
+		}
+		$sHost =& $aConfig['pool'][$iShardingID];
+		if (!$sHost) {
+			throw new TangoException(
+				'mongo ' . get_class() . 'sharding id overflow '
+				. $iShardingID . '/' . count($aConfig['pool'])
+			);
+		}
+
+		$iKey = array_search($sHost, self::$_lPoolConnConf);
+		if (!is_int($iKey)) {
+
+			$iKey = count(self::$_lPoolConnConf);
+			self::$_lPoolConnConf[$iKey] = $sHost;
+
+			self::$_lPoolConn[$iKey] = new \MongoClient('mongodb://' . $sHost);
+		}
+
+		$this->_oConn =& self::$_lPoolConn[$iKey];
+		return $this->_oConn;
 	}
 
 	public function _coll() {
+
+		$aConfig = static::_getConfig();
 		return $this
 			->_conn()
-			->selectCollection(static::$_aConfig['db'], static::$_aConfig['collection']);
+			->selectCollection($aConfig['db'], $aConfig['collection']);
 	}
 
 	protected static function _sharding() {
-		return 1;
+		return 0;
 	}
 
 	/**
@@ -397,8 +482,5 @@ class Mongo {
 		}
 		$mCurrent = $mVal;
 		return $aReturn;
-	}
-
-	public static function _diff(array $aData, array $aUpdate, $lPath = []) {
 	}
 }
