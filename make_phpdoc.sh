@@ -30,6 +30,9 @@ rm -r $doc_dir/phpdoc-cache-*
 echo
 echo "phpdoc"
 if [ $error_num -ge 1 ]; then
+	echo
+	$phpdoc_bin | grep -e '^Parsing \|37;41m'
+	echo
 	echo 'error = '$error_num
 	exit 1
 else
