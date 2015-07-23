@@ -1,10 +1,8 @@
 <?php
-class Map extends Tango\Drive\Mongo {
+class UserAI extends Tango\Drive\MongoAI {
 
 	use Tango\Drive\MongoDebug;
 
 	protected static $_sKeyType = 'int';
 	protected static $_mKey = '_id';
-
-	protected static $_lDiff = [];
 }

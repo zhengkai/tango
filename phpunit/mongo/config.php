@@ -13,6 +13,9 @@ return [
 		'User' => [
 			'collection' => 'user',
 		],
+		'UserAI' => [
+			'collection' => 'user_ai',
+		],
 		'Map' => [
 			'collection' => 'map',
 		],

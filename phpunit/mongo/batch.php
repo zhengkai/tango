@@ -1,17 +1,30 @@
 <?php
-use Tango\Drive\DB;
-
 require_once __DIR__ . '/class/User.php';
+require_once __DIR__ . '/class/UserAI.php';
 require_once __DIR__ . '/class/IdGen.php';
 require_once __DIR__ . '/class/Map.php';
 
-class MongoTest extends PHPUnit_Framework_TestCase {
+class MongoBatchTest extends PHPUnit_Framework_TestCase {
 
 	public function testConfig() {
 
 		$aConfig = User::debugConfig()['current'];
 		$this->assertEquals($aConfig, [
 			'collection' => 'user',
+			'debug' => FALSE,
+			'db' => 'tango_phpunit_test',
+			'capacity' => 10000,
+			'max_capacity' => 30000,
+			'pool' => [
+				'127.0.0.1:12306',
+				'127.0.0.1:12307',
+				'127.0.0.1:12308',
+			],
+		]);
+
+		$aConfig = UserAI::debugConfig()['current'];
+		$this->assertEquals($aConfig, [
+			'collection' => 'user_ai',
 			'debug' => FALSE,
 			'db' => 'tango_phpunit_test',
 			'capacity' => 10000,
