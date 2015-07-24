@@ -19,7 +19,7 @@ use Tango\Core\TangoException;
  * 典型场合如域名、文件名等
  *
  * @abstract
- * @package
+ * @package Tango
  * @author Zheng Kai <zhengkai@gmail.com>
  */
 abstract class DBEnumBase {

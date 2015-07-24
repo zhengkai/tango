@@ -10,6 +10,12 @@
 
 namespace Tango\Drive;
 
+/**
+ * MongoAI
+ *
+ * @package Tango
+ * @author Zheng Kai <zhengkai@gmail.com>
+ */
 class MongoAI {
 
 	use MongoConnect;
@@ -97,6 +103,14 @@ class MongoAI {
 		return $aResult[$sKey];
 	}
 
+	/**
+	 * 检查 key 是否合法
+	 *
+	 * @param string $sKey
+	 * @static
+	 * @access protected
+	 * @return boolean
+	 */
 	protected static function _checkKey($sKey) {
 		if ($sKey === '_id') {
 			return FALSE;

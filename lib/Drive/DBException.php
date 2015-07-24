@@ -13,7 +13,7 @@ namespace Tango\Drive;
 /**
  * 跟 \Tango\Core\TangoException 类似，差别在于能返回 PDO 错误代码
  *
- * @package
+ * @package Tango
  * @author Zheng Kai <zhengkai@gmail.com>
  */
 class DBException extends \Tango\Core\TangoException {

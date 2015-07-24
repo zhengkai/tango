@@ -37,10 +37,5 @@
 		<ignore>lib/Page/Link.php</ignore>
 		<ignore>lib/Page/Widget.php</ignore>
 		<ignore>lib/Page/Layout.php</ignore>
-		<ignore>lib/Drive/Mongo.php</ignore>
-		<ignore>lib/Drive/MongoAI.php</ignore>
-		<ignore>lib/Drive/MongoBatch.php</ignore>
-		<ignore>lib/Drive/MongoConnect.php</ignore>
-		<ignore>lib/Drive/MongoDebug.php</ignore>
 	</files>
 </phpdoc>

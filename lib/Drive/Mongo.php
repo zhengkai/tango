@@ -10,6 +10,12 @@
 
 namespace Tango\Drive;
 
+/**
+ * Mongo
+ *
+ * @package Tango
+ * @author Zheng Kai <zhengkai@gmail.com>
+ */
 class Mongo {
 
 	use MongoConnect;

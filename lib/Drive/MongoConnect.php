@@ -20,7 +20,7 @@ Config::setFileDefault('mongo', dirname(__DIR__) . '/Config/mongo.php');
  *
  * sharding，每个数据库只保持一个连接
  *
- * @package
+ * @package Tango
  * @author Zheng Kai <zhengkai@gmail.com>
  */
 trait MongoConnect {
@@ -52,6 +52,7 @@ trait MongoConnect {
 	/**
 	 * __construct
 	 *
+	 * @param mixed $mID
 	 * @access public
 	 * @return void
 	 */
@@ -74,6 +75,13 @@ trait MongoConnect {
 		$this->_mID = $mID;
 	}
 
+	/**
+	 * 读取配置文件，生成对应配置
+	 *
+	 * @static
+	 * @access protected
+	 * @return array
+	 */
 	protected static function _getConfig() {
 
 		$sConfig = get_called_class();
@@ -127,7 +135,7 @@ trait MongoConnect {
 	}
 
 	/**
-	 * _conn
+	 * 创建链接，保证相同配置的链接只保存一个
 	 *
 	 * @access protected
 	 * @return \MongoClient
@@ -172,15 +180,19 @@ trait MongoConnect {
 		return $this->_oConn;
 	}
 
+	/**
+	 * 获取对应的 MongoCollection 类以做操作
+	 *
+	 * 已做好 sharding
+	 *
+	 * @access public
+	 * @return \MongoCollection
+	 */
 	public function _coll() {
 
 		$aConfig = static::_getConfig();
 		return $this
 			->_conn()
 			->selectCollection($aConfig['db'], $aConfig['collection']);
-	}
-
-	protected static function _sharding() {
-		return 0;
 	}
 }

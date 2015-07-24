@@ -18,7 +18,7 @@ use Tango\Core\TangoException;
  * 多次更改，一次读写
  * 必须自己做额外的锁来防止互相覆盖的情况
  *
- * @package
+ * @package Tango
  * @author Zheng Kai <zhengkai@gmail.com>
  */
 trait MongoBatch {
@@ -29,10 +29,18 @@ trait MongoBatch {
 	/** 内存数组缓存（修改后） */
 	protected static $_lPoolDataChange = [];
 
+	/** 递归整个数组是用来存储所有需要改动的 path */
 	private static $_lDiff = [];
 
+	/** 那些字段是可以差值（$inc 而非 $set）的方式更新 */
 	protected static $_lIncKey = [];
 
+	/**
+	 * 获取整个 document
+	 *
+	 * @access public
+	 * @return array
+	 */
 	public function get() {
 
 		$v =& self::$_lPoolDataChange[$this->_sConfig][$this->_mID];
@@ -62,7 +70,14 @@ trait MongoBatch {
 		return $v;
 	}
 
-	public function update($aUpdate) {
+	/**
+	 * 更新某些值
+	 *
+	 * @param array $aUpdate
+	 * @access public
+	 * @return array
+	 */
+	public function update(array $aUpdate) {
 
 		$v =& self::$_lPoolDataChange[$this->_sConfig][$this->_mID];
 		if (!is_array($v)) {
@@ -71,6 +86,12 @@ trait MongoBatch {
 		return $v = self::_update($v, $aUpdate);
 	}
 
+	/**
+	 * 保存改动
+	 *
+	 * @access public
+	 * @return array
+	 */
 	public function save() {
 
 		$aUpdate =& self::$_lPoolDataChange[$this->_sConfig][$this->_mID];
@@ -215,10 +236,23 @@ trait MongoBatch {
 		}
 	}
 
+	/**
+	 * 如果 document 为空时，如何初始化
+	 *
+	 * @access protected
+	 * @return array
+	 */
 	protected function _init() {
 		return [];
 	}
 
+	/**
+	 * 每次加载时跑一遍，用于改造老数据
+	 *
+	 * @param array $a
+	 * @access protected
+	 * @return array
+	 */
 	protected function _format(array $a) {
 		return $a;
 	}
@@ -273,6 +307,15 @@ trait MongoBatch {
 		return $aData;
 	}
 
+	/**
+	 * 用于生成点号分隔的路径
+	 *
+	 * @param mixed $sPath
+	 * @param mixed $sSub
+	 * @static
+	 * @access protected
+	 * @return void
+	 */
 	protected static function _path($sPath, $sSub) {
 		return $sPath ? $sPath . '.' . $sSub : $sSub;
 	}
