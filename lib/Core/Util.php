@@ -192,6 +192,25 @@ class Util {
 	}
 
 	/**
+	 * 将数字转为 K/M/G 为单位的简写
+	 *
+	 * @param integer $iNum
+	 * @static
+	 * @access public
+	 * @return string
+	 */
+	public static function convertNumToDigitalUnit($iNum) {
+		foreach (['', 'K', 'M', 'G', 'T', 'P', 'G', 'E', 'Z'] as $sUnit) {
+			if ((int)round($iNum) < 1000) {
+				break;
+			}
+			$iNum = $iNum / 1024;
+		}
+		return ($iNum < 10 ? sprintf('%.01f', $iNum) : (int)round($iNum))
+			. ($sUnit ? ' ' . $sUnit : '');
+	}
+
+	/**
 	 * 在一个脚本内生成不重复的数字
 	 *
 	 * @static

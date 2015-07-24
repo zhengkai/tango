@@ -59,6 +59,27 @@ class Tango {
 		E_RECOVERABLE_ERROR,
 	];
 
+	/** 在脚本结束时可以触发的操作类型 */
+	protected static $_lEndTrigger = [
+		'Delay' => NULL,
+		'Mongo' => NULL,
+	];
+
+	/**
+	 * 在脚本结束时是否触发某类操作
+	 *
+	 * @param string $sType
+	 * @static
+	 * @access public
+	 * @return void
+	 */
+	public static function setEndTrigger($sType) {
+		if (!array_key_exists($sType, self::$_lEndTrigger)) {
+			throw new TangoException('unknown type "' . $sType . '"');
+		}
+		self::$_lEndTrigger = TRUE;
+	}
+
 	/**
 	 * 用于计算 www 的执行时间
 	 *
@@ -213,6 +234,16 @@ class Tango {
 			}
 		}
 		Page::parse();
+
+		if (function_exists('fastcgi_finish_request')) {
+			fastcgi_finish_request();
+		}
+		if (self::$_lEndTrigger['Mongo']) {
+			\Tango\Drive\Mongo::save();
+		}
+		if (self::$_lEndTrigger['Delay']) {
+			Delay::run();
+		}
 	}
 
 	/**

@@ -13,5 +13,5 @@ return [
 		echo "\n\n";
 
 		require HTML::getTpl('foot');
-	}
+	},
 ];

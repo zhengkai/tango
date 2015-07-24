@@ -18,12 +18,21 @@ chk_file=($doc_dir/*)
 if [ ${#chk_file[*]} -gt 1 ]; then
 	rm -r $doc_dir/*
 fi
-error_num=`$phpdoc_bin | grep '\[37;41m' | wc -l`
+
+if [[ "$1" == "-v" ]]; then
+	$phpdoc_bin | grep '\[37;41m'
+	exit;
+else
+	error_num=`$phpdoc_bin | grep '\[37;41m' | wc -l`
+fi
 rm -r $doc_dir/phpdoc-cache-*
 
 echo
 echo "phpdoc"
 if [ $error_num -ge 1 ]; then
+	echo
+	$phpdoc_bin | grep -e '^Parsing \|37;41m'
+	echo
 	echo 'error = '$error_num
 	exit 1
 else

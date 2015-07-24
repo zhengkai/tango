@@ -23,11 +23,36 @@ class Config {
 	/** 已读取的配置信息 */
 	protected static $_lStore = [];
 
+	/** 缺省目录 */
+	protected static $_sDir = NULL;
+
 	/** 命名对应的文件列表 */
 	protected static $_lFile = [];
 
 	/** 命名对应的缺省文件列表 */
 	protected static $_lFileDefault = [];
+
+	/**
+	 * 缺省目录
+	 *
+	 * 如果 setFile 没有指定，会去 setDir 目录看有没有特定文件，有则加载
+	 *
+	 * @param string $sPath
+	 * @static
+	 * @access public
+	 * @return void
+	 */
+	public static function setDir($sPath) {
+		if (self::$_sDir) {
+			throw new TangoException('dir define duplicate');
+		}
+		$sPath = rtrim(trim($sPath), '/');
+		if (!is_dir($sPath)) {
+			return FALSE;
+		}
+		self::$_sDir = $sPath . '/';
+		return TRUE;
+	}
 
 	/**
 	 * 设定“配置文件”的路径，只有在需要的时候才去读取配置
@@ -98,11 +123,15 @@ class Config {
 		if (!$aReturn) {
 
 			$sFileDefault =& self::$_lFileDefault[$sName];
-			// if (!Tango::isInit()) {
-			// 	return $sFileDefault ? require $sFileDefault : [];
-			// }
-
 			$sFile =& self::$_lFile[$sName];
+
+			if (!$sFile && self::$_sDir) {
+				$sGuess = self::$_sDir . $sName . '.php';
+				if (file_exists($sGuess)) {
+					$sFile = $sGuess;
+				}
+			}
+
 			$aReturn = array_replace_recursive(
 				$sFileDefault ? require $sFileDefault : [],
 				$sFile ? require $sFile : []
