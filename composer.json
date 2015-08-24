@@ -9,6 +9,11 @@
 			"email": "zhengkai@gmail.com",
 			"homepage": "https://soulogic.com/",
 			"role": "Developer"
+		},
+		{
+			"name": "Ning Junjie",
+			"email": "bupt1987@gmail.com",
+			"role": "Developer"
 		}
 	],
     "autoload": {
