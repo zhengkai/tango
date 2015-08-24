@@ -4,6 +4,8 @@ cd $(dirname `readlink -f $0`)
 phpdoc_bin='./vendor/bin/phpdoc'
 doc_dir='./doc'
 
+set -e
+
 if [ ! -f "$phpdoc_bin" ]; then
 	echo 'no phpdoc, file = '$phpdoc_bin
 	exit
