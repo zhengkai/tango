@@ -45,7 +45,7 @@ if [ -z "`git branch | grep -x \"\\*\\ $VENDOR_BRANCH\"`" ]; then
 fi
 git pull --rebase
 
-cp ../mod-composer.json ./composer.json
+cp ../composer.json ./composer.json
 
 echo
 echo '                   'run composer update
