@@ -29,5 +29,6 @@ return array(
     'Symfony\\Component\\Config\\' => array($vendorDir . '/symfony/config'),
     'Seld\\JsonLint\\' => array($vendorDir . '/seld/jsonlint/src/Seld/JsonLint'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
+    'Interop\\Container\\' => array($vendorDir . '/container-interop/container-interop/src/Interop/Container'),
     'Doctrine\\Instantiator\\' => array($vendorDir . '/doctrine/instantiator/src/Doctrine/Instantiator'),
 );
