@@ -51,57 +51,7 @@ class HTML {
 	protected static $_bRobotsFollow = TRUE;
 
 	/**
-	 * 默认渲染过程，不需要执行， \Tango\Core\Tango 会自动识别并执行
-	 *
-	 * @static
-	 * @access public
-	 * @return void
-	 */
-	public static function run() {
-
-		if (!self::$_lTpl['main']) {
-			self::$_lTpl['main'] = substr($_SERVER['SCRIPT_NAME'], 0, -4);
-		}
-
-		$T =& Tango::$T;
-		$D =& Tango::$D;
-
-		$T = self::escape($T);
-
-		$s = '';
-
-		$bError = FALSE;
-		ob_start();
-		try {
-			include self::getTpl('main');
-			$s = trim(ob_get_clean());
-		} catch(\Exception $e) {
-			ob_clean();
-			$bError = TRUE;
-			TangoException::handler($e);
-		}
-
-		if (!$bError) {
-			if ($aError = Tango::getStopError()) {
-				$bError = TRUE;
-			}
-		}
-
-		if ($bError) {
-
-			Tango::$T['error'] = 'http500';
-			HTML::setTpl('main', '/error/500');
-
-			ob_start();
-			include self::getTpl('main');
-			$s = trim(ob_get_clean());
-		}
-
-		Layout::run($s);
-	}
-
-	/**
-	 * 如设成 false 则会在页面强调不要让搜索引擎索引本页
+	 * 如设成 false 则会在页面强调不要让搜索引擎索引本页所指向的链接
 	 *
 	 * @param boolean $bIndex
 	 * @static
@@ -113,7 +63,7 @@ class HTML {
 	}
 
 	/**
-	 * 如设成 false 则会在页面强调不要让搜索引擎索引本页所指向的链接
+	 * 如设成 false 则会在页面强调不要让搜索引擎索引本页
 	 *
 	 * @param boolean $bIndex
 	 * @static

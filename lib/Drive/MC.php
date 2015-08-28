@@ -76,7 +76,7 @@ class MC {
 	 * @access public
 	 * @return mixed
 	 */
-	public static function get($sKey) {
+	public static function get(string $sKey) {
 		return static::conn()->get($sKey);
 	}
 
@@ -113,7 +113,7 @@ class MC {
 	 * @access public
 	 * @return boolean
 	 */
-	public static function set($sKey, $mValue, $iExpire = 86400) {
+	public static function set(string $sKey, $mValue, int $iExpire = 86400) {
 		return static::conn()->set($sKey, $mValue, $iExpire);
 	}
 
@@ -126,8 +126,22 @@ class MC {
 	 * @access public
 	 * @return boolean
 	 */
-	public static function setMulti(array $lItem, $iExpire = 86400) {
+	public static function setMulti(array $lItem, int $iExpire = 86400) {
 		return static::conn()->setMulti($lItem, $iExpire);
+	}
+
+	/**
+	 * add
+	 *
+	 * @param string $sKey
+	 * @param mixed $mValue
+	 * @param int $iExpire
+	 * @static
+	 * @access public
+	 * @return boolean
+	 */
+	public static function add(string $sKey, $mValue, int $iExpire = 86400) {
+		return static::conn()->add($sKey, $mValue, $iExpire);
 	}
 
 	/**
@@ -140,7 +154,7 @@ class MC {
 	 * @access public
 	 * @return void
 	 */
-	public static function touchDelay($sKey, $iExpire = 86400) {
+	public static function touchDelay(string $sKey, int $iExpire = 86400) {
 		static::$_lTouch[$sKey] = $iExpire;
 	}
 

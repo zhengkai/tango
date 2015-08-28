@@ -1,8 +1,6 @@
 language: php
 
 php:
-  - 5.5
-  - 5.6
   - 7
 
 before_script:
@@ -10,4 +8,3 @@ before_script:
 
 script: 
   - phpunit -c phpunit/phpunit.xml.dist
-  - ./make_phpdoc.sh

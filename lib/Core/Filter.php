@@ -67,7 +67,7 @@ class Filter {
 			throw new TangoException('unknown HTTP method "'.$sMethod.'"');
 		}
 
-		$_IN =& Tango::$IN;
+		$_IN =& Page::$IN;
 
 		foreach ($lRule as $sKey => $sType) {
 			$mValue =& $aParm[$sKey];

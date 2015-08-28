@@ -10,6 +10,8 @@
 
 namespace Tango\Core;
 
+Config::setFileDefault('tango', dirname(__DIR__) . '/Config/tango.php');
+
 /**
  * 配置信息
  *
@@ -32,6 +34,20 @@ class Config {
 	/** 命名对应的缺省文件列表 */
 	protected static $_lFileDefault = [];
 
+	/** debug mode */
+	protected static $_bDebug;
+
+	public static function isDebug() {
+		if (static::$_bDebug === NULL) {
+			static::$_bDebug = (boolean)static::get('tango')['debug']['enable'];
+		}
+		return static::$_bDebug;
+	}
+
+	public static function setDebug(bool $bDebug) {
+		return static::$_bDebug = $bDebug;
+	}
+
 	/**
 	 * 缺省目录
 	 *
@@ -43,14 +59,14 @@ class Config {
 	 * @return void
 	 */
 	public static function setDir($sPath) {
-		if (self::$_sDir) {
+		if (static::$_sDir) {
 			throw new TangoException('dir define duplicate');
 		}
 		$sPath = rtrim(trim($sPath), '/');
 		if (!is_dir($sPath)) {
 			return FALSE;
 		}
-		self::$_sDir = $sPath . '/';
+		static::$_sDir = $sPath . '/';
 		return TRUE;
 	}
 
@@ -64,7 +80,7 @@ class Config {
 	 * @return void
 	 */
 	public static function setFile($sName, $sPath) {
-		self::_setFile($sName, $sPath);
+		static::_setFile($sName, $sPath);
 	}
 
 	/**
@@ -82,7 +98,7 @@ class Config {
 	 * @return void
 	 */
 	public static function setFileDefault($sName, $sPath) {
-		self::_setFile($sName, $sPath, TRUE);
+		static::_setFile($sName, $sPath, TRUE);
 	}
 
 	/**
@@ -99,7 +115,7 @@ class Config {
 	protected static function _setFile($sName, $sPath, $bDefault = FALSE) {
 
 		$sVar = $bDefault ? '_lFileDefault' : '_lFile';
-		$sCurrentPath =& self::${$sVar}[$sName];
+		$sCurrentPath =& static::${$sVar}[$sName];
 		if ($sCurrentPath) {
 			if (!$bDefault || $sPath !== $sCurrentPath) {
 				throw new TangoException('"'.$sName.'"'.($bDefault ? '(default)' : '').' define duplicate');
@@ -118,15 +134,15 @@ class Config {
 	 * @return array
 	 */
 	public static function get($sName) {
-		$aReturn =& self::$_lStore[$sName];
+		$aReturn =& static::$_lStore[$sName];
 
 		if (!$aReturn) {
 
-			$sFileDefault =& self::$_lFileDefault[$sName];
-			$sFile =& self::$_lFile[$sName];
+			$sFileDefault =& static::$_lFileDefault[$sName];
+			$sFile =& static::$_lFile[$sName];
 
-			if (!$sFile && self::$_sDir) {
-				$sGuess = self::$_sDir . $sName . '.php';
+			if (!$sFile && static::$_sDir) {
+				$sGuess = static::$_sDir . $sName . '.php';
 				if (file_exists($sGuess)) {
 					$sFile = $sGuess;
 				}
@@ -149,8 +165,8 @@ class Config {
 	 * @return array
 	 */
 	public static function getFile($sName) {
-		$sFile        =& self::$_lFile[$sName];
-		$sFileDefault =& self::$_lFileDefault[$sName];
+		$sFile        =& static::$_lFile[$sName];
+		$sFileDefault =& static::$_lFileDefault[$sName];
 		return [
 			'file' => $sFile,
 			'file_default' => $sFileDefault,

@@ -25,6 +25,8 @@ class Delay {
 	/** 确保只运行一次 */
 	static $_bRun = FALSE;
 
+	static $_bHook= FALSE;
+
 	/**
 	 * 增加任务
 	 *
@@ -35,13 +37,16 @@ class Delay {
 	 */
 	public static function add(callable $func) {
 		self::$_lPool[] = $func;
-		Tango::setEndTrigger('Delay');
+		if (!self::$_bHook) {
+			self::$_bHook = TRUE;
+			Page::doDelay();
+		}
 	}
 
 	/**
 	 * 一次性执行所有任务
 	 *
-	 * 这个已经被 Tango 类调用，通常不需要主动 Delay::run()
+	 * 这个已经被 Page 类调用，通常不需要主动 Delay::run()
 	 *
 	 * @static
 	 * @access public

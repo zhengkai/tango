@@ -161,17 +161,15 @@ class Log {
 				return FALSE;
 			}
 			if (filesize($sFile) > $aConfig['max_size']) {
-				return FALSE;
+				return self::$_bEnable = FALSE;
 			}
 		} else {
 			$sSpaceCheck = dirname($sFile);
 		}
 
-		if (disk_free_space($sSpaceCheck) < $aConfig['disk_free_space']) {
-			echo 'disk_free_space = ' . $sFile . ' ';
-			var_dump(disk_free_space($sFile));
-			echo "\n";
-			return FALSE;
+		if (($iSpace = disk_free_space($sSpaceCheck)) < $aConfig['disk_free_space']) {
+			// throw new Exception('not enough free disk space ' . $iSpace . '/' . $aConfig['disk_free_space']);
+			return self::$_bEnable = FALSE;
 		}
 
 		return TRUE;

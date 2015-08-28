@@ -7,18 +7,27 @@ Config::setFileDefault('layout', dirname(__DIR__).'/Config/layout.php');
 
 class Layout {
 
-	protected static $_sLayout = FALSE; // 不填表示默认
+	protected $_sBody = '';
+	protected $_sLayout = 'Single'; // 不填表示默认
 
-	public static function set($sLayout) {
-		self::$_sLayout = $sLayout;
+	public function setBody(string $sBody) {
+		$this->_sBody = $sBody;
 	}
 
-	public static function run($s) {
-		if (self::$_sLayout) {
-			$fnLayout = Config::get('layout')[self::$_sLayout];
-		} else {
-			$fnLayout = current(Config::get('layout'));
+	public function setLayout(string $sLayout) {
+		$this->_sLayout = $sLayout;
+	}
+
+	public function run() {
+		$aCall = [$this, '_run' . $this->_sLayout];
+		if (!is_callable($aCall)) {
+			throw new \Exception('unknown layout "' . $this->_sLayout . '"');
 		}
-		$fnLayout($s);
+		return $aCall();
+	}
+
+	protected function _runSingle() {
+		echo $this->_sBody;
+		return TRUE;
 	}
 }
