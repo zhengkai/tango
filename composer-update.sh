@@ -53,6 +53,8 @@ echo
 
 composer update
 
+composer dump-autoload --optimize
+
 if [ -d vendor ]; then
 	cp -R vendor/* ./
 fi
