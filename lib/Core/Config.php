@@ -86,7 +86,9 @@ class Config {
 	/**
 	 * 设定“配置文件”的默认路径
 	 *
-	 * 这个方法通常是在定义类的文件里出现，确保所有初始值已经有了，而避免找不到 key 出现 php notice
+	 * 这个方法通常是在定义类的文件里出现，确保所有初始值已经有了，
+	 * 而避免找不到 key 出现 php notice
+	 *
 	 * 可以参考 Drive\DB.php 文件开头的用法
 	 *
 	 * @see \Tango\Drive\DB class

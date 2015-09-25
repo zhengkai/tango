@@ -45,6 +45,10 @@ class Log {
 	/** 单次脚本中第几次记录 log，超过 1000 次的部分丢弃 */
 	static $_iStep = 0;
 
+	public static function getConfig() {
+		return Config::get('log');
+	}
+
 	/**
 	 * 初始化
 	 *
@@ -65,8 +69,7 @@ class Log {
 		}
 
 		$sPath = trim($aConfig['debug_path']);
-		$sPath = Util::getTmpPath($sPath);
-		$sPath = rtrim($sPath, '/');
+		$sPath = Util::getTmpDir() . '/' . $sPath;
 		if (!$sPath) {
 			return self::$_bEnable = FALSE;
 		}

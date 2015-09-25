@@ -364,7 +364,7 @@ class DB {
 	 * @return mixed
 	 * @throws TangoException
 	 */
-	protected function _query($sQuery, array $aParam = [], $sType) {
+	protected function _query(string $sQuery, array $aParam = [], $sType) {
 
 		if (empty($sQuery)) {
 			throw new TangoException('empty $sQuery', 3);
@@ -375,7 +375,7 @@ class DB {
 			$aConfigLog = Config::get('db')['log'];
 
 			if ($aConfigLog['debug']) {
-				Log::debug('query', $sQuery);
+				Log::debug('query', substr(iconv('UTF-8', 'UTF-8//IGNORE', $sQuery), 0, 50));
 			}
 
 			if ($aConfigLog['collection']) {
@@ -443,7 +443,7 @@ class DB {
 	 * @access public
 	 * @return integer
 	 */
-	public function getInsertID($sQuery, array $aParam = []) {
+	public function getInsertID(string $sQuery, array $aParam = []) {
 		if (!$this->_query($sQuery, $aParam, 'exec')) {
 			return FALSE;
 		}
