@@ -24,6 +24,16 @@ class StopwatchTest extends \PHPUnit_Framework_TestCase
 {
     const DELTA = 20;
 
+    protected function setUp()
+    {
+        with_clock_mock(true);
+    }
+
+    protected function tearDown()
+    {
+        with_clock_mock(false);
+    }
+
     public function testStart()
     {
         $stopwatch = new Stopwatch();

@@ -12,6 +12,7 @@ return array(
     'Zend\\Math\\' => array($vendorDir . '/zendframework/zend-math/src'),
     'Zend\\Json\\' => array($vendorDir . '/zendframework/zend-json/src'),
     'Zend\\I18n\\' => array($vendorDir . '/zendframework/zend-i18n/src'),
+    'Zend\\Hydrator\\' => array($vendorDir . '/zendframework/zend-hydrator/src'),
     'Zend\\Filter\\' => array($vendorDir . '/zendframework/zend-filter/src'),
     'Zend\\EventManager\\' => array($vendorDir . '/zendframework/zend-eventmanager/src'),
     'Zend\\Config\\' => array($vendorDir . '/zendframework/zend-config/src'),
@@ -29,6 +30,7 @@ return array(
     'Symfony\\Component\\Config\\' => array($vendorDir . '/symfony/config'),
     'Seld\\JsonLint\\' => array($vendorDir . '/seld/jsonlint/src/Seld/JsonLint'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
+    'JsonSchema\\' => array($vendorDir . '/justinrainbow/json-schema/src/JsonSchema'),
     'Interop\\Container\\' => array($vendorDir . '/container-interop/container-interop/src/Interop/Container'),
     'Doctrine\\Instantiator\\' => array($vendorDir . '/doctrine/instantiator/src/Doctrine/Instantiator'),
 );
