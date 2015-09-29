@@ -126,6 +126,8 @@ class Log {
 			$sMessage = json_encode($sMessage, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 		}
 
+		$sMessage = preg_replace('#\e\[?.*?[\@-~]#', '', $sMessage);
+
 		if ($bHead) {
 
 			$fTime = microtime(TRUE);

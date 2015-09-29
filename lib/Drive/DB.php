@@ -375,7 +375,7 @@ class DB {
 			$aConfigLog = Config::get('db')['log'];
 
 			if ($aConfigLog['debug']) {
-				Log::debug('query', substr(iconv('UTF-8', 'UTF-8//IGNORE', $sQuery), 0, 50));
+				Log::debug('query', $sQuery);
 			}
 
 			if ($aConfigLog['collection']) {
