@@ -103,6 +103,7 @@ class Filter {
 					$mValue = (int)$mValue;
 					break;
 				case 'bool':
+					$mValue = (bool)$mValue;
 					break;
 				case "hex":
 					if (!preg_match('#^[0-9a-f]{0,1024}$#', $mValue) || ((strlen($mValue) % 2) !== 0)) {

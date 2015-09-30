@@ -41,7 +41,6 @@ class Page {
 	private static $_sBaseDir;
 
 	private static $_bWww = TRUE;
-	private static $_bWwwOverflow = FALSE;
 
 	private static $_sURI;
 	private static $_sTpl;
@@ -74,11 +73,6 @@ class Page {
 		E_USER_ERROR,
 		E_RECOVERABLE_ERROR,
 	];
-
-	public static function wwwOverflow() {
-		self::$_bWwwOverflow = TRUE;
-		return FALSE;
-	}
 
 	public static function getBaseDir() {
 		return self::$_sBaseDir;
@@ -164,7 +158,7 @@ class Page {
 
 		self::_www();
 
-		if (http_response_code() === 404) {
+		if (http_response_code() === 404 && !ob_get_length()) {
 			static::_notfoundPage();
 			return;
 		} else if (!self::$_bWww) {
@@ -174,7 +168,7 @@ class Page {
 		switch (self::$_sContentType) {
 
 			case 'html':
-				if (self::$_bWwwOverflow || ob_get_length()) {
+				if (ob_get_length()) {
 					ob_end_flush();
 					self::$_sStep = 'end';
 					break;
@@ -244,11 +238,7 @@ class Page {
 
 		self::$_sStep = 'www';
 
-		if (self::$_sContentType === 'html') {
-			ob_start([__CLASS__, 'wwwOverflow'], 4096);
-		} else {
-			ob_start();
-		}
+		ob_start();
 
 		self::$_fTimeWww = microtime(TRUE);
 		require $sFile;
