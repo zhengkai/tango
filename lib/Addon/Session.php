@@ -50,7 +50,7 @@ class Session {
 		}
 
 		if ($_SERVER['REQUEST_TIME'] - $aUser['date_active'] > self::RECORD_MIN_SEC) {
-			self::setSession($aCookie['id'], $aCookie['session']);
+			self::updateSession($aCookie['id'], $aCookie['session']);
 		}
 
 		self::$_iUser = $aCookie['id'];
@@ -92,13 +92,15 @@ class Session {
 		return $oDB->exec($sQuery);
 	}
 
-	public static function debugUser($iUser) {
+	public static function setSession($iUser) {
 
 		self::$_iUser = $iUser;
 		self::$_bAuth = TRUE;
+
+		self::updateSession($iUser);
 	}
 
-	public static function setSession(int $iUser, int $iSession = 0) {
+	public static function updateSession(int $iUser, int $iSession = 0) {
 
 		if (!self::$_bSetSession) {
 			return FALSE;

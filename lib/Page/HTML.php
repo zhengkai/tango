@@ -166,16 +166,16 @@ class HTML {
 
 		// css
 		foreach (array_merge(Config::get('html')['css'], self::$_lCSS) as $sCSS) {
-			$sReturn .= '<link rel="stylesheet" href="'.$sCSS.'" type="text/css" />'."\n";
+			$sReturn .= '<link rel="stylesheet" href="' . $sCSS . '" type="text/css" />'."\n";
 		}
 
 		// js
 		foreach (array_merge(Config::get('html')['js'], self::$_lJS) as $sJS) {
-			$sReturn .= '<script src="'.$sJS.'"></script>'."\n";
+			$sReturn .= '<script src="' . $sJS . '"></script>' . "\n";
 		}
 
 		if (self::$_sAddMeta) {
-			$sReturn .= self::$_sAddMeta."\n";
+			$sReturn .= self::$_sAddMeta;
 		}
 
 		return $sReturn;
@@ -190,7 +190,7 @@ class HTML {
 	 * @return void
 	 */
 	public static function addMeta($s) {
-		self::$_sAddMeta = trim($s);
+		self::$_sAddMeta .= trim($s) . "\n";
 	}
 
 	/**
