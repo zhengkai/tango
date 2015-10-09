@@ -144,7 +144,7 @@ class HTML {
 	 */
 	public static function getTitle() {
 		return (self::$_sTitle ? self::$_sTitle.' - ' : '')
-			.Config::get('html')['title'];
+			. self::getConfig()['title'];
 	}
 
 	/**
@@ -165,12 +165,12 @@ class HTML {
 		}
 
 		// css
-		foreach (array_merge(Config::get('html')['css'], self::$_lCSS) as $sCSS) {
+		foreach (array_merge(self::getConfig()['css'], self::$_lCSS) as $sCSS) {
 			$sReturn .= '<link rel="stylesheet" href="' . $sCSS . '" type="text/css" />'."\n";
 		}
 
 		// js
-		foreach (array_merge(Config::get('html')['js'], self::$_lJS) as $sJS) {
+		foreach (array_merge(self::getConfig()['js'], self::$_lJS) as $sJS) {
 			$sReturn .= '<script src="' . $sJS . '"></script>' . "\n";
 		}
 
@@ -312,5 +312,16 @@ class HTML {
 		}
 
 		return $lReturn;
+	}
+
+	/**
+	 * 读取相关配置
+	 *
+	 * @static
+	 * @access public
+	 * @return array
+	 */
+	public static function getConfig() {
+		return \Tango\Core\Config::get('html');
 	}
 }
