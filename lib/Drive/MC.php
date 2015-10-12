@@ -167,4 +167,17 @@ class MC {
 		}
 		static::$_lTouch = [];
 	}
+
+	/**
+	 * delete
+	 *
+	 * @param string $sKey
+	 * @param int $iTime
+	 * @static
+	 * @access public
+	 * @return boolean
+	 */
+	public static function delete(string $sKey, int $iTime = 0) {
+		return static::conn()->delete($sKey, $iTime);
+	}
 }
