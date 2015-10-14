@@ -64,6 +64,7 @@ class Page {
 		'json' => 'application/json',
 		'jsonp' => 'application/javascript',
 		'xml' => 'application/xml',
+		'css' => 'text/css',
 	];
 
 	const ERROR_STOP_CODE_LIST = [
@@ -183,6 +184,7 @@ class Page {
 				break;
 
 			case 'txt':
+			case 'css':
 				self::$_sStep = 'end';
 				self::sendContentTypeHeader();
 				ob_end_flush();
