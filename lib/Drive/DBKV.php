@@ -40,36 +40,45 @@ class DBKV {
 		$this->_iID = $iID;
 	}
 
-	public function update(string $sKey, $mVal) {
+	public function set(array $aSet) {
+
+		$bSuccess = FALSE;
 
 		foreach (range(1, 3) as $iTry) {
 
 			$this->_init();
-			$this->_aData[$sKey] = $mVal;
+			$this->_aData = $aSet + $this->_aData;
+
+			$sQuerySet = 'SET content = "' . addslashes(json_encode($this->_aData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) . '", '
+					. 'date_update = ' . $_SERVER['REQUEST_TIME'] . ', ';
 
 			if ($this->_iVer) {
 				$sQuery = 'UPDATE ' . static::$_sDBTable . ' '
-					. 'SET content = "' . addslashes(json_encode($this->_aData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) . '", '
-					. 'date_update = ' . $_SERVER['REQUEST_TIME'] . ', '
-					. 'ver = ' . ($this->_iVer + 1) . ' '
-					. 'WHERE ver = ' . $this->_iVer;
+					. $sQuerySet
+					. 'ver = ver + 1 '
+					. 'WHERE `' . static::$_sKey . '` = ' . $this->_iID;
 			} else {
 				$sQuery = 'INSERT IGNORE INTO ' . static::$_sDBTable . ' '
-					. 'SET content = "' . addslashes(json_encode($this->_aData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) . '", '
-					. 'date_update = ' . $_SERVER['REQUEST_TIME'] . ', '
+					. $sQuerySet
+					. '`' . static::$_sKey . '` = ' . $this->_iID . ', '
 					. 'ver = 1';
 			}
 
 			$oDB = DB::getInstance(static::$_sDB);
 			if ($oDB->exec($sQuery)) {
 				$this->_iVer++;
-				return TRUE;
+				$bSuccess = TRUE;
+				break;
 			}
 
-			$aData = [];
+			$this->_aData = NULL;
 		}
 
-		throw new TangoException('update fail');
+		if (!$bSuccess) {
+			throw new TangoException('update fail');
+		}
+
+		return TRUE;
 	}
 
 	public function get() {
