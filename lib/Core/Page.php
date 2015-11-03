@@ -75,6 +75,30 @@ class Page {
 		E_RECOVERABLE_ERROR,
 	];
 
+	public static function cacheForever() {
+
+		if (
+			!empty($_SERVER['HTTP_IF_MODIFIED_SINCE'])
+			|| !empty($_SERVER['HTTP_IF_NONE_MATCH'])
+		) {
+			http_response_code(304);
+			self::stopWww();
+			return TRUE;
+		}
+
+		header('ETag: "cache-forever"');
+		header('Last-Modified: ' . gmdate('D, d M Y H:i:s T', time()));
+
+		self::setExpireMax();
+
+		return FALSE;
+	}
+
+	public static function setExpireMax() {
+		header('Expires: Thu, 31 Dec 2037 23:55:55 GMT');
+		header('Cache-Control: max-age=315360000');
+	}
+
 	public static function getBaseDir() {
 		return self::$_sBaseDir;
 	}
@@ -162,7 +186,27 @@ class Page {
 		if (http_response_code() === 404 && !ob_get_length()) {
 			static::_notfoundPage();
 			return;
-		} else if (!self::$_bWww) {
+		}
+
+		self::_parseContentType();
+
+		if (self::$_bDelay) {
+			fastcgi_finish_request();
+			Delay::run();
+		}
+	}
+
+	/**
+	 * 根据扩展名的不同做后续处理
+	 * 为了不让 start() 太长而摘了出来
+	 *
+	 * @static
+	 * @access public
+	 * @return void
+	 */
+	public static function _parseContentType() {
+
+		if (!self::$_bWww) {
 			return;
 		}
 
@@ -208,11 +252,6 @@ class Page {
 				self::sendContentTypeHeader('txt');
 				echo 'ERROR: incomplete content-type parser "', self::$_sContentType, '"', "\n";
 				break;
-		}
-
-		if (self::$_bDelay) {
-			fastcgi_finish_request();
-			Delay::run();
 		}
 	}
 
