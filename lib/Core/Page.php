@@ -157,10 +157,8 @@ class Page {
 	}
 
 	public static function exceptionHandler(\Throwable $ex) {
-		self::$_oThrow = $ex;
-		if (Config::isDebug()) {
-			error_log('PHP Fatal error: ' . $ex->getMessage() . ' in file ' . $ex->getFile() . ':' . $ex->getLine());
-		}
+		static::$_oThrow = $ex;
+		error_log('PHP Fatal error: ' . $ex->getMessage() . ' in file ' . $ex->getFile() . ':' . $ex->getLine());
 	}
 
 	public static function start($sURI) {
@@ -387,13 +385,15 @@ class Page {
 		}
 
 		$aError = error_get_last();
-		if ($aError && self::isStopError($aError['type'])) {
-			// 还不知道什么情况下会 php7 报 error 而不是 ErrorException，
-			// 不知道如何触发，先这么写上吧
-			self::$_oThrow = new \ErrorException($aError['message'], 0, $aError['type'], $aError['file'], $aError['line']);
+		if ($aError) {
 			error_clear_last();
-			static::_debugPage();
-			return;
+			if (self::isStopError($aError['type'])) {
+				// 还不知道什么情况下会 php7 报 error 而不是 ErrorException，
+				// 不知道如何触发，先这么写上吧
+				self::$_oThrow = new \ErrorException($aError['message'], 0, $aError['type'], $aError['file'], $aError['line']);
+				static::_debugPage();
+				return;
+			}
 		}
 
 		switch (self::$_sStep) {
