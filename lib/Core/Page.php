@@ -374,7 +374,7 @@ class Page {
 	}
 
 	public static function getThrow() {
-		return self::$_oThrow;
+		return static::$_oThrow;
 	}
 
 	public static function shutdown() {
@@ -385,15 +385,13 @@ class Page {
 		}
 
 		$aError = error_get_last();
-		if ($aError) {
+		if ($aError && self::isStopError($aError['type'])) {
+			// 还不知道什么情况下会 php7 报 error 而不是 ErrorException，
+			// 不知道如何触发，先这么写上吧
+			static::$_oThrow = new \ErrorException($aError['message'], 0, $aError['type'], $aError['file'], $aError['line']);
 			error_clear_last();
-			if (self::isStopError($aError['type'])) {
-				// 还不知道什么情况下会 php7 报 error 而不是 ErrorException，
-				// 不知道如何触发，先这么写上吧
-				self::$_oThrow = new \ErrorException($aError['message'], 0, $aError['type'], $aError['file'], $aError['line']);
-				static::_debugPage();
-				return;
-			}
+			static::_debugPage();
+			return;
 		}
 
 		switch (self::$_sStep) {
@@ -407,8 +405,8 @@ class Page {
 
 			case 'tpl':
 
-				if (!self::$_oThrow) {
-					self::$_oThrow = new TangoException(self::$_sStep . ' 异常，错误：使用 return，别用 exit');
+				if (!static::$_oThrow) {
+					static::$_oThrow = new TangoException(self::$_sStep . ' 异常，错误：使用 return，别用 exit');
 				}
 				static::_debugPage();
 				break;
