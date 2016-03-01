@@ -70,6 +70,7 @@ class Log {
 
 		$sPath = trim($aConfig['debug_path']);
 		$sPath = Util::getTmpDir() . '/' . $sPath;
+		$sPath = rtrim($sPath, '/');
 		if (!$sPath) {
 			return self::$_bEnable = FALSE;
 		}
@@ -135,7 +136,7 @@ class Log {
 			$sTime = date(Config::get('log')['time_format'], $fTime);
 			$sTime .= substr(sprintf('%.03f' ,$fTime), -4);
 
-			$fTimeCost = sprintf('%.06f', $fTime - $_SERVER['REQUEST_TIME_FLOAT']);
+			$fTimeCost = sprintf('%10s', sprintf('%.06f', $fTime - $_SERVER['REQUEST_TIME_FLOAT']));
 			$sHead = '[' . $sTime . '] [' . $fTimeCost . '] ' . "\n"
 				. ($_SERVER['REQUEST_URI'] ?: $_SERVER['SCRIPT_FILENAME'])."\n"
 				. "\n";
