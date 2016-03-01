@@ -56,15 +56,28 @@ class Filter {
 		}
 		self::$_bCheck = TRUE;
 
-		if ($sMethod == 'POST' || $sMethod == 'POST_NO_REF_CHECK') {
-			if ($sMethod == 'POST') {
+		switch ((string)$sMethod) {
+
+			case 'POST':
 				// TODO: referer check
-			}
-			$aParm =& $_POST;
-		} else if ($sMethod == 'GET') {
-			$aParm =& $_GET;
-		} else {
-			throw new TangoException('unknown HTTP method "'.$sMethod.'"');
+			case 'POST_NO_REF_CHECK':
+				$aParm =& $_POST;
+				break;
+
+			case 'GET':
+				$aParm =& $_GET;
+				break;
+
+			case 'POST_JSON':
+				$aParm = json_decode(file_get_contents('php://input'), TRUE);
+				if (!is_array($aParm)) {
+					throw new TangoException('wrong POST JSON');
+				}
+				break;
+
+			default:
+				throw new TangoException('unknown HTTP method "'.$sMethod.'"');
+				break;
 		}
 
 		$_IN =& Page::$IN;
