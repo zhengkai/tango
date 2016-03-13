@@ -11,6 +11,7 @@
 namespace Tango\Page;
 
 use \Tango\Core\Tango;
+use \Tango\Core\Page;
 use \Tango\Core\Config;
 
 Config::setFileDefault('html', dirname(__DIR__).'/Config/html.php');
@@ -24,13 +25,8 @@ Config::setFileDefault('html', dirname(__DIR__).'/Config/html.php');
 class HTML {
 
 	/** 默认模板路径 */
-	protected static $_lTpl = [
-		'head'  => '/head',
-		'foot'  => '/foot',
-		'nav'   => '/nav',
-		'error' => '/error',
-		'main'  => '',
-	];
+	protected static $_sTpl = '';
+	protected static $_sTplType = '';
 
 	/** JS 列表 */
 	protected static $_lJS = [];
@@ -75,55 +71,6 @@ class HTML {
 	}
 
 	/**
-	 * 如果 tpl 跟 www 的名字不一致，需在这里定义
-	 *
-	 * @param string|array $lTpl
-	 * @param string $sValue
-	 * @static
-	 * @access public
-	 * @return void
-	 */
-	public static function setTpl($lTpl, $sValue = NULL) {
-
-		if (is_string($lTpl)) {
-			$lTpl = [$lTpl => $sValue];
-		}
-		foreach ($lTpl as $sKey => $sValue) {
-			if (!$sValue) {
-				die('setTpl "'.$sKey.'" empty');
-			}
-			if (!isset(self::$_lTpl[$sKey])) {
-				die('setTpl "'.$sKey.'" unknown');
-			}
-			self::$_lTpl[$sKey] = $sValue;
-		}
-	}
-
-	/**
-	 * 获取 tpl 对应的文件
-	 *
-	 * @param string $sTpl
-	 * @static
-	 * @access public
-	 * @return string
-	 */
-	public static function getTpl($sTpl) {
-		return self::_getFile(self::$_lTpl[$sTpl].'.php');
-	}
-
-	/**
-	 * 获取 tpl 对应的文件（通过相对路径而非 tpl 的类别名）
-	 *
-	 * @param string $sTpl
-	 * @static
-	 * @access public
-	 * @return string
-	 */
-	protected static function _getFile($sFile) {
-		return SITE_ROOT.'/tpl'.$sFile;
-	}
-
-	/**
 	 * 设置 <title>
 	 *
 	 * @param string $sTitle
@@ -133,6 +80,41 @@ class HTML {
 	 */
 	public static function setTitle($sTitle) {
 		self::$_sTitle = $sTitle;
+	}
+
+	public static function setTpl(string $sTpl) {
+
+		self::$_sTpl = $sTpl;
+	}
+
+	public static function setTplType(string $sType) {
+
+		self::$_sTplType = $sType;
+	}
+
+	public static function getTpl(string $sURI): string {
+
+		$sBase = Page::getBaseDir() . '/tpl';
+
+		if (!self::$_sTpl && !self::$_sTplType) {
+			return $sBase . $sURI;
+		}
+
+		if (self::$_sTpl) {
+			if (substr(self::$_sTpl, 0, 1) === '/') {
+				$sReturn = self::$_sTpl;
+			} else {
+				$sReturn = dirname($sURI) . '/' . self::$_sTpl;
+			}
+		} else {
+			$sReturn = substr($sURI, 0, -4);
+		}
+
+		if (self::$_sTplType) {
+			$sReturn .= self::$_sTplType;
+		}
+
+		return $sBase . $sReturn . '.php';
 	}
 
 	/**

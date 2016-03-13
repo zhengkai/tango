@@ -103,10 +103,10 @@ class Page {
 		return self::$_sBaseDir;
 	}
 
-	protected static function _checkPathSafe(string $sPath, string $sSubDir = '') {
+	public static function checkPathSafe(string $sPath, string $sSubDir = '') {
 		$sBaseDir = self::$_sBaseDir . '/';
 		if ($sSubDir) {
-			$sBaseDir .= trim($sSubDir, '/') . '/';
+			$sBaseDir .= rtrim($sSubDir, '/') . '/';
 		}
 		return strpos($sPath, $sBaseDir) === 0;
 	}
@@ -164,8 +164,8 @@ class Page {
 	public static function start($sURI) {
 
 		if (!self::$_bInit) {
-			set_exception_handler([get_called_class(), 'exceptionHandler']);
-			register_shutdown_function([get_called_class(), 'shutdown']);
+//			set_exception_handler([get_called_class(), 'exceptionHandler']);
+//			register_shutdown_function([get_called_class(), 'shutdown']);
 		}
 		self::$_bInit = TRUE;
 
@@ -266,7 +266,7 @@ class Page {
 			self::_missingPage(self::$_sURI, $sFile);
 			return;
 		}
-		if (!self::_checkPathSafe($sFile, 'www')) {
+		if (!self::checkPathSafe($sFile, 'www')) {
 			self::$_sStep = 'end';
 			throw new TangoException('path ' . self::$_sURI . ' unsafe');
 		}
@@ -292,19 +292,6 @@ class Page {
 		return self::$_fTimeTpl;
 	}
 
-	public static function setTpl(string $sTpl) {
-
-		if (!preg_match('#\.php$#', $sTpl)) {
-			$sTpl .= '.php';
-		}
-
-		if (substr($sTpl, 0, 1) === '/') {
-			self::$_sTpl = $sTpl;
-		} else {
-			self::$_sTpl = dirname(self::$_sURI) . '/' . $sTpl;
-		}
-	}
-
 	protected static function _tpl(string $sURI = '') {
 
 		ob_start();
@@ -315,14 +302,15 @@ class Page {
 
 		self::$_sStep = 'tpl';
 
-		if (!$sURI) {
-			$sURI = self::$_sTpl ?: self::$_sURI;
-		}
-		$sFile = self::$_sBaseDir . '/tpl' . $sURI;
+		j(self::$_sURI);
+		HTML::setTpl('/abc');
+		j(HTML::getTpl(self::$_sURI));
+		return;
+		$sTpl = self::$_sBaseDir . '/tpl' . HTML::getTpl(self::$_sURI);
 
-		if (!self::_checkPathSafe($sFile, 'tpl')) {
+		if (!self::checkPathSafe($sTpl, 'tpl')) {
 			self::$_sStep = 'end';
-			throw new TangoException('path ' . $sURI . ' unsafe');
+			throw new TangoException('file ' . $sTpl. ' unsafe');
 		}
 
 		self::$_fTimeTpl = microtime(TRUE);
