@@ -99,19 +99,24 @@ class HTML {
 		if (!self::$_sTpl && !self::$_sTplType) {
 			return $sBase . $sURI;
 		}
+		$sReturn = '';
 
 		if (self::$_sTpl) {
 			if (substr(self::$_sTpl, 0, 1) === '/') {
 				$sReturn = self::$_sTpl;
 			} else {
-				$sReturn = dirname($sURI) . '/' . self::$_sTpl;
+				$sReturn = dirname($sURI);
+				if ($sReturn !== '/') {
+					$sReturn .= '/';
+				}
+				$sReturn .= self::$_sTpl;
 			}
 		} else {
 			$sReturn = substr($sURI, 0, -4);
 		}
 
 		if (self::$_sTplType) {
-			$sReturn .= self::$_sTplType;
+			$sReturn .= '.' . self::$_sTplType;
 		}
 
 		return $sBase . $sReturn . '.php';

@@ -38,11 +38,11 @@ class Page {
 	private static $_bInit = FALSE;
 	private static $_sStep = 'init';
 
-	private static $_sBaseDir;
+	protected static $_sBaseDir;
 
 	private static $_bWww = TRUE;
 
-	private static $_sURI;
+	public static $_sURI;
 	private static $_sTpl;
 
 	private static $_bDelay; // 是否执行 Delay::run()
@@ -161,7 +161,7 @@ class Page {
 		error_log('PHP Fatal error: ' . $ex->getMessage() . ' in file ' . $ex->getFile() . ':' . $ex->getLine());
 	}
 
-	public static function start($sURI) {
+	public static function start(string $sURI) {
 
 		if (!self::$_bInit) {
 //			set_exception_handler([get_called_class(), 'exceptionHandler']);
