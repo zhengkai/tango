@@ -302,11 +302,7 @@ class Page {
 
 		self::$_sStep = 'tpl';
 
-		j(self::$_sURI);
-		HTML::setTpl('/abc');
-		j(HTML::getTpl(self::$_sURI));
-		return;
-		$sTpl = self::$_sBaseDir . '/tpl' . HTML::getTpl(self::$_sURI);
+		$sTpl = HTML::getTpl(self::$_sURI);
 
 		if (!self::checkPathSafe($sTpl, 'tpl')) {
 			self::$_sStep = 'end';
@@ -314,7 +310,7 @@ class Page {
 		}
 
 		self::$_fTimeTpl = microtime(TRUE);
-		require $sFile;
+		require $sTpl;
 		self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
 
 		$sBody = ob_get_clean();
