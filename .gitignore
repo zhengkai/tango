@@ -8,7 +8,7 @@
 /.project
 /.settings
 
-/tmp-vendor/
+/vendor/
 /composer.lock
 
 /phpunit/flock/lockname_test.*
