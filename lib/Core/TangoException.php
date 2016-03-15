@@ -10,8 +10,6 @@
 
 namespace Tango\Core;
 
-Config::setFileDefault('log',   dirname(__DIR__).'/Config/log.php');
-
 /**
  * 异常
  *
@@ -136,7 +134,7 @@ class TangoException extends \Exception {
 
 		$sHashType = hash('crc32', json_encode($aTrace, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-		$sTime = date(Config::get('log')['time_format'], $fTime);
+		$sTime = date(Log::getConfig()['time_format'], $fTime);
 		$sTime .= substr(sprintf('%.03f' ,$fTime), -4);
 
 		$sFunc = $aTrace['class'].$aTrace['type'].$aTrace['function'];

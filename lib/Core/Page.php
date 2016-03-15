@@ -12,6 +12,8 @@ namespace Tango\Core;
 
 use Tango\Page\HTML;
 
+Config::setFileDefault('page', dirname(__DIR__) . '/Config/page.php');
+
 /**
  * 页面输出
  *
@@ -22,237 +24,428 @@ use Tango\Page\HTML;
  */
 class Page {
 
-	/** 当前的扩展名 */
-	protected static $_aExt = FALSE;
+	/** www 传给 tpl 的变量，经过 HTML 过滤 */
+	public static $T = [];
 
-	/** 可用的扩展名 */
-	protected static $_lExt = [
-		'html' => [
-			'mime' => 'text/html',
-		],
-		'md' => [
-			'mime' => 'text/html',
-		],
-		'json' => [
-			'mime' => 'application/json',
-		],
-		'jsonp' => [
-			'mime' => 'application/javascript',
-		],
-		'text' => [
-			'mime' => 'text/plain',
-		],
-		'xml' => [
-			'mime' => 'application/xml',
-		],
+	/** www 传给 tpl 的变量，没有 HTML 过滤 */
+	public static $D = [];
+
+	/** 经过 \Tango\Core\Filter 过滤的输入参数（原 $_GET/$_POST） */
+	public static $IN = [];
+
+	private static $_bFail = FALSE;
+
+	private static $_bInit = FALSE;
+	private static $_sStep = 'init';
+
+	protected static $_sBaseDir;
+
+	private static $_bWww = TRUE;
+
+	public static $_sURI;
+	private static $_sTpl;
+
+	private static $_bDelay; // 是否执行 Delay::run()
+
+	private static $_oLayout;
+	private static $_sLayout;
+
+	private static $_oThrow;
+
+	private static $_fTimeWww;
+	private static $_fTimeTpl;
+
+	private static $_sContentType = 'html';
+	private static $_bSendContentTypeHeader = FALSE;
+
+	const CONTENT_TYPE_LIST = [
+		'html' => 'text/html',
+		'txt' => 'text/plain',
+		'json' => 'application/json',
+		'jsonp' => 'application/javascript',
+		'xml' => 'application/xml',
+		'css' => 'text/css',
 	];
 
-	/** 是否要做模板部分的处理 */
-	protected static $_bParse = FALSE;
+	const ERROR_STOP_CODE_LIST = [
+		E_ERROR,
+		E_CORE_ERROR,
+		E_COMPILE_ERROR,
+		E_USER_ERROR,
+		E_RECOVERABLE_ERROR,
+	];
 
-	/** 是否已经处理完模板 */
-	protected static $_bWellDone = FALSE;
+	public static function cacheForever() {
 
-	/**
-	 * 是否已经处理完模板
-	 * @static
-	 * @access public
-	 * @return boolean
-	 */
-	public static function isWellDone() {
-		return self::$_bWellDone;
-	}
-
-	/**
-	 * 在必要时重置输出（如 www 页出现异常后重新渲染显示 error 500 页面），通常情况下不需要用到
-	 *
-	 * @static
-	 * @access public
-	 * @return void
-	 */
-	public static function reset() {
-		self::$_bParse = FALSE;
-	}
-
-	/**
-	 * 通用的错误页面
-	 *
-	 * @param string $sError 简短的错误信息
-	 * @static
-	 * @access public
-	 * @return void
-	 * @throws TangoException
-	 */
-	public static function error($sError) {
-		if (self::$_bParse) {
-			throw new TangoException('Page has been sent');
-		}
-		Tango::$T['error'] = $sError;
-	}
-
-	/**
-	 * 调试页面（如仅限 127.0.0.1 访问的页面）对于不符合要求的请求显示 404，使外部无法确认调试页面是否是该地址
-	 *
-	 * @static
-	 * @access public
-	 * @return void
-	 */
-	public static function debugGate() {
-		if (!Tango::isDebug()) {
-			self::error('http404');
-			return FALSE;
-		}
-		return TRUE;
-	}
-
-	/**
-	 * 设置扩展名（输出类型）
-	 *
-	 * @param string $sExt 在 self::$_lExt 里列举的那些 key（html/json 等）
-	 * @param boolean $bTry 如果为 true，在失败的时候不报错
-	 * @static
-	 * @access public
-	 * @return void
-	 */
-	public static function set($sExt, $bTry = FALSE) {
-		if (self::$_aExt) {
-			if (!$bTry) {
-				trigger_error('ext exists');
-			}
-			return FALSE;
-		}
-		if (!isset(self::$_lExt[$sExt])) {
-			if (!$bTry) {
-				trigger_error('unknown ext "'.$sExt.'"');
-			}
-			return FALSE;
-		}
-		$aExt = [
-			'ext' => $sExt,
-			'ob' => TRUE,
-		];
-		$aExt += self::$_lExt[$sExt];
-		self::$_aExt = $aExt;
-		return TRUE;
-	}
-
-	/**
-	 * 获取当前扩展名
-	 *
-	 * @static
-	 * @access public
-	 * @return array
-	 */
-	public static function get() {
-		return self::$_aExt;
-	}
-
-	/**
-	 * 不处理模板页
-	 *
-	 * @static
-	 * @access public
-	 * @return void
-	 */
-	public static function stopParse() {
-		self::$_bParse = TRUE;
-	}
-
-	/**
-	 * 页面跳转
-	 *
-	 * @param string $sURL 将要跳转的 URL
-	 * @static
-	 * @access public
-	 * @return void
-	 * @throws TangoException
-	 */
-	public static function jump($sURL) {
-		if (self::$_bParse) {
-			throw new TangoException('jump before parse');
-		}
-		self::$_bParse = TRUE;
-		header('Location: ' . $sURL);
-		exit;
-	}
-
-	/**
-	 * 处理模板页
-	 *
-	 * @static
-	 * @access public
-	 * @return void
-	 */
-	public static function parse() {
-
-		if (self::$_bParse) {
-			return FALSE;
-		}
-		self::$_bParse = TRUE;
-
-		Page::set('html', TRUE);
-
-		$sExt = self::$_aExt['ext'];
-
-		if ($sExt === 'html') {
-
-			if ($aError = Tango::getStopError()) {
-				Tango::$T['error'] = 'http500';
-			}
-
-			if (!empty(Tango::$T['error'])) {
-				switch ((string)Tango::$T['error']) {
-					case 'http500':
-						HTML::setTpl('main', '/error/500');
-						break;
-					case 'http404':
-						HTML::setTpl('main', '/error/404');
-						break;
-					default:
-						HTML::setTpl('main', '/error/default');
-						break;
-				}
-			}
-
-			HTML::run();
-
+		if (
+			!empty($_SERVER['HTTP_IF_MODIFIED_SINCE'])
+			|| !empty($_SERVER['HTTP_IF_NONE_MATCH'])
+		) {
+			http_response_code(304);
+			self::stopWww();
 			return TRUE;
 		}
 
-		$call = [__CLASS__, '_parse'.ucfirst($sExt)];
-		if (is_callable($call)) {
-			header('Content-Type: '.self::$_aExt['mime'].'; charset=utf-8');
-			$call();
-			return TRUE;
+		header('ETag: "cache-forever"');
+		header('Last-Modified: ' . gmdate('D, d M Y H:i:s T', time()));
+
+		self::setExpireMax();
+
+		return FALSE;
+	}
+
+	public static function setExpireMax() {
+		header('Expires: Thu, 31 Dec 2037 23:55:55 GMT');
+		header('Cache-Control: max-age=315360000');
+	}
+
+	public static function getBaseDir() {
+		return self::$_sBaseDir;
+	}
+
+	public static function checkPathSafe(string $sPath, string $sSubDir = '') {
+		$sBaseDir = self::$_sBaseDir . '/';
+		if ($sSubDir) {
+			$sBaseDir .= rtrim($sSubDir, '/') . '/';
+		}
+		return strpos($sPath, $sBaseDir) === 0;
+	}
+
+	public static function setContentType(string $sType) {
+
+		if (!in_array(self::$_sStep, ['init', 'www'])) {
+			self::$_sStep = 'end';
+			throw new TangoException('only can be use in www page');
+		}
+		if (!array_key_exists($sType, self::CONTENT_TYPE_LIST)) {
+			self::$_sStep = 'end';
+			throw new TangoException('unknown content type "'. $sType .'" / '.implode(array_keys(self::CONTENT_TYPE_LIST)));
+		}
+		self::$_sContentType = $sType;
+	}
+
+	protected static function sendContentTypeHeader(string $sContentType = '') {
+
+		if (self::$_bSendContentTypeHeader) {
+			self::$_sStep = 'end';
+			throw new TangoException('duplicate set');
+		}
+		self::$_bSendContentTypeHeader = TRUE;
+
+		if (array_key_exists($sContentType, self::CONTENT_TYPE_LIST)) {
+
+			$sOut = self::CONTENT_TYPE_LIST[$sContentType];
+
+		} else if ($sContentType) {
+
+			$sOut = $sContentType;
+
 		} else {
-			header('Content-Type: text/plain; charset=utf-8');
-			echo "\n\t", 'Error: method "'.$sExt.'" incomplete', "\n";
-			return FALSE;
+
+			$sOut = self::CONTENT_TYPE_LIST[self::$_sContentType];
+		}
+
+		header('Content-Type: ' . $sOut);
+	}
+
+	public static function setLayout(string $sLayout) {
+		self::$_sLayout = $sLayout;
+	}
+
+	public static function getConfig() {
+		return Config::get('page');
+	}
+
+	public static function exceptionHandler(\Throwable $ex) {
+		static::$_oThrow = $ex;
+		error_log('PHP Fatal error: ' . $ex->getMessage() . ' in file ' . $ex->getFile() . ':' . $ex->getLine());
+	}
+
+	public static function start(string $sURI) {
+
+		if (!self::$_bInit) {
+			set_exception_handler([get_called_class(), 'exceptionHandler']);
+			register_shutdown_function([get_called_class(), 'shutdown']);
+		}
+		self::$_bInit = TRUE;
+
+		if (ob_get_length() !== FALSE) {
+			ob_end_flush();
+		}
+
+		if (!self::$_sBaseDir) {
+			self::$_sBaseDir = dirname(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0]['file']);
+		}
+
+		self::$_sURI = $sURI;
+
+		self::_www();
+
+		if (http_response_code() === 404 && !ob_get_length()) {
+			static::_notfoundPage();
+			return;
+		}
+
+		self::_parseContentType();
+
+		if (self::$_bDelay) {
+			fastcgi_finish_request();
+			Delay::run();
 		}
 	}
 
 	/**
-	 * 如果扩展名是 txt 时的输出
+	 * 根据扩展名的不同做后续处理
+	 * 为了不让 start() 太长而摘了出来
 	 *
 	 * @static
-	 * @access protected
+	 * @access public
 	 * @return void
 	 */
-	protected static function _parseText() {
-		Tango::$T += ['output' => ''];
-		echo Tango::$T['output'];
+	public static function _parseContentType() {
+
+		if (!self::$_bWww) {
+			return;
+		}
+
+		switch (self::$_sContentType) {
+
+			case 'html':
+				if (ob_get_length()) {
+					ob_end_flush();
+					self::$_sStep = 'end';
+					break;
+				}
+				ob_end_clean();
+
+				self::$T = HTML::escape(self::$T);
+
+				self::_tpl();
+
+				self::$_sStep = 'end';
+				break;
+
+			case 'txt':
+			case 'css':
+				self::$_sStep = 'end';
+				self::sendContentTypeHeader();
+				ob_end_flush();
+				break;
+
+			case 'json':
+				self::$_sStep = 'end';
+				self::sendContentTypeHeader();
+				if ($iLength = ob_get_length()) {
+					trigger_error('www output when json, length = ' . $iLength);
+					ob_end_flush();
+				} else {
+					ob_end_clean();
+				}
+				echo json_encode(self::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+				break;
+
+			default:
+				self::$_sStep = 'end';
+				ob_end_clean();
+				self::sendContentTypeHeader('txt');
+				echo 'ERROR: incomplete content-type parser "', self::$_sContentType, '"', "\n";
+				break;
+		}
+	}
+
+	public static function doDelay() {
+		if (PHP_SAPI === 'fpm-fcgi') {
+			self::$_bDelay = TRUE;
+		}
+	}
+
+	private static function _www() {
+
+		$sFile = self::$_sBaseDir . '/www' . self::$_sURI;
+		if (!is_file($sFile)) {
+			self::_missingPage(self::$_sURI, $sFile);
+			return;
+		}
+		if (!self::checkPathSafe($sFile, 'www')) {
+			self::$_sStep = 'end';
+			throw new TangoException('path ' . self::$_sURI . ' unsafe');
+		}
+
+		$T =& self::$T;
+		$D =& self::$D;
+		$_IN =& self::$IN;
+
+		self::$_sStep = 'www';
+
+		ob_start();
+
+		self::$_fTimeWww = microtime(TRUE);
+		require $sFile;
+		self::$_fTimeWww = microtime(TRUE) - self::$_fTimeWww;
+	}
+
+	public static function getTimeWww() {
+		return self::$_fTimeWww;
+	}
+
+	public static function getTimeTpl() {
+		return self::$_fTimeTpl;
+	}
+
+	protected static function _tpl(string $sURI = '') {
+
+		ob_start();
+
+		$T =& self::$T;
+		$D =& self::$D;
+		$_IN =& self::$IN;
+
+		self::$_sStep = 'tpl';
+
+		$sTpl = HTML::getTpl(self::$_sURI);
+
+		if (!self::checkPathSafe($sTpl, 'tpl')) {
+			self::$_sStep = 'end';
+			throw new TangoException('file ' . $sTpl. ' unsafe');
+		}
+
+		self::$_fTimeTpl = microtime(TRUE);
+		require $sTpl;
+		self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
+
+		$sBody = ob_get_clean();
+
+		self::$_sStep = 'layout';
+		$oLayout = static::initLayout();
+		if (self::$_sLayout) {
+			$oLayout->setLayout(self::$_sLayout);
+		}
+		$oLayout->setBody($sBody);
+		$oLayout->run();
+
 		return TRUE;
 	}
 
-	/**
-	 * 如果扩展名是 json 时的输出
-	 *
-	 * @static
-	 * @access protected
-	 * @return void
-	 */
-	protected static function _parseJson() {
-		echo json_encode(Tango::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-		return TRUE;
+	protected static function _missingPage($sURI, $sFile) {
+		self::$_bWww = FALSE;
+		self::$_sStep = 'end';
+		self::setContentType('txt');
+		echo 'ERROR: missing uri ' . $sURI;
+	}
+
+	protected static function _notfoundPage() {
+
+		if (self::$_bFail) {
+			return;
+		}
+		self::$_bFail = TRUE;
+
+		require dirname(__DIR__) . '/Page/tpl/404_notfound.php';
+	}
+
+	protected static function _debugPage() {
+
+		if (self::$_bFail) {
+			return;
+		}
+		self::$_bFail = TRUE;
+
+		if (Config::isDebug()) {
+			require dirname(__DIR__) . '/Page/tpl/500_debug.php';
+		} else {
+			http_response_code(500);
+		}
+	}
+
+	public static function getThrow() {
+		return static::$_oThrow;
+	}
+
+	public static function shutdown() {
+
+		if (self::$_sStep === 'end') {
+			// 正常结束
+			return;
+		}
+
+		$aError = error_get_last();
+		if ($aError && self::isStopError($aError['type'])) {
+			// 还不知道什么情况下会 php7 报 error 而不是 ErrorException，
+			// 不知道如何触发，先这么写上吧
+			static::$_oThrow = new \ErrorException($aError['message'], 0, $aError['type'], $aError['file'], $aError['line']);
+			error_clear_last();
+			static::_debugPage();
+			return;
+		}
+
+		switch (self::$_sStep) {
+
+			case 'www':
+
+				if (self::$_fTimeWww) {
+					self::$_fTimeWww = microtime(TRUE) - self::$_fTimeWww;
+				}
+				ob_end_clean();
+
+			case 'tpl':
+
+				if (!static::$_oThrow) {
+					static::$_oThrow = new TangoException(self::$_sStep . ' 异常，错误：使用 return，别用 exit');
+				}
+				static::_debugPage();
+				break;
+
+			case 'layout':
+				echo 'error when layout';
+				break;
+
+			default:
+				// init 或其他未知阶段
+				break;
+		}
+		// echo 'step = ', self::$_sStep, "\n";
+		// echo 'shutdown', "\n";
+	}
+
+	public static function isStopError($iError) {
+		return in_array($iError, self::ERROR_STOP_CODE_LIST);
+	}
+
+	public static function initLayout() {
+
+		// 这么干是为了延迟加载，如果没有 HTML 输出，可以避免加载 Layout 类的开销
+
+		if (!self::$_oLayout) {
+			self::$_oLayout = new \Tango\Page\Layout();
+		}
+		return self::$_oLayout;
+	}
+
+	public static function jump($sURL) {
+		if (self::$_sStep === 'www') {
+			ob_end_clean();
+		} else if (self::$_sStep !== 'init') {
+			throw new \Exception('only can be use in www page, now step ' . self::$_sStep);
+		}
+		self::$_sStep = 'end';
+		self::$_bWww = FALSE;
+		if (preg_match('#^/#', $sURL)) {
+			$sURL = Config::get('page')['site_url'] . ltrim($sURL, '/');
+		}
+		header('Location: ' . $sURL);
+		return;
+	}
+
+	public static function stopWww() {
+		if (self::$_sStep === 'www') {
+			self::$_sStep = 'end';
+			self::$_bWww = FALSE;
+		} else if (self::$_sStep !== 'init') {
+			throw new \Exception('only can be use in www page, now step ' . self::$_sStep);
+		}
+	}
+
+	public static function getStep() {
+		return self::$_sStep;
 	}
 }

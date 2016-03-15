@@ -45,6 +45,10 @@ class Log {
 	/** 单次脚本中第几次记录 log，超过 1000 次的部分丢弃 */
 	static $_iStep = 0;
 
+	public static function getConfig() {
+		return Config::get('log');
+	}
+
 	/**
 	 * 初始化
 	 *
@@ -65,7 +69,7 @@ class Log {
 		}
 
 		$sPath = trim($aConfig['debug_path']);
-		$sPath = Util::getTmpPath($sPath);
+		$sPath = Util::getTmpDir() . '/' . $sPath;
 		$sPath = rtrim($sPath, '/');
 		if (!$sPath) {
 			return self::$_bEnable = FALSE;
@@ -123,6 +127,8 @@ class Log {
 			$sMessage = json_encode($sMessage, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 		}
 
+		$sMessage = preg_replace('#\e\[?.*?[\@-~]#', '', $sMessage);
+
 		if ($bHead) {
 
 			$fTime = microtime(TRUE);
@@ -130,7 +136,7 @@ class Log {
 			$sTime = date(Config::get('log')['time_format'], $fTime);
 			$sTime .= substr(sprintf('%.03f' ,$fTime), -4);
 
-			$fTimeCost = sprintf('%.06f', $fTime - $_SERVER['REQUEST_TIME_FLOAT']);
+			$fTimeCost = sprintf('%10s', sprintf('%.06f', $fTime - $_SERVER['REQUEST_TIME_FLOAT']));
 			$sHead = '[' . $sTime . '] [' . $fTimeCost . '] ' . "\n"
 				. ($_SERVER['REQUEST_URI'] ?: $_SERVER['SCRIPT_FILENAME'])."\n"
 				. "\n";
@@ -161,17 +167,15 @@ class Log {
 				return FALSE;
 			}
 			if (filesize($sFile) > $aConfig['max_size']) {
-				return FALSE;
+				return self::$_bEnable = FALSE;
 			}
 		} else {
 			$sSpaceCheck = dirname($sFile);
 		}
 
-		if (disk_free_space($sSpaceCheck) < $aConfig['disk_free_space']) {
-			echo 'disk_free_space = ' . $sFile . ' ';
-			var_dump(disk_free_space($sFile));
-			echo "\n";
-			return FALSE;
+		if (($iSpace = disk_free_space($sSpaceCheck)) < $aConfig['disk_free_space']) {
+			// throw new Exception('not enough free disk space ' . $iSpace . '/' . $aConfig['disk_free_space']);
+			return self::$_bEnable = FALSE;
 		}
 
 		return TRUE;

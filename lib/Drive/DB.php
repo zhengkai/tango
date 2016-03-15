@@ -81,7 +81,7 @@ class DB {
 	 * @return void
 	 */
 	public static function setLogOn() {
-		self::$_bLog = TRUE;
+		static::$_bLog = TRUE;
 	}
 
 	/**
@@ -92,7 +92,7 @@ class DB {
 	 * @return void
 	 */
 	public static function setLogOff() {
-		self::$_bLog = FALSE;
+		static::$_bLog = FALSE;
 	}
 
 	/**
@@ -124,10 +124,10 @@ class DB {
 	public static function getInstance($sName, $bReset = FALSE) {
 
 		if ($bReset) {
-			self::$_lInstance[$sName] = NULL;
+			static::$_lInstance[$sName] = NULL;
 		}
 
-		if (!$oDB =& self::$_lInstance[$sName]) {
+		if (!$oDB =& static::$_lInstance[$sName]) {
 
 			$aConfig = Config::get('db');
 			$aServer =& $aConfig['server'][$sName];
@@ -174,7 +174,11 @@ class DB {
 		$this->_bDebug = (bool)$aServer['debug'];
 
 		$this->_aConfig = [
-			'dsn' => 'mysql:' . $aServer['dsn'] . ';dbname=' . $aServer['dbname'] . ';charset=utf8',
+			'dsn' => sprintf(
+				'mysql:%s;dbname=%s;charset=utf8mb4',
+				$aServer['dsn'],
+				$aServer['dbname']
+			),
 			'user' => $aServer['user'],
 			'password' => $aServer['password'],
 			'option' => [
@@ -301,7 +305,7 @@ class DB {
 			$aMeta['native_type'] = ($sTmp =& $aMeta['native_type']) ?: 'UNKNOWN';
 
 			$fnConvert = FALSE;
-			foreach (self::$lTypeNeedConvert as $iKey => $fnCheck) {
+			foreach (static::$lTypeNeedConvert as $iKey => $fnCheck) {
 				if ($fnConvert = $fnCheck($aMeta)) {
 					break;
 				}
@@ -364,13 +368,13 @@ class DB {
 	 * @return mixed
 	 * @throws TangoException
 	 */
-	protected function _query($sQuery, array $aParam = [], $sType) {
+	protected function _query(string $sQuery, array $aParam = [], $sType) {
 
 		if (empty($sQuery)) {
 			throw new TangoException('empty $sQuery', 3);
 		}
 
-		if (self::$_bLog && $this->_sName != '_debug') {
+		if (static::$_bLog && $this->_sName != '_debug') {
 
 			$aConfigLog = Config::get('db')['log'];
 
@@ -443,7 +447,7 @@ class DB {
 	 * @access public
 	 * @return integer
 	 */
-	public function getInsertID($sQuery, array $aParam = []) {
+	public function getInsertID(string $sQuery, array $aParam = []) {
 		if (!$this->_query($sQuery, $aParam, 'exec')) {
 			return FALSE;
 		}
@@ -492,7 +496,7 @@ class DB {
 			return $aData;
 		}
 
-		self::_ColumnConvertScan($oResult);
+		static::_ColumnConvertScan($oResult);
 
 		$iColumnCount = $oResult->columnCount();
 		if ($bByKey && $iColumnCount == 1) {
@@ -503,7 +507,7 @@ class DB {
 		$bPeelArray = ($iColumnCount == ($bByKey ? 2 : 1));
 		foreach ($aData as $iRowKey => $aRow) {
 
-			$aRow = self::_ColumnConvertDo($aRow);
+			$aRow = static::_ColumnConvertDo($aRow);
 
 			// 取第一个字段为 key，替代原来的顺序数字
 			if ($bByKey) {
@@ -538,8 +542,8 @@ class DB {
 		$aRow = $oResult->fetch();
 
 		if ($aRow) {
-			self::_ColumnConvertScan($oResult);
-			$aRow = self::_ColumnConvertDo($aRow);
+			static::_ColumnConvertScan($oResult);
+			$aRow = static::_ColumnConvertDo($aRow);
 		}
 
 		$oResult->closeCursor();

@@ -33,15 +33,6 @@ class MC {
 	/** 用于延迟 touch 的 key 列表 */
 	private static $_lTouch = [];
 
-	/** 连接配置 */
-	protected static $_aOption = [
-		\Memcached::OPT_BINARY_PROTOCOL => TRUE,
-		\Memcached::OPT_COMPRESSION => TRUE,
-		\Memcached::OPT_LIBKETAMA_COMPATIBLE => FALSE,
-		\Memcached::OPT_PREFIX_KEY => 't_',
-		\Memcached::OPT_CONNECT_TIMEOUT => 300,
-	];
-
 	/**
 	 * 创建单例连接
 	 *
@@ -56,14 +47,19 @@ class MC {
 		}
 
 		$aConfig = Config::get('memcache');
+
 		$lServer =& $aConfig['server'][static::$_sConfig];
 		if (!is_array($lServer)) {
-			throw new Exception('memcache config "' . static::$_sConfig . '" not found');
+			throw new \Exception('memcache config "' . static::$_sConfig . '" not found');
 		}
 
-		$oConn = new \Memcached();
-		$oConn->setOptions(static::$_aOption);
-		$oConn->addServers($lServer);
+		if ($aConfig['enable']) {
+			$oConn = new \Memcached();
+			$oConn->setOptions($aConfig['option']);
+			$oConn->addServers($lServer);
+		} else {
+			$oConn = new MemcacheFake();
+		}
 
 		return static::$_oConn = $oConn;
 	}
@@ -76,7 +72,7 @@ class MC {
 	 * @access public
 	 * @return mixed
 	 */
-	public static function get($sKey) {
+	public static function get(string $sKey) {
 		return static::conn()->get($sKey);
 	}
 
@@ -113,7 +109,7 @@ class MC {
 	 * @access public
 	 * @return boolean
 	 */
-	public static function set($sKey, $mValue, $iExpire = 86400) {
+	public static function set(string $sKey, $mValue, int $iExpire = 86400) {
 		return static::conn()->set($sKey, $mValue, $iExpire);
 	}
 
@@ -126,8 +122,22 @@ class MC {
 	 * @access public
 	 * @return boolean
 	 */
-	public static function setMulti(array $lItem, $iExpire = 86400) {
+	public static function setMulti(array $lItem, int $iExpire = 86400) {
 		return static::conn()->setMulti($lItem, $iExpire);
+	}
+
+	/**
+	 * add
+	 *
+	 * @param string $sKey
+	 * @param mixed $mValue
+	 * @param int $iExpire
+	 * @static
+	 * @access public
+	 * @return boolean
+	 */
+	public static function add(string $sKey, $mValue, int $iExpire = 86400) {
+		return static::conn()->add($sKey, $mValue, $iExpire);
 	}
 
 	/**
@@ -140,7 +150,7 @@ class MC {
 	 * @access public
 	 * @return void
 	 */
-	public static function touchDelay($sKey, $iExpire = 86400) {
+	public static function touchDelay(string $sKey, int $iExpire = 86400) {
 		static::$_lTouch[$sKey] = $iExpire;
 	}
 
@@ -156,5 +166,18 @@ class MC {
 			static::conn()->touch($sKey, $iExpire);
 		}
 		static::$_lTouch = [];
+	}
+
+	/**
+	 * delete
+	 *
+	 * @param string $sKey
+	 * @param int $iTime
+	 * @static
+	 * @access public
+	 * @return boolean
+	 */
+	public static function delete(string $sKey, int $iTime = 0) {
+		return static::conn()->delete($sKey, $iTime);
 	}
 }

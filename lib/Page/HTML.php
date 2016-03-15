@@ -11,6 +11,7 @@
 namespace Tango\Page;
 
 use \Tango\Core\Tango;
+use \Tango\Core\Page;
 use \Tango\Core\Config;
 
 Config::setFileDefault('html', dirname(__DIR__).'/Config/html.php');
@@ -24,13 +25,8 @@ Config::setFileDefault('html', dirname(__DIR__).'/Config/html.php');
 class HTML {
 
 	/** 默认模板路径 */
-	protected static $_lTpl = [
-		'head'  => '/head',
-		'foot'  => '/foot',
-		'nav'   => '/nav',
-		'error' => '/error',
-		'main'  => '',
-	];
+	protected static $_sTpl = '';
+	protected static $_sTplType = '';
 
 	/** JS 列表 */
 	protected static $_lJS = [];
@@ -51,57 +47,7 @@ class HTML {
 	protected static $_bRobotsFollow = TRUE;
 
 	/**
-	 * 默认渲染过程，不需要执行， \Tango\Core\Tango 会自动识别并执行
-	 *
-	 * @static
-	 * @access public
-	 * @return void
-	 */
-	public static function run() {
-
-		if (!self::$_lTpl['main']) {
-			self::$_lTpl['main'] = substr($_SERVER['SCRIPT_NAME'], 0, -4);
-		}
-
-		$T =& Tango::$T;
-		$D =& Tango::$D;
-
-		$T = self::escape($T);
-
-		$s = '';
-
-		$bError = FALSE;
-		ob_start();
-		try {
-			include self::getTpl('main');
-			$s = trim(ob_get_clean());
-		} catch(\Exception $e) {
-			ob_clean();
-			$bError = TRUE;
-			TangoException::handler($e);
-		}
-
-		if (!$bError) {
-			if ($aError = Tango::getStopError()) {
-				$bError = TRUE;
-			}
-		}
-
-		if ($bError) {
-
-			Tango::$T['error'] = 'http500';
-			HTML::setTpl('main', '/error/500');
-
-			ob_start();
-			include self::getTpl('main');
-			$s = trim(ob_get_clean());
-		}
-
-		Layout::run($s);
-	}
-
-	/**
-	 * 如设成 false 则会在页面强调不要让搜索引擎索引本页
+	 * 如设成 false 则会在页面强调不要让搜索引擎索引本页所指向的链接
 	 *
 	 * @param boolean $bIndex
 	 * @static
@@ -113,7 +59,7 @@ class HTML {
 	}
 
 	/**
-	 * 如设成 false 则会在页面强调不要让搜索引擎索引本页所指向的链接
+	 * 如设成 false 则会在页面强调不要让搜索引擎索引本页
 	 *
 	 * @param boolean $bIndex
 	 * @static
@@ -122,55 +68,6 @@ class HTML {
 	 */
 	public static function setIndex($bIndex) {
 		self::$_bRobotsIndex = (bool)$bIndex;
-	}
-
-	/**
-	 * 如果 tpl 跟 www 的名字不一致，需在这里定义
-	 *
-	 * @param string|array $lTpl
-	 * @param string $sValue
-	 * @static
-	 * @access public
-	 * @return void
-	 */
-	public static function setTpl($lTpl, $sValue = NULL) {
-
-		if (is_string($lTpl)) {
-			$lTpl = [$lTpl => $sValue];
-		}
-		foreach ($lTpl as $sKey => $sValue) {
-			if (!$sValue) {
-				die('setTpl "'.$sKey.'" empty');
-			}
-			if (!isset(self::$_lTpl[$sKey])) {
-				die('setTpl "'.$sKey.'" unknown');
-			}
-			self::$_lTpl[$sKey] = $sValue;
-		}
-	}
-
-	/**
-	 * 获取 tpl 对应的文件
-	 *
-	 * @param string $sTpl
-	 * @static
-	 * @access public
-	 * @return string
-	 */
-	public static function getTpl($sTpl) {
-		return self::_getFile(self::$_lTpl[$sTpl].'.php');
-	}
-
-	/**
-	 * 获取 tpl 对应的文件（通过相对路径而非 tpl 的类别名）
-	 *
-	 * @param string $sTpl
-	 * @static
-	 * @access public
-	 * @return string
-	 */
-	protected static function _getFile($sFile) {
-		return SITE_ROOT.'/tpl'.$sFile;
 	}
 
 	/**
@@ -185,6 +82,46 @@ class HTML {
 		self::$_sTitle = $sTitle;
 	}
 
+	public static function setTpl(string $sTpl) {
+
+		self::$_sTpl = $sTpl;
+	}
+
+	public static function setTplType(string $sType) {
+
+		self::$_sTplType = $sType;
+	}
+
+	public static function getTpl(string $sURI): string {
+
+		$sBase = Page::getBaseDir() . '/tpl';
+
+		if (!self::$_sTpl && !self::$_sTplType) {
+			return $sBase . $sURI;
+		}
+		$sReturn = '';
+
+		if (self::$_sTpl) {
+			if (substr(self::$_sTpl, 0, 1) === '/') {
+				$sReturn = self::$_sTpl;
+			} else {
+				$sReturn = dirname($sURI);
+				if ($sReturn !== '/') {
+					$sReturn .= '/';
+				}
+				$sReturn .= self::$_sTpl;
+			}
+		} else {
+			$sReturn = substr($sURI, 0, -4);
+		}
+
+		if (self::$_sTplType) {
+			$sReturn .= '.' . self::$_sTplType;
+		}
+
+		return $sBase . $sReturn . '.php';
+	}
+
 	/**
 	 * 获取 <title>
 	 *
@@ -194,7 +131,7 @@ class HTML {
 	 */
 	public static function getTitle() {
 		return (self::$_sTitle ? self::$_sTitle.' - ' : '')
-			.Config::get('html')['title'];
+			. self::getConfig()['title'];
 	}
 
 	/**
@@ -215,17 +152,17 @@ class HTML {
 		}
 
 		// css
-		foreach (array_merge(Config::get('html')['css'], self::$_lCSS) as $sCSS) {
-			$sReturn .= '<link rel="stylesheet" href="'.$sCSS.'" type="text/css" />'."\n";
+		foreach (array_merge(self::getConfig()['css'], self::$_lCSS) as $sCSS) {
+			$sReturn .= '<link rel="stylesheet" href="' . $sCSS . '" type="text/css" />'."\n";
 		}
 
 		// js
-		foreach (array_merge(Config::get('html')['js'], self::$_lJS) as $sJS) {
-			$sReturn .= '<script src="'.$sJS.'"></script>'."\n";
+		foreach (array_merge(self::getConfig()['js'], self::$_lJS) as $sJS) {
+			$sReturn .= '<script src="' . $sJS . '"></script>' . "\n";
 		}
 
 		if (self::$_sAddMeta) {
-			$sReturn .= self::$_sAddMeta."\n";
+			$sReturn .= self::$_sAddMeta;
 		}
 
 		return $sReturn;
@@ -240,7 +177,7 @@ class HTML {
 	 * @return void
 	 */
 	public static function addMeta($s) {
-		self::$_sAddMeta = trim($s);
+		self::$_sAddMeta .= trim($s) . "\n";
 	}
 
 	/**
@@ -362,5 +299,16 @@ class HTML {
 		}
 
 		return $lReturn;
+	}
+
+	/**
+	 * 读取相关配置
+	 *
+	 * @static
+	 * @access public
+	 * @return array
+	 */
+	public static function getConfig() {
+		return \Tango\Core\Config::get('html');
 	}
 }
