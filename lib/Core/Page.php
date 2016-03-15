@@ -164,8 +164,8 @@ class Page {
 	public static function start(string $sURI) {
 
 		if (!self::$_bInit) {
-//			set_exception_handler([get_called_class(), 'exceptionHandler']);
-//			register_shutdown_function([get_called_class(), 'shutdown']);
+			set_exception_handler([get_called_class(), 'exceptionHandler']);
+			register_shutdown_function([get_called_class(), 'shutdown']);
 		}
 		self::$_bInit = TRUE;
 
