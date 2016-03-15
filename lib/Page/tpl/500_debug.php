@@ -10,7 +10,12 @@
 
 <hr />
 
+<?php
+print_r(debug_print_backtrace());
+?>
+
 <pre>
+
 <?= htmlspecialchars($sMessage ?? '') ?>
 </pre>
 

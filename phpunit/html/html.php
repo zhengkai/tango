@@ -1,11 +1,17 @@
 <?php
-require_once __DIR__ . '/lib/Page.php';
-require_once __DIR__ . '/lib/HTML.php';
+require __DIR__ . '/lib/Page.php';
+require __DIR__ . '/lib/HTML.php';
 
 Page::start('/abc/def.php');
 
 class HtmlTest extends PHPUnit_Framework_TestCase {
 
+	/**
+	 * 检查设置 tpl 相对/绝对路径是否符合预期
+	 *
+	 * @access public
+	 * @return void
+	 */
 	public function testTpl() {
 
 		// t1
@@ -15,7 +21,8 @@ class HtmlTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertSame(
 			HTML::getTpl('/w1.php'),
-			'/basedir/tpl/t1.php'
+			'/basedir/tpl/t1.php',
+			't1'
 		);
 
 		// t2
@@ -25,7 +32,8 @@ class HtmlTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertSame(
 			HTML::getTpl('/xyz/w2.php'),
-			'/basedir/tpl/xyz/t2.php'
+			'/basedir/tpl/xyz/t2.php',
+			't2'
 		);
 
 		// t3
@@ -34,18 +42,19 @@ class HtmlTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertSame(
 			HTML::getTpl('/xyz/w3.php'),
-			'/basedir/tpl/xyz/w3.php'
+			'/basedir/tpl/xyz/w3.php',
+			't3'
 		);
 
 		// t4
 
 		HTML::debugReset();
-
 		HTML::setTplType('type1');
 
 		$this->assertSame(
 			HTML::getTpl('/xyz/w1.php'),
-			'/basedir/tpl/xyz/w1.type1.php'
+			'/basedir/tpl/xyz/w1.type1.php',
+			't4'
 		);
 
 		// t5
@@ -56,7 +65,8 @@ class HtmlTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertSame(
 			HTML::getTpl('/w5.php'),
-			'/basedir/tpl/t5.type5.php'
+			'/basedir/tpl/t5.type5.php',
+			't5'
 		);
 
 		// t6
@@ -67,7 +77,8 @@ class HtmlTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertSame(
 			HTML::getTpl('/xyz/w6.php'),
-			'/basedir/tpl/xyz/t6.type6.php'
+			'/basedir/tpl/xyz/t6.type6.php',
+			't6'
 		);
 	}
 }

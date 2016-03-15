@@ -9,7 +9,8 @@
 
     <testsuites>
         <testsuite name="Project Tango">
-			<file>page/html.php</file>
+			<file>page/page.php</file>
+			<file>html/html.php</file>
 			<!--
 			<file>db/pdo.php</file>
 			<file>db/enum.php</file>

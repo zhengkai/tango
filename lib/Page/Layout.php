@@ -8,7 +8,7 @@ Config::setFileDefault('layout', dirname(__DIR__).'/Config/layout.php');
 class Layout {
 
 	protected $_sBody = '';
-	protected $_sLayout = 'Single'; // 不填表示默认
+	protected $_sLayout; // 不填表示默认
 
 	public function setBody(string $sBody) {
 		$this->_sBody = $sBody;
@@ -19,7 +19,7 @@ class Layout {
 	}
 
 	public function run() {
-		$aCall = [$this, '_run' . $this->_sLayout];
+		$aCall = [$this, '_run' . ($this->_sLayout ?: 'Single')];
 		if (!is_callable($aCall)) {
 			throw new \Exception('unknown layout "' . $this->_sLayout . '"');
 		}

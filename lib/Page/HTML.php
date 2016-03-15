@@ -226,7 +226,7 @@ class HTML {
 			$sReturn .= sprintf('%02s', dechex(round($iColor)));
 		}
 
-		return '#'.$sReturn;
+		return '#' . $sReturn;
 	}
 
 	/**

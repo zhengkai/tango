@@ -7,6 +7,7 @@ before_script:
   - rm -f ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/xdebug.ini
   - composer update --quiet
   - mysql < phpunit/db/create_table.sql
+  - php -i
 
 script: 
   - phpunit -c phpunit/phpunit.xml.dist

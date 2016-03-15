@@ -33,30 +33,30 @@ class Page {
 	/** 经过 \Tango\Core\Filter 过滤的输入参数（原 $_GET/$_POST） */
 	public static $IN = [];
 
-	private static $_bFail = FALSE;
+	protected static $_bFail = FALSE;
 
-	private static $_bInit = FALSE;
-	private static $_sStep = 'init';
+	protected static $_bInit = FALSE;
+	protected static $_sStep = 'init';
 
 	protected static $_sBaseDir;
 
-	private static $_bWww = TRUE;
+	protected static $_bWww = TRUE;
 
-	public static $_sURI;
-	private static $_sTpl;
+	protected static $_sURI;
+	protected static $_sTpl;
 
-	private static $_bDelay; // 是否执行 Delay::run()
+	protected static $_bDelay; // 是否执行 Delay::run()
 
-	private static $_oLayout;
-	private static $_sLayout;
+	protected static $_oLayout;
+	protected static $_sLayout;
 
-	private static $_oThrow;
+	protected static $_oThrow;
 
-	private static $_fTimeWww;
-	private static $_fTimeTpl;
+	protected static $_fTimeWww;
+	protected static $_fTimeTpl;
 
-	private static $_sContentType = 'html';
-	private static $_bSendContentTypeHeader = FALSE;
+	protected static $_sContentType = 'html';
+	protected static $_bSendContentTypeHeader = FALSE;
 
 	const CONTENT_TYPE_LIST = [
 		'html' => 'text/html',
@@ -121,7 +121,7 @@ class Page {
 			self::$_sStep = 'end';
 			throw new TangoException('unknown content type "'. $sType .'" / '.implode(array_keys(self::CONTENT_TYPE_LIST)));
 		}
-		self::$_sContentType = $sType;
+		static::$_sContentType = $sType;
 	}
 
 	protected static function sendContentTypeHeader(string $sContentType = '') {
@@ -157,8 +157,8 @@ class Page {
 	}
 
 	public static function exceptionHandler(\Throwable $ex) {
-		static::$_oThrow = $ex;
-		error_log('PHP Fatal error: ' . $ex->getMessage() . ' in file ' . $ex->getFile() . ':' . $ex->getLine());
+		self::$_oThrow = $ex;
+		error_log(self::$_oThrow);
 	}
 
 	public static function start(string $sURI) {
@@ -182,7 +182,7 @@ class Page {
 		self::_www();
 
 		if (http_response_code() === 404 && !ob_get_length()) {
-			static::_notfoundPage();
+			self::_notfoundPage();
 			return;
 		}
 
@@ -208,7 +208,7 @@ class Page {
 			return;
 		}
 
-		switch (self::$_sContentType) {
+		switch (static::$_sContentType) {
 
 			case 'html':
 				if (ob_get_length()) {
@@ -232,7 +232,19 @@ class Page {
 				ob_end_flush();
 				break;
 
+			case 'jsonp':
+
+				if (is_string($_GET['callback'] ?? FALSE)) {
+					$sCallback = $_GET['callback'];
+					if (!preg_match('#^[_$a-zA-Z\x{A0}-\x{FFFF}][_$a-zA-Z0-9\x{A0}-\x{FFFF}]*$#u', $sCallback)) {
+						$sCallback = '';
+					}
+				}
+
 			case 'json':
+
+				$sCallback = $sCallback ?? '';
+
 				self::$_sStep = 'end';
 				self::sendContentTypeHeader();
 				if ($iLength = ob_get_length()) {
@@ -241,14 +253,20 @@ class Page {
 				} else {
 					ob_end_clean();
 				}
+				if ($sCallback) {
+					echo $sCallback . '(';
+				}
 				echo json_encode(self::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+				if ($sCallback) {
+					echo ')';
+				}
 				break;
 
 			default:
 				self::$_sStep = 'end';
 				ob_end_clean();
 				self::sendContentTypeHeader('txt');
-				echo 'ERROR: incomplete content-type parser "', self::$_sContentType, '"', "\n";
+				echo 'ERROR: incomplete content-type parser "', static::$_sContentType, '"', "\n";
 				break;
 		}
 	}
@@ -259,7 +277,7 @@ class Page {
 		}
 	}
 
-	private static function _www() {
+	protected static function _www() {
 
 		$sFile = self::$_sBaseDir . '/www' . self::$_sURI;
 		if (!is_file($sFile)) {
@@ -310,11 +328,24 @@ class Page {
 		}
 
 		self::$_fTimeTpl = microtime(TRUE);
+
+		if (!is_file($sTpl)) {
+			self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
+			ob_clean();
+			throw new \Exception('no tpl file ' . $sTpl);
+		}
 		require $sTpl;
+
 		self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
 
 		$sBody = ob_get_clean();
 
+		self::_layout($sBody);
+
+		return TRUE;
+	}
+
+	protected static function _layout(string $sBody) {
 		self::$_sStep = 'layout';
 		$oLayout = static::initLayout();
 		if (self::$_sLayout) {
@@ -322,8 +353,6 @@ class Page {
 		}
 		$oLayout->setBody($sBody);
 		$oLayout->run();
-
-		return TRUE;
 	}
 
 	protected static function _missingPage($sURI, $sFile) {
@@ -343,22 +372,25 @@ class Page {
 		require dirname(__DIR__) . '/Page/tpl/404_notfound.php';
 	}
 
-	protected static function _debugPage() {
+	protected static function _debugPage(string $sTpl = ''): string {
 
 		if (self::$_bFail) {
-			return;
+			return '';
 		}
 		self::$_bFail = TRUE;
 
-		if (Config::isDebug()) {
-			require dirname(__DIR__) . '/Page/tpl/500_debug.php';
-		} else {
+		if (!Config::isDebug()) {
 			http_response_code(500);
+			return '';
 		}
+
+		ob_start();
+		require $sTpl ?: (dirname(__DIR__) . '/Page/tpl/500_debug.php');
+		return ob_get_clean();
 	}
 
 	public static function getThrow() {
-		return static::$_oThrow;
+		return self::$_oThrow;
 	}
 
 	public static function shutdown() {
@@ -372,10 +404,8 @@ class Page {
 		if ($aError && self::isStopError($aError['type'])) {
 			// 还不知道什么情况下会 php7 报 error 而不是 ErrorException，
 			// 不知道如何触发，先这么写上吧
-			static::$_oThrow = new \ErrorException($aError['message'], 0, $aError['type'], $aError['file'], $aError['line']);
+			self::$_oThrow = new \ErrorException($aError['message'], 0, $aError['type'], $aError['file'], $aError['line']);
 			error_clear_last();
-			static::_debugPage();
-			return;
 		}
 
 		switch (self::$_sStep) {
@@ -389,10 +419,13 @@ class Page {
 
 			case 'tpl':
 
-				if (!static::$_oThrow) {
-					static::$_oThrow = new TangoException(self::$_sStep . ' 异常，错误：使用 return，别用 exit');
+				if (!self::$_oThrow) {
+					self::$_oThrow = new TangoException(self::$_sStep . ' 异常，错误：使用 return，别用 exit');
 				}
-				static::_debugPage();
+				$sBody = static::_debugPage();
+				if ($sBody) {
+					self::_layout($sBody);
+				}
 				break;
 
 			case 'layout':
