@@ -19,7 +19,7 @@ class DBKV {
 	private static $_sDBTable;
 	private static $_sKey;
 
-	protected static $_aDefault;
+	protected static $_aDefault = [];
 
 	protected $_aData;
 	protected $_iVer;

@@ -15,6 +15,15 @@ class Session {
 	protected static $_bAuth = NULL;
 	protected static $_bSetSession = TRUE;
 
+	protected static $_bAdmin;
+
+	public static function isAdmin() {
+		if (static::$_bAdmin === NULL) {
+			static::$_bAdmin = ($_ENV['REMOTE_ADDR'] === '::ffff:127.0.0.1');
+		}
+		return static::$_bAdmin;
+	}
+
 	public static function auth() {
 		$bAuth =& self::$_bAuth;
 		if ($bAuth !== NULL) {
@@ -45,7 +54,7 @@ class Session {
 		$aCookie = array_map('intval', $aCookie);
 
 		$aUser = Passport::id($aCookie['id']);
-		if (!$aUser || !empty($aUser['is_ban'])) {
+		if (!$aUser || !empty($aUser['status'])) {
 			return FALSE;
 		}
 
@@ -167,7 +176,7 @@ class Session {
 	/**
 	 * 仅限登录用户，没有登录就做页面跳转，通常用在页头
 	 */
-	public static function gate() {
+	public static function gate(): bool {
 
 		if (Session::auth()) {
 			return FALSE;
