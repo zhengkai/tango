@@ -4,7 +4,12 @@ php:
   - 7
 
 before_script:
+  - rm -f ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/xdebug.ini
+  - composer update
   - mysql < phpunit/db/create_table.sql
 
 script: 
   - phpunit -c phpunit/phpunit.xml.dist
+    
+git:
+  depth: 5
