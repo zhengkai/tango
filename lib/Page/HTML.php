@@ -153,7 +153,11 @@ class HTML {
 
 		// css
 		foreach (array_merge(self::getConfig()['css'], self::$_lCSS) as $sCSS) {
-			$sReturn .= '<link rel="stylesheet" href="' . $sCSS . '" type="text/css" />'."\n";
+			$sRel = 'stylesheet';
+			if (substr($sCSS, -5) === '.less') {
+				$sRel .= '/less';
+			}
+			$sReturn .= '<link rel="' . $sRel . '" href="' . $sCSS . '" type="text/css" />'."\n";
 		}
 
 		// js
