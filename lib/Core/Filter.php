@@ -33,14 +33,6 @@ class Filter {
 	protected static $_bCheck = FALSE;
 
 	/**
-	 * 判断邮箱合法性的正则
-	 *
-	 * not the full regexp, it is too crazy
-	 * http://www.ex-parrot.com/~pdw/Mail-RFC822-Address.html
-	 */
-	protected static $_pEmail = '#^[0-9a-z]([\+\.\-_0-9a-z][0-9a-z]+)*[0-9a-z]?@[0-9a-z]([\.\-_0-9a-z][0-9a-z]+)\.[a-z]{2,}$#i';
-
-	/**
 	 * 工作方法
 	 *
      * @param string $sMethod "POST" 或 "GET"
@@ -135,9 +127,7 @@ class Filter {
 					}
 					break;
 				case 'email';
-					if (!preg_match(self::$_pEmail, $mValue)) {
-						$mValue = FALSE;
-					}
+					$mValue = filter_var($mValue, FILTER_VALIDATE_EMAIL);
 					break;
 				default:
 					throw new TangoException('unknwon rule type "'.$sType.'"');
