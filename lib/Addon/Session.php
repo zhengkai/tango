@@ -17,20 +17,7 @@ class Session {
 
 	protected static $_bAdmin;
 
-	public static function isAdmin() {
-		if (static::$_bAdmin === NULL) {
-			static::$_bAdmin = ($_ENV['REMOTE_ADDR'] === '::ffff:127.0.0.1');
-		}
-		return static::$_bAdmin;
-	}
-
-	public static function auth() {
-		$bAuth =& self::$_bAuth;
-		if ($bAuth !== NULL) {
-			return $bAuth;
-		}
-
-		$bAuth = FALSE;
+	public static function _authCookie() {
 
 		// Cookie 完整性/防篡改校验
 		$sCookie =& $_COOKIE[self::COOKIE_NAME];
@@ -43,7 +30,7 @@ class Session {
 		}
 		$sCheckHash = substr($sCookie, 0, 40);
 		$sCookie = substr($sCookie, 40);
-		if ($sCheckHash != self::_cookieHash($sCookie)) {
+		if ($sCheckHash != static::_cookieHash($sCookie)) {
 			return FALSE;
 		}
 
@@ -52,21 +39,30 @@ class Session {
 			explode(',', $sCookie, 3) + [0, 0, 0]
 		);
 		$aCookie = array_map('intval', $aCookie);
+		return $aCookie;
+	}
 
-		$aUser = Passport::id($aCookie['id']);
-		if (!$aUser || !empty($aUser['status'])) {
-			return FALSE;
+	public static function auth(): bool {
+
+		$bAuth =& self::$_bAuth;
+		if ($bAuth !== NULL) {
+			return $bAuth;
 		}
 
-		if ($_SERVER['REQUEST_TIME'] - $aUser['date_active'] > self::RECORD_MIN_SEC) {
-			self::updateSession($aCookie['id'], $aCookie['session']);
+		$aCookie = static::_authCookie();
+		if (!$aCookie) {
+			return $bAuth = FALSE;
+		}
+
+		if (($_SERVER['REQUEST_TIME'] - $aCookie['time']) > self::RECORD_MIN_SEC) {
+			static::updateSession($aCookie['id'], $aCookie['session']);
 		}
 
 		self::$_iUser = $aCookie['id'];
 		return $bAuth = TRUE;
 	}
 
-	protected static function _cookieHash($sCookie) {
+	protected static function _cookieHash($sCookie): string {
 
 		$sUserAgent = preg_replace('#\d+#', '', $_SERVER['HTTP_USER_AGENT']);
 		// 用去了版本号的 useragent 作为 salt 的一部分
@@ -146,7 +142,7 @@ class Session {
 		self::_setCookie(FALSE);
 	}
 
-	protected static function _setCookie(string $sValue) {
+	protected static function _setCookie(string $sValue): bool {
 
 		if (PHP_SAPI === 'cli' || headers_sent()) {
 			return FALSE;
@@ -165,7 +161,7 @@ class Session {
 	 *
 	 * 调用前一定要先用过 Session::gate() 或者 Session::auth()
 	 */
-	public static function id() {
+	public static function id(): int {
 
 		if (!self::$_bAuth) {
 			throw new TangoException('no session');
