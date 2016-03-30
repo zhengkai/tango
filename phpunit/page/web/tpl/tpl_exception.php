@@ -1,4 +1,4 @@
-<?php
-echo $T['foo'];
+<p><?= $T['foo'] ?></p>
 
+<?php
 throw new Exception('test for tpl exception');

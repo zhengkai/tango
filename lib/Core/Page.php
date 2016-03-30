@@ -212,11 +212,10 @@ class Page {
 
 			case 'html':
 				if (ob_get_length()) {
-					ob_end_flush();
 					self::$_sStep = 'end';
+					ob_end_flush();
 					break;
 				}
-				ob_end_clean();
 
 				self::$T = HTML::escape(self::$T);
 
@@ -253,11 +252,11 @@ class Page {
 				} else {
 					ob_end_clean();
 				}
-				if ($sCallback) {
+				if (strlen($sCallback)) {
 					echo $sCallback . '(';
 				}
 				echo json_encode(self::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-				if ($sCallback) {
+				if (strlen($sCallback)) {
 					echo ')';
 				}
 				break;
@@ -415,14 +414,18 @@ class Page {
 				if (self::$_fTimeWww) {
 					self::$_fTimeWww = microtime(TRUE) - self::$_fTimeWww;
 				}
-				ob_end_clean();
 
 			case 'tpl':
 
+				ob_clean();
 				if (!self::$_oThrow) {
 					self::$_oThrow = new TangoException(self::$_sStep . ' 异常，错误：使用 return，别用 exit');
 				}
+				if (!self::$_fTimeTpl) {
+					self::$_fTimeTpl = microtime(TRUE);
+				}
 				$sBody = static::_debugPage();
+				self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
 				if ($sBody) {
 					self::_layout($sBody);
 				}

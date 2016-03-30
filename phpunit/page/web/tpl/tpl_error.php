@@ -1,4 +1,4 @@
-<?php
-echo $T['foo'];
+<p><?= $T['foo'] ?></p>
 
+<?php
 syntax error
