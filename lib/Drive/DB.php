@@ -183,7 +183,7 @@ class DB {
 				\PDO::ATTR_PERSISTENT => FALSE,
 				\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
 				\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
-				\PDO::ATTR_EMULATE_PREPARES => boolval($aServer['pdo_prepare'] ?? true),
+				\PDO::ATTR_EMULATE_PREPARES => boolval($aServer['pdo_prepare'] ?? TRUE),
 			],
 		];
 	}
