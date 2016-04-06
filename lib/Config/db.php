@@ -3,7 +3,7 @@ return [
 	'default' => [
 		'user' => 'tango',
 		'password' => 'tango',
-		'dsn' => 'unix_socket=/var/run/mysqld/mysqld.sock',
+		'dsn' => 'host=localhost',
 		'debug' => FALSE,
 	],
 	'log' => [
