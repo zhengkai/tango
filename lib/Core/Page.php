@@ -41,6 +41,7 @@ class Page {
 	protected static $_sBaseDir;
 
 	protected static $_bWww = TRUE;
+	protected static $_bStopWww = FALSE;
 
 	protected static $_sURI;
 	protected static $_sTpl;
@@ -75,7 +76,7 @@ class Page {
 		E_RECOVERABLE_ERROR,
 	];
 
-	public static function cacheForever() {
+	public static function cacheForever(): bool {
 
 		if (
 			!empty($_SERVER['HTTP_IF_MODIFIED_SINCE'])
@@ -361,14 +362,16 @@ class Page {
 		echo 'ERROR: missing uri ' . $sURI;
 	}
 
-	protected static function _notfoundPage() {
+	protected static function _notfoundPage(string $sTpl = ''): string {
 
 		if (self::$_bFail) {
-			return;
+			return '';
 		}
 		self::$_bFail = TRUE;
 
-		require dirname(__DIR__) . '/Page/tpl/404_notfound.php';
+		ob_start();
+		require $sTpl ?: dirname(__DIR__) . '/Page/tpl/404_notfound.php';
+		return ob_get_clean();
 	}
 
 	protected static function _debugPage(string $sTpl = ''): string {
@@ -473,6 +476,11 @@ class Page {
 	}
 
 	public static function stopWww() {
+		if (self::$_bStopWww) {
+			return FALSE;
+		}
+		self::$_bStopWww = TRUE;
+
 		if (self::$_sStep === 'www') {
 			self::$_sStep = 'end';
 			self::$_bWww = FALSE;

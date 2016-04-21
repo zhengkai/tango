@@ -104,9 +104,8 @@ abstract class DBEnumBase {
 	 * @return mixed
 	 * @throws TangoException
 	 */
-	public function getById($iID) {
+	public function getById(int $iID) {
 
-		$iID = intval($iID);
 		if ($iID < 1) {
 			throw new TangoException('id error');
 		}
@@ -120,19 +119,17 @@ abstract class DBEnumBase {
 		}
 
 		static::_checkPreload();
-
 		static::_checkPoolFull();
 
 		$sQuery = sprintf(
-			'SELECT %s FROM %s WHERE %s = %d',
-			implode(', ', static::$_lKeySearch),
+			'SELECT `%s` FROM `%s` WHERE `%s` = ?',
+			implode('`, `', static::$_lKeySearch),
 			static::$_sDBTable,
-			static::$_sKeyID,
-			$iID
+			static::$_sKeyID
 		);
 
 		$oDB = static::_getDB();
-		$aRow = $oDB->getRow($sQuery);
+		$aRow = $oDB->getRow($sQuery, [$iID]);
 		if (!$aRow) {
 			static::$_iPoolNum--;
 			return FALSE;
