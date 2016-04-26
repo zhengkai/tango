@@ -95,6 +95,24 @@ class Page {
 		return FALSE;
 	}
 
+	public static function etag(string $sETag): bool {
+
+		$sETag = '"' . $sETag . '"';
+		$sETagCheck = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
+		if (
+			$sETagCheck === $sETag
+			|| $sETagCheck === 'W/' . $sETag
+		) {
+			http_response_code(304);
+			self::stopWww();
+			return TRUE;
+		}
+
+		header('ETag: ' . $sETag);
+
+		return FALSE;
+	}
+
 	public static function setExpireMax() {
 		header('Expires: Thu, 31 Dec 2037 23:55:55 GMT');
 		header('Cache-Control: max-age=315360000');
