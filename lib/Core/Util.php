@@ -59,6 +59,17 @@ class Util {
 		return self::$_sTmpDir;
 	}
 
+	public static function getTmpFile(string $sDir = '', string $sPrefix = '') {
+		$sDir = static::getTmpDir() . '/' . trim($sDir, ' /');
+		if (!is_dir($sDir)) {
+			if (file_exists($sDir)) {
+				throw new \Exception('can not create dir ' . $sDir);
+			}
+			mkdir($sDir, 0777, TRUE);
+		}
+		return tempnam($sDir, $sPrefix);
+	}
+
 	/**
 	 * 非阻塞文件锁，可以用于限制并发数量
 	 *
