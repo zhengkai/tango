@@ -11,9 +11,9 @@
         <testsuite name="Project Tango">
 			<file>page/page.php</file>
 			<file>html/html.php</file>
-			<!--
 			<file>db/pdo.php</file>
 			<file>db/enum.php</file>
+			<!--
 			<file>flock/test.php</file>
 			 -->
         </testsuite>

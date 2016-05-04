@@ -26,7 +26,7 @@ class DBTest extends PHPUnit_Framework_TestCase {
 	public function testInsert() {
 
 		$oDB = DB::getInstance('test');
-		$r = $oDB->exec('TRUNCATE TABLE pdo_test');
+		$r = $oDB->emptyTable('pdo_test');
 
 		$i = mt_rand(20, 30);
 
@@ -74,7 +74,7 @@ class DBTest extends PHPUnit_Framework_TestCase {
      */
 	public function testGet() {
 		$oDB = DB::getInstance('test');
-		$r = $oDB->exec('TRUNCATE TABLE pdo_test');
+		$r = $oDB->emptyTable('pdo_test');
 
 		// 生成测试用数据
 		$a = [];
@@ -172,5 +172,23 @@ class DBTest extends PHPUnit_Framework_TestCase {
 
 		$r = $oDB->getSingle('SELECT name, date_create FROM pdo_test WHERE test_id = '.$t['test_id']);
 		$this->assertSame($t['name'], $r);
+	}
+
+	public function testTableOP() {
+		$oDB = DB::getInstance('test');
+
+		$r = $oDB->emptyTable('pdo_test');
+		$this->assertEquals($r, 0, 'emptyTable');
+
+		$oDB->exec('INSERT INTO pdo_test SET name = "insert"');
+
+		$r = $oDB->optimizeTable('pdo_test');
+		$this->assertEquals($r, 0, 'optimizeTable');
+
+		$r = $oDB->repairTable('pdo_test');
+		$this->assertEquals($r, 0, 'repairTable');
+
+		$r = $oDB->emptyTable('pdo_test');
+		$this->assertEquals($r, 0, 'emptyTable again');
 	}
 }

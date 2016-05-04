@@ -34,9 +34,6 @@ class DB {
 	/** 数据库alias */
 	protected $_sName;
 
-	/** debug 模式 */
-	protected $_bDebug;
-
 	/** 对于不同的 MySQL 字段做不同方式的处理 */
 	protected $_lColumnNeedConvert;
 
@@ -182,9 +179,11 @@ class DB {
 			'user' => $aServer['user'],
 			'password' => $aServer['password'],
 			'option' => [
+				\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+				\PDO::ATTR_PERSISTENT => FALSE,
 				\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
 				\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
-				\PDO::ATTR_EMULATE_PREPARES => isset($aServer['pdo_prepare']) ? (bool)$aServer['pdo_prepare'] : true,
+				\PDO::ATTR_EMULATE_PREPARES => boolval($aServer['pdo_prepare'] ?? true),
 			],
 		];
 	}
@@ -196,7 +195,7 @@ class DB {
 	 * @return boolean
 	 * @throws TangoException
 	 */
-	protected function _connect() {
+	protected function _connect(): bool {
 
 		if ($this->_oPDO) {
 			return FALSE;
@@ -204,6 +203,8 @@ class DB {
 
 		$sName = $this->_sName;
 		$sDSN = $this->_aConfig['dsn'];
+		$this->_sPrevPrepareQuery = NULL;
+		$this->_oPrevPrepare = NULL;
 
 		try {
 
@@ -225,7 +226,41 @@ class DB {
 	}
 
 	/**
-	 * 自动重连
+	 * 实际发请求
+	 *
+	 * 因为可能有异常（重连/表不存在等情况）需要再重试一次，所以包了一下
+	 *
+	 * @param string $sQuery
+	 * @param array $aParam
+	 * @param bool $bExec
+	 * @access protected
+	 * @return mixed
+	 */
+	protected function _queryTry(string $sQuery, array $aParam = [], bool $bExec) {
+
+		if ($aParam) {
+
+			if ($this->_sPrevPrepareQuery === $sQuery) {
+				$oResult = $this->_oPrevPrepare;
+			} else {
+				$this->_sPrevPrepareQuery = $sQuery;
+				$aOption = [];
+				if (key($aParam) !== 0) {
+					$aOption[\PDO::ATTR_CURSOR] = \PDO::CURSOR_FWDONLY;
+				}
+				$oResult = $this->_oPDO->prepare($sQuery, $aOption);
+				$this->_oPrevPrepare = $oResult;
+			}
+
+			@$oResult->execute($aParam);
+			return $bExec ? $oResult->rowCount() : $oResult;
+		}
+
+		return $bExec ? @$this->_oPDO->exec($sQuery) : @$this->_oPDO->query($sQuery);
+	}
+
+	/**
+	 * 处理可以挽救的异常
 	 *
 	 * 返回值 true 表示重新执行 query
 	 *
@@ -236,52 +271,27 @@ class DB {
 	 * @throws DBException
 	 * @return bool
 	 */
-	protected function _connectSmart(array $aError, $sQuery, array $aParam) {
+	protected function _parseException(string $sErrorCode) {
 
-		if ($aError[0] === '00000') {
-			return FALSE;
-		}
-
-		$this->_oPDO = NULL;
-
-		$sError = $aError[0];
-		$iError = intval($aError[1]);
-
-		if ($iError && $this->_iErrorLast != $iError) { // 不能连续报相同错误，否则终止
-
-			$this->_iErrorLast = $iError;
-
-			// 42S02 table doesn't exist
-			if ($iError == 1146 && $this->_aAutoCreateTable) {
-				$this->_connect();
-				$this->cloneTableStructure(
-					$this->_aAutoCreateTable['source'],
-					$this->_aAutoCreateTable['target']
-				);
-				$this->_aAutoCreateTable = NULL;
-				return TRUE;
+		// 42S02 table doesn't exist
+		if ($sErrorCode === '42S02') {
+			if (!$this->_aAutoCreateTable) {
+				return FALSE;
 			}
+			$this->_connect();
+			$this->cloneTableStructure(
+				$this->_aAutoCreateTable['source'],
+				$this->_aAutoCreateTable['target']
+			);
 			$this->_aAutoCreateTable = NULL;
-
-			// HY000 lost connect (MySQL server has gone away)
-			if ($iError == 2006) {
-				$this->_connect();
-				return TRUE;
-			}
+			return TRUE;
 		}
 
-		$sErrorShow = $iError ? $iError . ': '. $aError[2] : $sError;
-
-		if (Config::get('db')['log']['debug']) {
-
-			$sMsg = 'query = ' . $sQuery . "\n"
-				. ($aParam ? 'param = ' . json_encode($aParam, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n" : '')
-				. 'error = ' . $sErrorShow;
-			Log::debug('db_error', $sMsg, TRUE);
-		}
-
-		if ($iError) {
-			throw new DBException('PDO ' . $sErrorShow);
+		// HY000 lost connect (MySQL server has gone away)
+		if ($sErrorCode === 'HY000') {
+			$this->_oPDO = NULL;
+			$this->_connect();
+			return TRUE;
 		}
 
 		return FALSE;
@@ -344,7 +354,7 @@ class DB {
 	 * @return mixed
 	 */
 	public function query($sQuery, array $aParam = []) {
-		return $this->_query($sQuery, $aParam, 'query');
+		return $this->_query($sQuery, $aParam, FALSE);
 	}
 
 	/**
@@ -356,7 +366,7 @@ class DB {
 	 * @return mixed
 	 */
 	public function exec($sQuery, array $aParam = []) {
-		return $this->_query($sQuery, $aParam, 'exec');
+		return $this->_query($sQuery, $aParam, TRUE);
 	}
 
 	/**
@@ -368,75 +378,23 @@ class DB {
 	 * @return mixed
 	 * @throws TangoException
 	 */
-	protected function _query(string $sQuery, array $aParam = [], $sType) {
+	protected function _query(string $sQuery, array $aParam = [], bool $bExec) {
 
 		if (empty($sQuery)) {
 			throw new TangoException('empty $sQuery', 3);
 		}
 
-		if (static::$_bLog && $this->_sName != '_debug') {
-
-			$aConfigLog = Config::get('db')['log'];
-
-			if ($aConfigLog['debug']) {
-				Log::debug('query', $sQuery);
-			}
-
-			if ($aConfigLog['collection']) {
-				Log::collection('db', [
-					'query' => $sQuery,
-					'param' => $aParam,
-					'type' => $sType,
-				]);
-			}
-		}
-
 		$this->_connect();
 		$this->_iErrorLast = NULL;
 
-		$iAffected = 0;
-		$oResult = NULL;
-		do {
-
-			$aError = $this->_oPDO->errorInfo();
-			if ($aError[1]) {
-				$this->_oPDO = NULL;
-				$this->_connect();
+		try {
+			return $this->_queryTry($sQuery, $aParam, $bExec);
+		} catch(\PDOException $e) {
+			if (!$this->_parseException($e->getCode())) {
+				throw $e;
 			}
-
-			if ($aParam) {
-
-				if ($this->_sPrevPrepareQuery === $sQuery) {
-					$oResult = $this->_oPrevPrepare;
-				} else {
-					$this->_sPrevPrepareQuery = $sQuery;
-					$aOption = [];
-					if (key($aParam) !== 0) {
-						$aOption[\PDO::ATTR_CURSOR] = \PDO::CURSOR_FWDONLY;
-					}
-					$oResult = $this->_oPDO->prepare($sQuery, $aOption);
-					$this->_oPrevPrepare = $oResult;
-				}
-
-				$oResult->execute($aParam);
-				$aError = $oResult->errorInfo();
-				if ($sType === 'exec') {
-					$iAffected = $oResult->rowCount();
-				}
-
-			} else {
-
-				if ($sType === 'exec') {
-					$iAffected = $this->_oPDO->exec($sQuery);
-				} else {
-					$oResult = $this->_oPDO->query($sQuery);
-				}
-				$aError = $this->_oPDO->errorInfo();
-			}
-
-		} while ($this->_connectSmart($aError, $sQuery, $aParam));
-
-		return $sType === 'exec' ? $iAffected : $oResult;
+		}
+		return $this->_queryTry($sQuery, $aParam, $bExec);
 	}
 
 	/**
@@ -448,7 +406,7 @@ class DB {
 	 * @return integer
 	 */
 	public function getInsertID(string $sQuery, array $aParam = []) {
-		if (!$this->_query($sQuery, $aParam, 'exec')) {
+		if (!$this->_query($sQuery, $aParam, TRUE)) {
 			return FALSE;
 		}
 		return (int)$this->_oPDO->lastInsertId();
@@ -489,7 +447,7 @@ class DB {
 	 */
 	public function getAll($sQuery, array $aParam = [], $bByKey = TRUE) {
 
-		$oResult = $this->_query($sQuery, $aParam, 'query');
+		$oResult = $this->_query($sQuery, $aParam, FALSE);
 
 		$aData = $oResult->fetchAll();
 		if (empty($aData)) {
@@ -537,7 +495,7 @@ class DB {
 	 */
 	public function getRow($sQuery, array $aParam = []) {
 
-		$oResult = $this->_query($sQuery, $aParam, 'query');
+		$oResult = $this->_query($sQuery, $aParam, FALSE);
 
 		$aRow = $oResult->fetch();
 
@@ -667,7 +625,7 @@ class DB {
 	 * @access public
 	 * @return int
 	 */
-	public function cloneTableStructure($sTableSource, $sTableTarget) {
+	public function cloneTableStructure(string $sTableSource, string $sTableTarget) {
 
 		if (!$sTableSource || !$sTableTarget) {
 			throw new TangoException('empty table name');
@@ -680,7 +638,7 @@ class DB {
 			'CREATE TABLE IF NOT EXISTS `' . $sTableTarget . '` (',
 			$s
 		);
-		return (int)$this->_query($s, [], 'exec');
+		return (int)$this->_query($s, [], TRUE);
 	}
 
 	/**
@@ -690,12 +648,12 @@ class DB {
 	 * @access public
 	 * @return array
 	 */
-	public function repairTable($sTable) {
+	public function repairTable(string $sTable) {
 		if (!$sTable) {
 			throw new TangoException('empty table name');
 		}
 		$sQuery = 'REPAIR TABLE `' . addslashes($sTable) . '`';
-		return $this->getRow($sQuery);
+		return $this->exec($sQuery);
 	}
 
 	/**
@@ -705,12 +663,12 @@ class DB {
 	 * @access public
 	 * @return array
 	 */
-	public function optimizeTable($sTable) {
+	public function optimizeTable(string $sTable) {
 		if (!$sTable) {
 			throw new TangoException('empty table name');
 		}
 		$sQuery = 'OPTIMIZE TABLE `' . addslashes($sTable) . '`';
-		return $this->getRow($sQuery);
+		return $this->exec($sQuery);
 	}
 
 	/**
@@ -720,12 +678,12 @@ class DB {
 	 * @access public
 	 * @return array
 	 */
-	public function emptyTable($sTable) {
+	public function emptyTable(string $sTable) {
 		if (!$sTable) {
 			throw new TangoException('empty table name');
 		}
 		$sQuery = 'TRUNCATE TABLE `' . addslashes($sTable) . '`';
-		return $this->getRow($sQuery);
+		return $this->exec($sQuery);
 	}
 
 	/**
