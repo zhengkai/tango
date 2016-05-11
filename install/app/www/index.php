@@ -1,0 +1,2 @@
+<?php
+Page::jump('/demo/');

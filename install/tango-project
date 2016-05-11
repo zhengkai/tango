@@ -1,0 +1,98 @@
+#! /usr/bin/env php
+<?php
+
+function error(string $sError, bool $bPrefix = TRUE) {
+	if ($bPrefix) {
+		$sError = 'ERROR: ' . $sError;
+	}
+	fwrite(STDERR, "\n" . basename(__FILE__) . ': ' . $sError . "\n");
+	exit(1);
+}
+
+function check_dir(string $sDir) {
+	if (!is_dir($sDir)) {
+		error('path "' . $sDir . '" is not a dir');
+		return FALSE;
+	}
+
+	if (!is_writable($sDir)) {
+		error('dir "' . $sDir . '" is not writeable');
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+if (PHP_SAPI !== 'cli') {
+	error('running in command line only');
+}
+
+if ($_SERVER['argc'] < 2) {
+	error('Usage: ' . "\n\t" . basename(__FILE__) . ' <app_dir>', FALSE);
+}
+
+$sTarget = array_pop($_SERVER['argv']);
+
+if (substr($sTarget, 0, 1) !== '/') {
+	$sTarget = $_SERVER['PWD'] . '/' . $sTarget;
+}
+$sTarget = rtrim($sTarget, "/");
+
+if (file_exists($sTarget)) {
+
+	if (!check_dir($sTarget)) {
+		exit(1);
+	}
+
+	$h = opendir($sTarget);
+	while ($file = readdir($h)) {
+		if (in_array($file, ['.', '..'])) {
+			continue;
+		}
+		error('dir "' . $sTarget . '" is not empty');
+	}
+
+} else {
+	$sDir = dirname($sTarget);
+	if (!file_exists($sDir)) {
+		error('dir "' . $sDir . '" not exists');
+	}
+	if (!check_dir($sDir)) {
+		exit(1);
+	}
+
+	mkdir($sTarget, 0777);
+}
+
+$sSource = __DIR__ . '/app/.';
+
+$sCmd = 'cp -R -n ' . escapeshellarg($sSource) . ' ' . escapeshellarg($sTarget);
+
+shell_exec($sCmd . ' 2>&1');
+
+$sFile = $sTarget . '/config/tango.php';
+$sContent = file_get_contents($sFile);
+$sSalt = base64_encode(random_bytes(32));
+$sContent = str_replace('__FILL SECRET SALT HERE__', $sSalt, $sContent);
+file_put_contents($sFile, $sContent);
+
+$sFile = $sTarget . '/nginx.conf';
+$sContent = file_get_contents($sFile);
+$sContent = str_replace('__FILL SITE ROOT__', $sTarget, $sContent);
+file_put_contents($sFile, $sContent);
+
+$sFile = $sTarget . '/README.md';
+$sContent = file_get_contents($sFile);
+$sContent = str_replace('{DIR}', $sTarget, $sContent);
+file_put_contents($sFile, $sContent);
+
+echo "\n";
+echo basename(__FILE__) . ': Done. Project created at "' . $sTarget . '"';
+echo "\n";
+
+$sReadme = $sTarget . '/README.md';
+
+readfile($sReadme);
+
+echo "\n\n";
+echo 'You can read it again, in ' . $sReadme, "\n\n";
