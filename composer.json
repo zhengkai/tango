@@ -21,6 +21,9 @@
 			"Tango\\": "lib/"
 		}
     },
+	"bin": [
+		"install/tango-project"
+	],
 	"require": {
 		"php": ">=7.0.0"
 	},

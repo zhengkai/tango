@@ -1,0 +1,10 @@
+{
+	"autoload": {
+		"psr-4": {
+			"": "lib/"
+		}
+	},
+	"require": {
+		"tango/tango": "@stable"
+	}
+}
