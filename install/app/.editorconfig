@@ -11,3 +11,6 @@ trim_trailing_whitespace = true
 spaces_around_operators = true
 spaces_around_brackets = outside
 indent_brace_style = K&R
+
+[*.md]
+trim_trailing_whitespace = false
