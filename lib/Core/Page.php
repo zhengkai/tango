@@ -64,6 +64,7 @@ class Page {
 		'txt' => 'text/plain',
 		'json' => 'application/json',
 		'jsonp' => 'application/javascript',
+		'js' => 'application/javascript',
 		'xml' => 'application/xml',
 		'css' => 'text/css',
 	];
@@ -245,6 +246,7 @@ class Page {
 
 			case 'txt':
 			case 'css':
+			case 'js':
 				self::$_sStep = 'end';
 				self::sendContentTypeHeader();
 				ob_end_flush();
