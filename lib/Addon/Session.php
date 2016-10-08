@@ -15,6 +15,9 @@ class Session {
 	protected static $_bAuth = NULL;
 	protected static $_bSetSession = TRUE;
 
+	protected static $_sUserTable = 'user';
+	protected static $_sUserRowName = 'user_id';
+
 	protected static $_bAdmin;
 
 	public static function _authCookie() {
@@ -85,7 +88,7 @@ class Session {
 	}
 
 	/**
-	 * 更新 date_active
+	 * 更新 ts_active
 	 */
 	protected static function _updateActive() {
 
@@ -117,12 +120,12 @@ class Session {
 		}
 
 		$oDB = \Tango\Drive\DB::getInstance('passport');
-		$sQuery = 'UPDATE user '
-			.'SET session_id = '.$iSession.', '
-			.'date_active = ' . $_SERVER['REQUEST_TIME'] . ' '
-			.'WHERE user_id = ' . $iUser . ' '
-			.'AND date_active < ' . $_SERVER['REQUEST_TIME'];
-		$oDB->exec($sQuery);
+		$sQuery = 'UPDATE ' . static::$_sUserTable . ' '
+			.'SET session_id = ? , '
+			.'ts_active = ? '
+			.'WHERE ' . static::$_sUserRowName . ' = ? '
+			.'AND ts_active < ?';
+		$oDB->exec($sQuery, [$iSession, $_SERVER['REQUEST_TIME'], $iUser, $_SERVER['REQUEST_TIME']]);
 
 		$aCookie = [
 			$iUser,

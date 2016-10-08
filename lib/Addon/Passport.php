@@ -24,7 +24,7 @@ class Passport {
 	public static function create() {
 
 		$sQuery = 'INSERT INTO user '
-			. 'SET date_create = ' . $_SERVER['REQUEST_TIME'];
+			. 'SET ts_create = ' . $_SERVER['REQUEST_TIME'];
 
 		$oDB = \Tango\Drive\DB::getInstance('passport');
 		return $oDB->getInsertID($sQuery);
