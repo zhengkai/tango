@@ -59,6 +59,8 @@ class Page {
 	protected static $_sContentType = 'html';
 	protected static $_bSendContentTypeHeader = FALSE;
 
+	protected static $_lHookPreWww = [];
+
 	const CONTENT_TYPE_LIST = [
 		'html' => 'text/html',
 		'txt' => 'text/plain',
@@ -318,8 +320,23 @@ class Page {
 		ob_start();
 
 		self::$_fTimeWww = microtime(TRUE);
-		require $sFile;
+		if (!self::_hookPreWww()) {
+			require $sFile;
+		}
 		self::$_fTimeWww = microtime(TRUE) - self::$_fTimeWww;
+	}
+
+	public static function addHookPreWww(callable $cb) {
+		static::$_lHookPreWww[] = $cb;
+	}
+
+	protected static function _hookPreWww(): bool {
+		foreach (static::$_lHookPreWww as $cb) {
+			if ($cb(self::$_sURI)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static function getTimeWww() {
