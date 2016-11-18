@@ -174,7 +174,7 @@ class DB {
 		$this->_bDebug = (bool)$aServer['debug'];
 
 		$this->_aConfig = [
-			'dsn' => 'mysql:' . $aServer['dsn'] . ';dbname=' . $aServer['dbname'] . ';charset=utf8',
+			'dsn' => 'mysql:' . $aServer['dsn'] . ';dbname=' . $aServer['dbname'] . ';charset=utf8mb4',
 			'user' => $aServer['user'],
 			'password' => $aServer['password'],
 			'option' => [
