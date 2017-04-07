@@ -105,7 +105,7 @@ class Session {
 		self::$_iUser = $iUser;
 		self::$_bAuth = TRUE;
 
-		self::updateSession($iUser);
+		static::updateSession($iUser);
 	}
 
 	public static function updateSession(int $iUser, int $iSession = 0) {
