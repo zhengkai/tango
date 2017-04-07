@@ -10,7 +10,7 @@ before_script:
   - php -i
 
 script: 
-  - phpunit -c phpunit/phpunit.xml.dist
+  - ./vendor/bin/phpunit -c phpunit/phpunit.xml.dist
     
 git:
   depth: 5
