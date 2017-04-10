@@ -1,5 +1,5 @@
 <?php
-class PageTest extends PHPUnit_Framework_TestCase {
+class PageTest extends PHPUnit\Framework\TestCase {
 
 	protected function _makeTest(string $sName) {
 

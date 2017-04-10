@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/class/UserAI.php';
 
-class MongoAITest extends PHPUnit_Framework_TestCase {
+class MongoAITest extends PHPUnit\Framework\TestCase {
 
 	public function testGen() {
 

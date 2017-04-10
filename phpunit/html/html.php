@@ -4,7 +4,7 @@ require __DIR__ . '/lib/HTML.php';
 
 Page::start('/abc/def.php');
 
-class HtmlTest extends PHPUnit_Framework_TestCase {
+class HtmlTest extends PHPUnit\Framework\TestCase {
 
 	/**
 	 * 检查设置 tpl 相对/绝对路径是否符合预期

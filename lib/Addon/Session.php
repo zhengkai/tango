@@ -136,13 +136,13 @@ class Session {
 		$sCookie = implode(',', $aCookie);
 		$sCookie = self::_cookieHash($sCookie).$sCookie;
 
-		self::_setCookie($sCookie);
+		static::_setCookie($sCookie);
 	}
 
 	public static function cleanCookie() {
 
 		self::$_bAuth = FALSE;
-		self::_setCookie(FALSE);
+		static::_setCookie(FALSE);
 	}
 
 	protected static function _setCookie(string $sValue): bool {

@@ -6,7 +6,7 @@ require_once __DIR__.'/enum/TestB.class.php';
 require_once __DIR__.'/enum/TestC.class.php';
 require_once __DIR__.'/enum/TestD.class.php';
 
-class DBEnumTest extends PHPUnit_Framework_TestCase {
+class DBEnumTest extends PHPUnit\Framework\TestCase {
 
 	protected static $_lChar;
 

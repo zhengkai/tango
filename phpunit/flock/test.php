@@ -1,7 +1,7 @@
 #! /usr/bin/env php
 <?php
 
-class FlockTest extends PHPUnit_Framework_TestCase {
+class FlockTest extends PHPUnit\Framework\TestCase {
 
 	/**
 	 * 额外挂一个 sh 脚本并发执行 6 次 php，然后检查输出的结果是否符合格式

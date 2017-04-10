@@ -4,7 +4,7 @@ require_once __DIR__ . '/class/UserAI.php';
 require_once __DIR__ . '/class/IdGen.php';
 require_once __DIR__ . '/class/Map.php';
 
-class MongoBatchTest extends PHPUnit_Framework_TestCase {
+class MongoBatchTest extends PHPUnit\Framework\TestCase {
 
 	public function testConfig() {
 

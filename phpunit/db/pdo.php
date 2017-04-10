@@ -1,7 +1,7 @@
 <?php
 use Tango\Drive\DB;
 
-class DBTest extends PHPUnit_Framework_TestCase {
+class DBTest extends PHPUnit\Framework\TestCase {
 
 	protected $_i = 0;
 
