@@ -204,8 +204,7 @@ class Page {
 		self::_www();
 
 		if (http_response_code() === 404 && !ob_get_length()) {
-			self::_notfoundPage();
-			return;
+			self::$_sTpl = static::_notfoundPage();
 		}
 
 		self::_parseContentType();
@@ -357,7 +356,7 @@ class Page {
 
 		self::$_sStep = 'tpl';
 
-		$sTpl = HTML::getTpl(self::$_sURI);
+		$sTpl = self::$_sTpl ?: HTML::getTpl(self::$_sURI);
 
 		if (!self::checkPathSafe($sTpl, 'tpl')) {
 			self::$_sStep = 'end';
@@ -406,9 +405,7 @@ class Page {
 		}
 		self::$_bFail = TRUE;
 
-		ob_start();
-		require $sTpl ?: dirname(__DIR__) . '/Page/tpl/404_notfound.php';
-		return ob_get_clean();
+		return $sTpl ?: dirname(__DIR__) . '/Page/tpl/404_notfound.php';
 	}
 
 	protected static function _debugPage(string $sTpl = ''): string {
