@@ -3,9 +3,10 @@ language: php
 php:
   - '7.0'
   - '7.1'
+  - nightly
 
 before_script:
-  - rm -f ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/xdebug.ini
+  - phpenv config-rm xdebug.ini
   - composer update --quiet
   - mysql < phpunit/db/create_table.sql
   - php -i
