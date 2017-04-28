@@ -307,7 +307,8 @@ class Page {
 		}
 		if (!self::checkPathSafe($sFile, 'www')) {
 			self::$_sStep = 'end';
-			throw new TangoException('path ' . self::$_sURI . ' unsafe');
+			self::$_oThrow = new TangoException('path ' . self::$_sURI . ' unsafe');
+			return;
 		}
 
 		$T =& self::$T;
@@ -320,7 +321,13 @@ class Page {
 
 		self::$_fTimeWww = microtime(TRUE);
 		if (!self::_hookPreWww()) {
-			require $sFile;
+			try {
+				(function () use ($sFile, &$T, &$D, &$_IN) {
+					require $sFile;
+				})();
+			} catch(Throwable $e) {
+				self::$_oThrow = $e;
+			}
 		}
 		self::$_fTimeWww = microtime(TRUE) - self::$_fTimeWww;
 	}
@@ -370,7 +377,15 @@ class Page {
 			ob_clean();
 			throw new \Exception('no tpl file ' . $sTpl);
 		}
-		require $sTpl;
+
+		$sFile = $sTpl;
+		try {
+			(function () use ($sFile, $T, $D, $_IN) {
+				require $sFile;
+			})();
+		} catch(Throwable $e) {
+			self::$_oThrow = $e;
+		}
 
 		self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
 
