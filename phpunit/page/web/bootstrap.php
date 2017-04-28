@@ -10,4 +10,6 @@ Config::setFile('html', __DIR__ . '/config/html.php');
 
 define('GIT_ROOT', dirname(__DIR__, 3));
 
+set_include_path('.');
+
 Page::start($_SERVER['SCRIPT_NAME']);

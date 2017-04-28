@@ -192,6 +192,15 @@ class Page {
 
 		self::_www();
 
+		if (self::$_oThrow) {
+			self::shutdown();
+			return;
+		}
+
+		self::_afterWww();
+	}
+
+	protected static function _afterWww() {
 		if (http_response_code() === 404 && !ob_get_length()) {
 			self::$_sTpl = static::_notfoundPage();
 		}
@@ -314,7 +323,7 @@ class Page {
 				(function () use ($sFile, &$T, &$D, &$_IN) {
 					require $sFile;
 				})();
-			} catch(Throwable $e) {
+			} catch(\Throwable $e) {
 				self::$_oThrow = $e;
 			}
 		}
@@ -344,13 +353,13 @@ class Page {
 
 	protected static function _tpl(string $sURI = '') {
 
+		self::$_sStep = 'tpl';
+
 		ob_start();
 
 		$T =& self::$T;
 		$D =& self::$D;
 		$_IN =& self::$IN;
-
-		self::$_sStep = 'tpl';
 
 		$sTpl = self::$_sTpl ?: HTML::getTpl(self::$_sURI);
 
@@ -361,26 +370,23 @@ class Page {
 
 		self::$_fTimeTpl = microtime(TRUE);
 
-		if (!is_file($sTpl)) {
-			self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
-			ob_clean();
-			throw new \Exception('no tpl file ' . $sTpl);
-		}
-
 		$sFile = $sTpl;
 		try {
 			(function () use ($sFile, $T, $D, $_IN) {
 				require $sFile;
 			})();
-		} catch(Throwable $e) {
+		} catch(\Throwable $e) {
 			self::$_oThrow = $e;
 		}
 
 		self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
 
-		$sBody = ob_get_clean();
+		if (self::$_oThrow) {
+			self::shutdown();
+			return;
+		}
 
-		self::_layout($sBody);
+		self::_layout(ob_get_clean());
 
 		return TRUE;
 	}
@@ -391,6 +397,7 @@ class Page {
 		if (self::$_sLayout) {
 			$oLayout->setLayout(self::$_sLayout);
 		}
+
 		$oLayout->setBody($sBody);
 		$oLayout->run();
 	}
@@ -451,25 +458,23 @@ class Page {
 		switch (self::$_sStep) {
 
 			case 'www':
-
-				if (self::$_fTimeWww) {
-					self::$_fTimeWww = microtime(TRUE) - self::$_fTimeWww;
-				}
-
 			case 'tpl':
 
 				ob_clean();
 				if (!self::$_oThrow) {
-					self::$_oThrow = new TangoException(self::$_sStep . ' 异常，错误：使用 return，别用 exit');
+					self::_afterWww();
+					break;
 				}
 				if (!self::$_fTimeTpl) {
 					self::$_fTimeTpl = microtime(TRUE);
 				}
 				$sBody = static::_debugPage();
+
 				self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
 				if ($sBody) {
 					self::_layout($sBody);
 				}
+				self::$_sStep = 'end';
 				break;
 
 			case 'layout':

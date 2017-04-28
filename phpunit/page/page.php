@@ -23,6 +23,8 @@ class PageTest extends PHPUnit\Framework\TestCase {
 		foreach ([
 			'index',
 			'base',
+			'base_exit',
+			'base_change_tpl',
 			'www_echo',
 			'www_error',
 			'www_exception',
