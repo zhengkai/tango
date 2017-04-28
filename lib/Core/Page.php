@@ -57,7 +57,6 @@ class Page {
 	protected static $_fTimeTpl;
 
 	protected static $_sContentType = 'html';
-	protected static $_bSendContentTypeHeader = FALSE;
 
 	protected static $_lHookPreWww = [];
 
@@ -148,24 +147,14 @@ class Page {
 
 	protected static function sendContentTypeHeader(string $sContentType = '') {
 
-		if (self::$_bSendContentTypeHeader) {
+		static $_bSend = FALSE;
+		if ($_bSend) {
 			self::$_sStep = 'end';
 			throw new TangoException('duplicate set');
 		}
-		self::$_bSendContentTypeHeader = TRUE;
+		$_bSend = TRUE;
 
-		if (array_key_exists($sContentType, self::CONTENT_TYPE_LIST)) {
-
-			$sOut = self::CONTENT_TYPE_LIST[$sContentType];
-
-		} else if ($sContentType) {
-
-			$sOut = $sContentType;
-
-		} else {
-
-			$sOut = self::CONTENT_TYPE_LIST[self::$_sContentType];
-		}
+		$sOut = self::CONTENT_TYPE_LIST[$sContentType ?: self::$_sContentType];
 
 		header('Content-Type: ' . $sOut);
 	}
