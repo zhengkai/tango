@@ -215,7 +215,7 @@ class DB {
 				$this->_aConfig['option']
 			);
 
-		} catch (\Exception $e) {
+		} catch (\Throwable $e) {
 
 			$sError = 'MySQL Connect fail, Database "' . $sName . '"' . "\n"
 				. $e->getMessage() . "\n"

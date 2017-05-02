@@ -37,13 +37,7 @@ class TangoException extends \Exception {
 	 * @access public
 	 */
 	public function __construct($sMessage, $iDepth = 0, $iCode = 0) {
-
-		$iDepth = (int)$iDepth;
-		if ($iDepth < 0) {
-			$iDepth = 0;
-		}
-		self::$_iDepth = $iDepth;
-
+		self::$_iDepth = max($iDepth, 0);
 		parent::__construct($sMessage, $iCode);
 	}
 
@@ -81,6 +75,11 @@ class TangoException extends \Exception {
 	 */
 	public static function handler(\Exception $e, $bSend = TRUE) {
 
+		static $_sTimeFormat;
+		if ($_sTimeFormat === NULL) {
+			Log::getConfig()['time_format'];
+		}
+
 		$aTrace = [];
 
 		if (is_a($e, __CLASS__)) {
@@ -98,7 +97,7 @@ class TangoException extends \Exception {
 					$aPrev = $aRow;
 				}
 			} else {
-				$aSelect =& $lTrace[self::$_iDepth - 1];
+				$aSelect =& $lTrace[self::$_iDepth ? self::$_iDepth - 1 : 0];
 				if ($aSelect) {
 					$aTrace = $aSelect;
 				}
@@ -126,22 +125,15 @@ class TangoException extends \Exception {
 
 		$bCli = PHP_SAPI === 'cli';
 
-		$sHash = ($bCli ? posix_getpid() : $_SERVER["REMOTE_PORT"]) . "\n"
-			. sprintf('%.16f', $fTime) . "\n"
-			. $e->getMessage() . "\n"
-			. Util::getAI();
-		$sHash = hash('crc32', $sHash);
+		$sHash = bin2hex(random_bytes(4));
 
 		$sHashType = hash('crc32', json_encode($aTrace, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-		$sTime = date(Log::getConfig()['time_format'], $fTime);
+		$sTime = date($_sTimeFormat, $fTime);
 		$sTime .= substr(sprintf('%.03f' ,$fTime), -4);
 
 		$sFunc = $aTrace['class'].$aTrace['type'].$aTrace['function'];
-		$iArgLenLimit = 80 - 3 - strlen($sFunc);
-		if ($iArgLenLimit < 50) {
-			$iArgLenLimit = 50;
-		}
+		$iArgLenLimit = max(80 - 3 - strlen($sFunc), 50);
 
 		$sArg = '';
 		if ($aTrace['args']) {
@@ -172,11 +164,6 @@ class TangoException extends \Exception {
 			.($bCli ? '' : "\n".'uri '.$_SERVER['REQUEST_URI']);
 
 		self::$_sLastError = $s;
-
-		try {
-			Page::reset();
-			Page::error('http500');
-		} catch(\Exception $e) {}
 
 		if ($bSend) {
 			error_log("\n".$s."\n", 3, ini_get('error_log'));
