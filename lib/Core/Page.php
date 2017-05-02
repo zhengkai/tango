@@ -136,7 +136,7 @@ class Page {
 
 		if (!in_array(self::$_sStep, ['init', 'www'])) {
 			self::$_sStep = 'end';
-			throw new TangoException('only can be use in www page');
+			throw new TangoException('only can be use in www page, step = '. self::$_sStep);
 		}
 		if (!array_key_exists($sType, self::CONTENT_TYPE_LIST)) {
 			self::$_sStep = 'end';
@@ -190,7 +190,13 @@ class Page {
 
 		self::$_sURI = $sURI;
 
-		self::_www();
+		if (strpos($sURI, '..') !== FALSE) {
+			self::$_sStep = 'www';
+			self::$_oThrow = new \Exception('Looks like an attack: ' . $sURI);
+			ob_start();
+		} else {
+			self::_www();
+		}
 
 		if (self::$_oThrow) {
 			self::shutdown();
@@ -507,7 +513,7 @@ class Page {
 		if (self::$_sStep === 'www') {
 			ob_end_clean();
 		} else if (self::$_sStep !== 'init') {
-			throw new \Exception('only can be use in www page, now step ' . self::$_sStep);
+			throw new \Exception('only can be use in www page, now step = ' . self::$_sStep);
 		}
 		self::$_sStep = 'end';
 		self::$_bWww = FALSE;

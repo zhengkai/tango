@@ -35,6 +35,7 @@ class PageTest extends PHPUnit\Framework\TestCase {
 			'type_jsonp',
 			'type_txt',
 			'html_meta',
+			'attack..a',
 
 		] as $sTest) {
 
