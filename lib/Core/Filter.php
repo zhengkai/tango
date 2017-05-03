@@ -82,9 +82,16 @@ class Filter {
 			}
 
 			switch ($sType) {
-				case 'time':
-					$sValue = iconv('UTF-8', 'UTF-8//IGNORE', trim($mValue));
-					$mValue = strtotime($sValue) ?: 0;
+				case 'int':
+					$mValue = str_replace(
+						['１', '２', '３', '４', '５', '６', '７', '８', '９', '０'],
+						[1, 2, 3, 4, 5, 6, 7, 8, 9, 0],
+						$mValue
+					);
+					$mValue = (int)$mValue;
+					if ($mValue < 1) {
+						$mValue = 0;
+					}
 					break;
 				case 'str':
 					$mValue = iconv('UTF-8', 'UTF-8//IGNORE', trim($mValue));
@@ -92,28 +99,30 @@ class Filter {
 						$mValue = '';
 					}
 					break;
+				case "hex":
+					if (!preg_match('#^[0-9a-f]{0,1024}$#', $mValue) || ((strlen($mValue) % 2) !== 0)) {
+						$mValue = FALSE;
+					}
+					break;
 				case 'longStr':
 					$mValue = iconv('UTF-8', 'UTF-8//IGNORE', trim($mValue));
 					break;
-				case 'bin':
-				case 'array':
+				case 'time':
+					$sValue = iconv('UTF-8', 'UTF-8//IGNORE', trim($mValue));
+					$mValue = strtotime($sValue) ?: 0;
 					break;
-				case 'int':
-					$mValue = (int)$mValue;
-					if ($mValue < 1) {
-						$mValue = 0;
+				case 'array':
+					if (!is_array($mValue)) {
+						$mValue = [$mValue];
 					}
+					break;
+				case 'bin':
 					break;
 				case 'signedInt':
 					$mValue = (int)$mValue;
 					break;
 				case 'bool':
 					$mValue = (bool)$mValue;
-					break;
-				case "hex":
-					if (!preg_match('#^[0-9a-f]{0,1024}$#', $mValue) || ((strlen($mValue) % 2) !== 0)) {
-						$mValue = FALSE;
-					}
 					break;
 				case 'json';
 					if (!is_string($mValue) || strlen($mValue) > 10000000) {
