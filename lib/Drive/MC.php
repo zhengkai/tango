@@ -25,7 +25,7 @@ Config::setFileDefault('memcache', dirname(__DIR__).'/Config/memcache.php');
 class MC {
 
 	/** 对应 config 中的命名 */
-	private static $_sConfig = 'default';
+	private const _CONFIG = 'default';
 
 	/** 单例连接 */
 	private static $_oConn;
@@ -48,9 +48,9 @@ class MC {
 
 		$aConfig = Config::get('memcache');
 
-		$lServer =& $aConfig['server'][static::$_sConfig];
+		$lServer =& $aConfig['server'][static::_CONFIG];
 		if (!is_array($lServer)) {
-			throw new \Exception('memcache config "' . static::$_sConfig . '" not found');
+			throw new \Exception('memcache config "' . static::_CONFIG . '" not found');
 		}
 
 		if ($aConfig['enable']) {

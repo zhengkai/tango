@@ -17,6 +17,6 @@ class MemcacheFake {
 	}
 
 	public function getResultCode() {
-		return Memcached::RES_FAILURE;
+		return \Memcached::RES_FAILURE;
 	}
 }
