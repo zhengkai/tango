@@ -25,13 +25,13 @@ Config::setFileDefault('page', dirname(__DIR__) . '/Config/page.php');
 class Page {
 
 	/** www 传给 tpl 的变量，经过 HTML 过滤 */
-	public static $T = [];
+	protected static $_T = [];
 
 	/** www 传给 tpl 的变量，没有 HTML 过滤 */
-	public static $D = [];
+	protected static $_D = [];
 
 	/** 经过 \Tango\Core\Filter 过滤的输入参数（原 $_GET/$_POST） */
-	public static $IN = [];
+	protected static $_IN = [];
 
 	protected static $_bFail = FALSE;
 
@@ -49,6 +49,7 @@ class Page {
 	protected static $_sLayout;
 
 	protected static $_oThrow;
+	protected static $_oThrowTpl;
 
 	protected static $_fTimeWww;
 	protected static $_fTimeTpl;
@@ -64,6 +65,8 @@ class Page {
 	public const STEP_TPL     = 400;
 	public const STEP_LAYOUT  = 500;
 	public const STEP_END     = 999;
+
+	protected static $_bDebugTpl = FALSE;
 
 	public const CONTENT_TYPE_LIST = [
 		'html' => 'text/html',
@@ -237,13 +240,13 @@ class Page {
 			return;
 		}
 
-		$T =& self::$T;
-		$D =& self::$D;
-		$_IN =& self::$IN;
-
 		if (self::_hookPreWww()) {
 			return;
 		}
+
+		$T =& self::$_T;
+		$D =& self::$_D;
+		$_IN =& self::$_IN;
 
 		self::$_fTimeWww = microtime(TRUE);
 		try {
@@ -274,18 +277,21 @@ class Page {
 		}
 
 		if (static::$_sContentType === 'html') {
-			self::$T = HTML::escape(self::$T);
+			self::$_T = HTML::escape(self::$_T);
 			return;
 		}
 
 		if (in_array(static::$_sContentType, ['json', 'jsonp'])) {
 			$sCallback = '';
 			if (static::$_sContentType === 'jsonp') {
-				$sCallback = self::$IN['callback'] ?? $_GET['callback'] ?? '';
+				$sCallback = self::$_IN['callback'] ?? $_GET['callback'] ?? '';
 				if (!is_string($sCallback)) {
 					$sCallback = '';
 				} else if (!preg_match('#^[_$a-zA-Z\x{A0}-\x{FFFF}][_$a-zA-Z0-9\x{A0}-\x{FFFF}]*$#u', $sCallback)) {
 					$sCallback = '';
+				}
+				if (!$sCallback) {
+					$sCallback = 'callback';
 				}
 			}
 
@@ -295,7 +301,7 @@ class Page {
 			if (strlen($sCallback)) {
 				echo $sCallback . '(';
 			}
-			echo json_encode(self::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+			echo json_encode(self::$_T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 			if (strlen($sCallback)) {
 				echo ')';
 			}
@@ -311,22 +317,25 @@ class Page {
 		self::_checkFileSafe($sFile, 'tpl');
 
 		if (self::$_oThrow) {
-			$bDebugTpl = TRUE;
+			self::$_bDebugTpl = TRUE;
 			$sFile = static::_fallbackTplDebug();
 		}
 
-		$T =& self::$T;
-		$D =& self::$D;
-		$_IN =& self::$IN;
+		$T =& self::$_T;
+		$D =& self::$_D;
+		$_IN =& self::$_IN;
 
-		$oThrow = self::$_oThrow;
-		self::$_oThrow = NULL;
+		if (self::$_oThrow) {
+			self::$_oThrowTpl = self::$_oThrow;
+			self::$_oThrow = NULL;
+		}
 
 		self::$_fTimeTpl = microtime(TRUE);
 
+		$e = NULL;
 		if (is_readable($sFile)) {
 			try {
-				(function () use ($sFile, $T, $D, $_IN, $oThrow) {
+				(function () use ($sFile, $T, $D, $_IN) {
 					require $sFile;
 				})();
 			} catch(\Throwable $e) {
@@ -335,14 +344,22 @@ class Page {
 			$e = new \Exception('no tpl ' . $sFile);
 		}
 
-		if (!empty($e) && empty($bDebugTpl)) {
+		if ($e) {
 			ob_clean();
+
+			if (self::$_bDebugTpl) {
+				j('tpl stop');
+				self::stop(FALSE);
+				j(self::$_iStep);
+				throw $e;
+			}
+
 			self::$_oThrow = $e;
 			self::$_iStep = self::STEP_CONTENT;
 		}
 	}
 
-	protected static function _layout() {
+	protected static function _layout(): void {
 
 		self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
 		$sBody = ob_get_clean();
@@ -383,8 +400,11 @@ class Page {
 		return self::$_fTimeTpl;
 	}
 
-	public static function getThrow(): Throwable {
-		return self::$_oThrow;
+	/**
+	 * 仅用于 debug tpl
+	 */
+	public static function getThrow(): ?\Throwable {
+		return self::$_oThrowTpl;
 	}
 
 	public static function run(bool $bKeep = TRUE) {
@@ -425,8 +445,10 @@ class Page {
 		return self::$_iStep === self::STEP_END;
 	}
 
-	public static function stop() {
-		self::$_iStep === self::STEP_END;
-		exit;
+	public static function stop(bool $bExit = TRUE) {
+		self::$_iStep = self::STEP_END;
+		if ($bExit) {
+			exit;
+		}
 	}
 }
