@@ -40,7 +40,7 @@ class Page {
 	protected static $_sWww = '';
 	protected static $_bStopWww = FALSE;
 
-	protected static $_sURI;
+	protected static $_sScript;
 	protected static $_sTpl;
 
 	protected static $_bDelay; // 是否执行 Delay::run()
@@ -154,7 +154,7 @@ class Page {
 			throw new Exception('only can be use in www page, step = '. self::$_iStep);
 		}
 		if (!array_key_exists($sType, self::CONTENT_TYPE_LIST)) {
-			throw new Exception('unknown content type "'. $sType .'" / '.implode(array_keys(self::CONTENT_TYPE_LIST)));
+			throw new Exception('unknown content type "' . $sType . '" / ' . implode(',', array_keys(self::CONTENT_TYPE_LIST)));
 		}
 		static::$_sContentType = $sType;
 	}
@@ -176,14 +176,23 @@ class Page {
 		register_shutdown_function([get_called_class(), 'run']);
 	}
 
-	public static function start(string $sURI): void {
+	public static function start(string $sScript, string $sBaseDir = ''): void {
 
 		ob_start();
 
-		if (!self::$_sBaseDir) {
-			self::$_sBaseDir = dirname(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0]['file']);
+		self::$_sBaseDir = $sBaseDir ?: dirname(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0]['file']);
+		self::$_sScript = $sScript;
+
+		// detect content-type by filename
+		$sFilename = basename($sScript, '.php');
+		if (strpos($sFilename, '.') !== FALSE) {
+			foreach (self::CONTENT_TYPE_LIST as $sType => $_) {
+				if (preg_match('#\.' . $sType . '$#', $sFilename)) {
+					static::$_sContentType = $sType;
+					break;
+				}
+			}
 		}
-		self::$_sURI = $sURI;
 
 		self::_register();
 		self::run(FALSE);
@@ -229,12 +238,12 @@ class Page {
 
 		self::$_iStep = self::STEP_WWW;
 
-		if (strpos(self::$_sURI, '..') !== FALSE) {
-			self::$_oThrow = new \Exception('Looks like an attack: ' . self::$_sURI);
+		if (strpos(self::$_sScript, '..') !== FALSE) {
+			self::$_oThrow = new \Exception('Looks like an attack: ' . self::$_sScript);
 			return;
 		}
 
-		$sFile = self::$_sBaseDir . '/www' . self::$_sURI;
+		$sFile = self::$_sBaseDir . '/www' . self::$_sScript;
 
 		if (!self::_checkFileSafe($sFile, 'www')) {
 			return;
@@ -313,7 +322,7 @@ class Page {
 
 		self::$_iStep = self::STEP_TPL;
 
-		$sFile = self::$_sTpl ?: HTML::getTpl(self::$_sURI);
+		$sFile = self::$_sTpl ?: HTML::getTpl(self::$_sScript);
 		self::_checkFileSafe($sFile, 'tpl');
 
 		if (self::$_oThrow) {
@@ -385,7 +394,7 @@ class Page {
 
 	protected static function _hookPreWww(): bool {
 		foreach (static::$_lHookPreWww as $cb) {
-			if ($cb(self::$_sURI)) {
+			if ($cb(self::$_sScript)) {
 				return true;
 			}
 		}

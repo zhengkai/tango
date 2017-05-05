@@ -36,6 +36,8 @@ class PageTest extends PHPUnit\Framework\TestCase {
 			'type_jsonp_get',
 			'type_jsonp_invalid',
 			'type_txt',
+			'type.json',
+			'type.jsonp',
 			'html_meta',
 			'attack..a',
 

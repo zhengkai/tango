@@ -2,7 +2,7 @@
 require __DIR__ . '/lib/Page.php';
 require __DIR__ . '/lib/HTML.php';
 
-Page::start('/abc/def.php');
+Page::start('/abc/def.php', '/basedir');
 
 class HtmlTest extends PHPUnit\Framework\TestCase {
 
