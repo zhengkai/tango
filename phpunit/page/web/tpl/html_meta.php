@@ -1,4 +1,6 @@
 <?php
+Page::setLayout('BaseMeta');
+
 echo '<p>', $T['foo'], '</p>';
 
 HTML::addJS('/bootstrap/3.3.6/js/bootstrap.min.js');

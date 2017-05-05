@@ -1,3 +1,6 @@
+<?php
+Page::setLayout('Base');
+?>
 <h1>Error</h1>
 <?php
 
@@ -6,8 +9,7 @@ $fnFilter = function ($s) {
 	return htmlspecialchars($s);
 };
 
-if (static::$_oThrow) {
-
-	echo '<p>', $fnFilter(static::$_oThrow->getMessage()), '</p>', "\n";
-	echo '<p>', $fnFilter(static::$_oThrow->getFile()), '</p>';
+if ($oThrow) {
+	echo '<p>', $fnFilter($oThrow->getMessage()), '</p>', "\n";
+	echo '<p>', $fnFilter($oThrow->getFile()), '</p>';
 }

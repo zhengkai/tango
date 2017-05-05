@@ -35,12 +35,9 @@ class Page {
 
 	protected static $_bFail = FALSE;
 
-	protected static $_bInit = FALSE;
-	protected static $_sStep = 'init';
+	protected static $_sBaseDir = '';
 
-	protected static $_sBaseDir;
-
-	protected static $_bWww = TRUE;
+	protected static $_sWww = '';
 	protected static $_bStopWww = FALSE;
 
 	protected static $_sURI;
@@ -60,7 +57,15 @@ class Page {
 
 	protected static $_lHookPreWww = [];
 
-	const CONTENT_TYPE_LIST = [
+	protected static $_iStep = self::STEP_INIT;
+	public const STEP_INIT    = 100;
+	public const STEP_WWW     = 200;
+	public const STEP_CONTENT = 300;
+	public const STEP_TPL     = 400;
+	public const STEP_LAYOUT  = 500;
+	public const STEP_END     = 999;
+
+	public const CONTENT_TYPE_LIST = [
 		'html' => 'text/html',
 		'txt' => 'text/plain',
 		'json' => 'application/json',
@@ -68,14 +73,6 @@ class Page {
 		'js' => 'application/javascript',
 		'xml' => 'application/xml',
 		'css' => 'text/css',
-	];
-
-	const ERROR_STOP_CODE_LIST = [
-		E_ERROR,
-		E_CORE_ERROR,
-		E_COMPILE_ERROR,
-		E_USER_ERROR,
-		E_RECOVERABLE_ERROR,
 	];
 
 	public static function cacheForever(): bool {
@@ -120,27 +117,29 @@ class Page {
 		header('Cache-Control: max-age=315360000');
 	}
 
-	public static function getBaseDir() {
+	public static function getBaseDir(): string {
 		return self::$_sBaseDir;
 	}
 
-	public static function checkPathSafe(string $sPath, string $sSubDir = '') {
+	protected static function _checkFileSafe(string $sPath, string $sSubDir = '') {
 		$sBaseDir = self::$_sBaseDir . '/';
 		if ($sSubDir) {
 			$sBaseDir .= rtrim($sSubDir, '/') . '/';
 		}
-		return strpos($sPath, $sBaseDir) === 0;
+		if (strpos($sPath, $sBaseDir) === 0) {
+			return TRUE;
+		}
+		self::$_oThrow = new \Exception($sSubDir . ' file ' . $sFile. ' unsafe');
+		return FALSE;
 	}
 
 	public static function setContentType(string $sType) {
 
-		if (!in_array(self::$_sStep, ['init', 'www'])) {
-			self::$_sStep = 'end';
-			throw new TangoException('only can be use in www page, step = '. self::$_sStep);
+		if (self::$_iStep != self::STEP_WWW) {
+			throw new Exception('only can be use in www page, step = '. self::$_iStep);
 		}
 		if (!array_key_exists($sType, self::CONTENT_TYPE_LIST)) {
-			self::$_sStep = 'end';
-			throw new TangoException('unknown content type "'. $sType .'" / '.implode(array_keys(self::CONTENT_TYPE_LIST)));
+			throw new Exception('unknown content type "'. $sType .'" / '.implode(array_keys(self::CONTENT_TYPE_LIST)));
 		}
 		static::$_sContentType = $sType;
 	}
@@ -149,7 +148,7 @@ class Page {
 
 		static $_bSend = FALSE;
 		if ($_bSend) {
-			self::$_sStep = 'end';
+			self::$_iStep = 'end';
 			throw new TangoException('duplicate set');
 		}
 		$_bSend = TRUE;
@@ -167,22 +166,19 @@ class Page {
 		return Config::get('page');
 	}
 
-	public static function exceptionHandler(\Throwable $ex) {
-		self::$_oThrow = $ex;
-		error_log(self::$_oThrow);
-	}
-
-	public static function start(string $sURI) {
-
-		if (!self::$_bInit) {
-			set_exception_handler([get_called_class(), 'exceptionHandler']);
+	protected static function _register(bool $bForce = FALSE) {
+		static $_bInit;
+		if ($bForce || !$_bInit) {
+			$_bInit = TRUE;
 			register_shutdown_function([get_called_class(), 'shutdown']);
 		}
-		self::$_bInit = TRUE;
+	}
 
-		if (ob_get_length() !== FALSE) {
-			ob_end_flush();
-		}
+	public static function start(string $sURI): void {
+
+		ob_start();
+
+		self::_register();
 
 		if (!self::$_sBaseDir) {
 			self::$_sBaseDir = dirname(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0]['file']);
@@ -190,110 +186,21 @@ class Page {
 
 		self::$_sURI = $sURI;
 
-		if (strpos($sURI, '..') !== FALSE) {
-			self::$_sStep = 'www';
-			self::$_oThrow = new \Exception('Looks like an attack: ' . $sURI);
-			ob_start();
-		} else {
-			self::_www();
-		}
+		self::_www();
 
-		if (self::$_oThrow) {
-			self::shutdown();
-			return;
-		}
+		self::_content();
 
-		self::_afterWww();
+		self::_tpl();
+
+		self::_layout();
 	}
 
-	protected static function _afterWww() {
-		if (http_response_code() === 404 && !ob_get_length()) {
-			self::$_sTpl = static::_notfoundPage();
-		}
-
-		self::_parseContentType();
-
-		if (self::$_bDelay) {
-			fastcgi_finish_request();
-			Delay::run();
-		}
+	protected static function _fallbackTplDebug(): string {
+		return dirname(__DIR__) . '/Page/tpl/500_debug.php';
 	}
 
-	/**
-	 * 根据扩展名的不同做后续处理
-	 * 为了不让 start() 太长而摘了出来
-	 *
-	 * @static
-	 * @access public
-	 * @return void
-	 */
-	public static function _parseContentType() {
-
-		if (!self::$_bWww) {
-			return;
-		}
-
-		switch (static::$_sContentType) {
-
-			case 'html':
-				if (ob_get_length()) {
-					self::$_sStep = 'end';
-					ob_end_flush();
-					break;
-				}
-
-				self::$T = HTML::escape(self::$T);
-
-				self::_tpl();
-
-				self::$_sStep = 'end';
-				break;
-
-			case 'txt':
-			case 'css':
-			case 'js':
-				self::$_sStep = 'end';
-				self::sendContentTypeHeader();
-				ob_end_flush();
-				break;
-
-			case 'jsonp':
-
-				if (is_string($_GET['callback'] ?? FALSE)) {
-					$sCallback = $_GET['callback'];
-					if (!preg_match('#^[_$a-zA-Z\x{A0}-\x{FFFF}][_$a-zA-Z0-9\x{A0}-\x{FFFF}]*$#u', $sCallback)) {
-						$sCallback = '';
-					}
-				}
-
-			case 'json':
-
-				$sCallback = $sCallback ?? '';
-
-				self::$_sStep = 'end';
-				self::sendContentTypeHeader();
-				if ($iLength = ob_get_length()) {
-					trigger_error('www output when json, length = ' . $iLength);
-					ob_end_flush();
-				} else {
-					ob_end_clean();
-				}
-				if (strlen($sCallback)) {
-					echo $sCallback . '(';
-				}
-				echo json_encode(self::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-				if (strlen($sCallback)) {
-					echo ')';
-				}
-				break;
-
-			default:
-				self::$_sStep = 'end';
-				ob_end_clean();
-				self::sendContentTypeHeader('txt');
-				echo 'ERROR: incomplete content-type parser "', static::$_sContentType, '"', "\n";
-				break;
-		}
+	protected static function _fallbackTplNotFound(): string {
+		return dirname(__DIR__) . '/Page/tpl/404_notfound.php';
 	}
 
 	public static function doDelay() {
@@ -302,16 +209,18 @@ class Page {
 		}
 	}
 
-	protected static function _www() {
+	protected static function _www(): void {
 
-		$sFile = self::$_sBaseDir . '/www' . self::$_sURI;
-		if (!is_file($sFile)) {
-			self::_missingPage(self::$_sURI, $sFile);
+		self::$_iStep = self::STEP_WWW;
+
+		if (strpos(self::$_sURI, '..') !== FALSE) {
+			self::$_oThrow = new \Exception('Looks like an attack: ' . self::$_sURI);
 			return;
 		}
-		if (!self::checkPathSafe($sFile, 'www')) {
-			self::$_sStep = 'end';
-			self::$_oThrow = new TangoException('path ' . self::$_sURI . ' unsafe');
+
+		$sFile = self::$_sBaseDir . '/www' . self::$_sURI;
+
+		if (!self::_checkFileSafe($sFile, 'www')) {
 			return;
 		}
 
@@ -319,24 +228,117 @@ class Page {
 		$D =& self::$D;
 		$_IN =& self::$IN;
 
-		self::$_sStep = 'www';
-
-		ob_start();
+		if (self::_hookPreWww()) {
+			return;
+		}
 
 		self::$_fTimeWww = microtime(TRUE);
-		if (!self::_hookPreWww()) {
+		try {
+			(function () use ($sFile, &$T, &$D, &$_IN) {
+				require $sFile;
+			})();
+		} catch(\Throwable $e) {
+			self::$_oThrow = $e;
+		}
+	}
+
+	protected static function _content(): void {
+
+		self::$_iStep = self::STEP_CONTENT;
+		self::$_fTimeWww = microtime(TRUE) - self::$_fTimeWww;
+
+		if (self::$_oThrow) {
+			ob_clean();
+			return;
+		}
+
+		if (ob_get_length()) {
+			self::$_iStep = self::STEP_END;
+			if (static::$_sContentType !== 'html') {
+				self::sendContentTypeHeader();
+			}
+			return;
+		}
+
+		if (self::$_iStep === self::STEP_END) {
+			return;
+		}
+
+		if (static::$_sContentType === 'html') {
+			self::$T = HTML::escape(self::$T);
+			return;
+		}
+
+		if (in_array(static::$_sContentType, ['json', 'jsonp'])) {
+			$sCallback = '';
+			if (static::$_sContentType === 'jsonp') {
+				$sCallback = self::$IN['callback'] ?? $_GET['callback'] ?? '';
+				if (!is_string($sCallback)) {
+					$sCallback = '';
+				} else if (!preg_match('#^[_$a-zA-Z\x{A0}-\x{FFFF}][_$a-zA-Z0-9\x{A0}-\x{FFFF}]*$#u', $sCallback)) {
+					$sCallback = '';
+				}
+			}
+
+			self::$_iStep = self::STEP_END;
+			self::sendContentTypeHeader();
+
+			if (strlen($sCallback)) {
+				echo $sCallback . '(';
+			}
+			echo json_encode(self::$T, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+			if (strlen($sCallback)) {
+				echo ')';
+			}
+			return;
+		}
+	}
+
+	protected static function _tpl(): void {
+
+		if (self::$_iStep === self::STEP_END) {
+			return;
+		}
+
+		self::$_iStep = self::STEP_TPL;
+
+		$sFile = self::$_sTpl ?: HTML::getTpl(self::$_sURI);
+		self::_checkFileSafe($sFile, 'tpl');
+
+		if (self::$_oThrow) {
+			$bDebugTpl = TRUE;
+			$sFile = static::_fallbackTplDebug();
+		}
+
+		$T =& self::$T;
+		$D =& self::$D;
+		$_IN =& self::$IN;
+
+		$oThrow = self::$_oThrow;
+		self::$_oThrow = NULL;
+
+		self::$_fTimeTpl = microtime(TRUE);
+
+		if (is_readable($sFile)) {
 			try {
-				(function () use ($sFile, &$T, &$D, &$_IN) {
+				(function () use ($sFile, $T, $D, $_IN, $oThrow) {
 					require $sFile;
 				})();
 			} catch(\Throwable $e) {
-				self::$_oThrow = $e;
 			}
+		} else {
+			$e = new \Exception('no tpl ' . $sFile);
 		}
-		self::$_fTimeWww = microtime(TRUE) - self::$_fTimeWww;
+
+		if (!empty($e) && empty($bDebugTpl)) {
+			ob_clean();
+			self::$_oThrow = $e;
+			self::$_iStep = self::STEP_CONTENT;
+			exit;
+		}
 	}
 
-	public static function addHookPreWww(callable $cb) {
+	public static function addHookPreWww(callable $cb): void {
 		static::$_lHookPreWww[] = $cb;
 	}
 
@@ -349,56 +351,25 @@ class Page {
 		return false;
 	}
 
-	public static function getTimeWww() {
+	public static function getTimeWww(): string {
 		return self::$_fTimeWww;
 	}
 
-	public static function getTimeTpl() {
+	public static function getTimeTpl(): string {
 		return self::$_fTimeTpl;
 	}
 
-	protected static function _tpl(string $sURI = '') {
-
-		self::$_sStep = 'tpl';
-
-		ob_start();
-
-		$T =& self::$T;
-		$D =& self::$D;
-		$_IN =& self::$IN;
-
-		$sTpl = self::$_sTpl ?: HTML::getTpl(self::$_sURI);
-
-		if (!self::checkPathSafe($sTpl, 'tpl')) {
-			self::$_sStep = 'end';
-			throw new TangoException('file ' . $sTpl. ' unsafe');
-		}
-
-		self::$_fTimeTpl = microtime(TRUE);
-
-		$sFile = $sTpl;
-		try {
-			(function () use ($sFile, $T, $D, $_IN) {
-				require $sFile;
-			})();
-		} catch(\Throwable $e) {
-			self::$_oThrow = $e;
-		}
+	protected static function _layout() {
 
 		self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
+		$sBody = ob_get_clean();
+
+		self::$_iStep = self::STEP_LAYOUT;
 
 		if (self::$_oThrow) {
-			self::shutdown();
-			return;
+			throw self::$_oThrow;
 		}
 
-		self::_layout(ob_get_clean());
-
-		return TRUE;
-	}
-
-	protected static function _layout(string $sBody) {
-		self::$_sStep = 'layout';
 		$oLayout = static::initLayout();
 		if (self::$_sLayout) {
 			$oLayout->setLayout(self::$_sLayout);
@@ -409,8 +380,7 @@ class Page {
 	}
 
 	protected static function _missingPage($sURI, $sFile) {
-		self::$_bWww = FALSE;
-		self::$_sStep = 'end';
+		self::$_iStep = self::STEP_END;
 		self::setContentType('txt');
 		echo 'ERROR: missing uri ' . $sURI;
 	}
@@ -425,83 +395,44 @@ class Page {
 		return $sTpl ?: dirname(__DIR__) . '/Page/tpl/404_notfound.php';
 	}
 
-	protected static function _debugPage(string $sTpl = ''): string {
-
-		if (self::$_bFail) {
-			return '';
-		}
-		self::$_bFail = TRUE;
-
-		if (!Config::isDebug()) {
-			http_response_code(500);
-			return '';
-		}
-
-		ob_start();
-		require $sTpl ?: (dirname(__DIR__) . '/Page/tpl/500_debug.php');
-		return ob_get_clean();
-	}
-
-	public static function getThrow() {
+	public static function getThrow(): Throwable {
 		return self::$_oThrow;
 	}
 
 	public static function shutdown() {
 
-		if (self::$_sStep === 'end') {
-			// 正常结束
+		if (self::$_iStep === self::STEP_END) {
 			return;
 		}
 
-		$aError = error_get_last();
-		if ($aError && self::isStopError($aError['type'])) {
-			// 还不知道什么情况下会 php7 报 error 而不是 ErrorException，
-			// 不知道如何触发，先这么写上吧
-			self::$_oThrow = new \ErrorException($aError['message'], 0, $aError['type'], $aError['file'], $aError['line']);
-			error_clear_last();
+		self::_register();
+
+		switch (self::$_iStep) {
+
+		case self::STEP_WWW:
+
+			self::_content();
+
+		case self::STEP_CONTENT:
+
+			self::_tpl();
+
+		case self::STEP_TPL:
+
+			self::_layout();
 		}
 
-		switch (self::$_sStep) {
-
-			case 'www':
-			case 'tpl':
-
-				ob_clean();
-				if (!self::$_oThrow) {
-					self::_afterWww();
-					break;
-				}
-				if (!self::$_fTimeTpl) {
-					self::$_fTimeTpl = microtime(TRUE);
-				}
-				$sBody = static::_debugPage();
-
-				self::$_fTimeTpl = microtime(TRUE) - self::$_fTimeTpl;
-				if ($sBody) {
-					self::_layout($sBody);
-				}
-				self::$_sStep = 'end';
-				break;
-
-			case 'layout':
-				echo 'error when layout';
-				break;
-
-			default:
-				// init 或其他未知阶段
-				break;
+		/*
+		if (self::$_bDelay) {
+			fastcgi_finish_request();
+			Delay::run();
 		}
-		// echo 'step = ', self::$_sStep, "\n";
-		// echo 'shutdown', "\n";
-	}
-
-	public static function isStopError($iError) {
-		return in_array($iError, self::ERROR_STOP_CODE_LIST);
+		 */
 	}
 
 	public static function initLayout() {
 
-		// 这么干是为了延迟加载，如果没有 HTML 输出，可以避免加载 Layout 类的开销
+		// 延迟加载，如果没有 HTML 输出，可以避免加载 Layout 类的开销
 
 		if (!self::$_oLayout) {
 			self::$_oLayout = new \Tango\Page\Layout();
@@ -510,18 +441,13 @@ class Page {
 	}
 
 	public static function jump($sURL) {
-		if (self::$_sStep === 'www') {
-			ob_end_clean();
-		} else if (self::$_sStep !== 'init') {
-			throw new \Exception('only can be use in www page, now step = ' . self::$_sStep);
-		}
-		self::$_sStep = 'end';
-		self::$_bWww = FALSE;
+		self::$_iStep = self::STEP_END;
+		ob_clean();
 		if (preg_match('#^/#', $sURL)) {
 			$sURL = Config::get('page')['site_url'] . ltrim($sURL, '/');
 		}
 		header('Location: ' . $sURL);
-		return;
+		exit;
 	}
 
 	public static function stopWww() {
@@ -530,15 +456,10 @@ class Page {
 		}
 		self::$_bStopWww = TRUE;
 
-		if (self::$_sStep === 'www') {
-			self::$_sStep = 'end';
-			self::$_bWww = FALSE;
-		} else if (self::$_sStep !== 'init') {
-			throw new \Exception('only can be use in www page, now step ' . self::$_sStep);
+		if (self::$_iStep === self::STEP_WWW) {
+			self::$_iStep = 'end';
+		} else if (self::$_iStep !== 'init') {
+			throw new \Exception('only can be use in www page, now step ' . self::$_iStep);
 		}
-	}
-
-	public static function getStep() {
-		return self::$_sStep;
 	}
 }
