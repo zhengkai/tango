@@ -76,7 +76,7 @@ class Filter {
 
 		foreach ($lRule as $sKey => $sType) {
 			$mValue =& $aParm[$sKey];
-			if ($sType !== 'array' && is_array($mValue)) {
+			if (is_array($mValue) && $sType !== 'array') {
 				$_IN[$sKey] = FALSE;
 				continue;
 			}

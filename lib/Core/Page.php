@@ -31,7 +31,7 @@ class Page {
 	protected static $_D = [];
 
 	/** 经过 \Tango\Core\Filter 过滤的输入参数（原 $_GET/$_POST） */
-	protected static $_IN = [];
+	public static $IN = [];
 
 	protected static $_bFail = FALSE;
 
@@ -90,26 +90,23 @@ class Page {
 		}
 	}
 
-	public static function cacheForever(): bool {
+	public static function cacheForever(): void {
 
 		if (
 			!empty($_SERVER['HTTP_IF_MODIFIED_SINCE'])
 			|| !empty($_SERVER['HTTP_IF_NONE_MATCH'])
 		) {
 			http_response_code(304);
-			self::stopWww();
-			return TRUE;
+			self::stop();
 		}
 
 		header('ETag: "cache-forever"');
 		header('Last-Modified: ' . gmdate('D, d M Y H:i:s T', time()));
 
 		self::setExpireMax();
-
-		return FALSE;
 	}
 
-	public static function etag(string $sETag): bool {
+	public static function etag(string $sETag): void {
 
 		$sETag = '"' . $sETag . '"';
 		$sETagCheck = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
@@ -118,13 +115,10 @@ class Page {
 			|| $sETagCheck === 'W/' . $sETag
 		) {
 			http_response_code(304);
-			self::stopWww();
-			return TRUE;
+			self::stop();
 		}
 
 		header('ETag: ' . $sETag);
-
-		return FALSE;
 	}
 
 	public static function setExpireMax() {
@@ -172,10 +166,6 @@ class Page {
 		return Config::get('page') ?: [];
 	}
 
-	protected static function _register() {
-		register_shutdown_function([get_called_class(), 'run']);
-	}
-
 	public static function start(string $sScript, string $sBaseDir = ''): void {
 
 		ob_start();
@@ -194,7 +184,7 @@ class Page {
 			}
 		}
 
-		self::_register();
+		register_shutdown_function([get_called_class(), 'run']);
 		self::run(FALSE);
 	}
 
@@ -255,7 +245,7 @@ class Page {
 
 		$T =& self::$_T;
 		$D =& self::$_D;
-		$_IN =& self::$_IN;
+		$_IN =& self::$IN;
 
 		self::$_fTimeWww = microtime(TRUE);
 		try {
@@ -293,7 +283,7 @@ class Page {
 		if (in_array(static::$_sContentType, ['json', 'jsonp'])) {
 			$sCallback = '';
 			if (static::$_sContentType === 'jsonp') {
-				$sCallback = self::$_IN['callback'] ?? $_GET['callback'] ?? '';
+				$sCallback = self::$IN['callback'] ?? $_GET['callback'] ?? '';
 				if (!is_string($sCallback)) {
 					$sCallback = '';
 				} else if (!preg_match('#^[_$a-zA-Z\x{A0}-\x{FFFF}][_$a-zA-Z0-9\x{A0}-\x{FFFF}]*$#u', $sCallback)) {
@@ -332,7 +322,7 @@ class Page {
 
 		$T =& self::$_T;
 		$D =& self::$_D;
-		$_IN =& self::$_IN;
+		$_IN =& self::$IN;
 
 		if (self::$_oThrow) {
 			self::$_oThrowTpl = self::$_oThrow;
