@@ -38,7 +38,6 @@ class Page {
 	protected static $_sBaseDir = '';
 
 	protected static $_sWww = '';
-	protected static $_bStopWww = FALSE;
 
 	protected static $_sScript;
 	protected static $_sTpl;
@@ -130,11 +129,8 @@ class Page {
 		return self::$_sBaseDir;
 	}
 
-	protected static function _checkFileSafe(string $sPath, string $sSubDir = '') {
-		$sBaseDir = self::$_sBaseDir . '/';
-		if ($sSubDir) {
-			$sBaseDir .= rtrim($sSubDir, '/') . '/';
-		}
+	protected static function _checkFileSafe(string $sPath, string $sSubDir) {
+		$sBaseDir = self::$_sBaseDir . '/' . rtrim($sSubDir, '/') . '/';
 		if (strpos($sPath, $sBaseDir) === 0) {
 			return TRUE;
 		}
@@ -153,7 +149,11 @@ class Page {
 		static::$_sContentType = $sType;
 	}
 
-	protected static function sendContentTypeHeader(string $sContentType = '') {
+	public static function getContentType(): string {
+		return static::$_sContentType;
+	}
+
+	protected static function _sendContentTypeHeader(string $sContentType = '') {
 		$sOut = self::CONTENT_TYPE_LIST[$sContentType ?: self::$_sContentType];
 		header('Content-Type: ' . $sOut);
 	}
@@ -228,7 +228,9 @@ class Page {
 
 		self::$_iStep = self::STEP_WWW;
 
-		if (strpos(self::$_sScript, '..') !== FALSE) {
+		if (strpos(self::$_sScript, '..') !== FALSE
+			|| strpos(self::$_sScript, '/_') !== FALSE
+		) {
 			self::$_oThrow = new \Exception('Looks like an attack: ' . self::$_sScript);
 			return;
 		}
@@ -247,11 +249,32 @@ class Page {
 		$D =& self::$_D;
 		$_IN =& self::$IN;
 
+		$sFileDir = dirname($sFile);
+		$sFileBefore = $sFileDir . '/_before.inc.php';
+		$sFileAfter  = $sFileDir . '/_after.inc.php';
+
 		self::$_fTimeWww = microtime(TRUE);
 		try {
-			(function () use ($sFile, &$T, &$D, &$_IN) {
-				require $sFile;
+
+			if (file_exists($sFileBefore)) {
+				$_sFile = $sFileBefore;
+				(function () use ($_sFile, &$T, &$D, &$_IN) {
+					require $_sFile;
+				})();
+			}
+
+			$_sFile = $sFile;
+			(function () use ($_sFile, &$T, &$D, &$_IN) {
+				require $_sFile;
 			})();
+
+			if (file_exists($sFileAfter)) {
+				$_sFile = $sFileAfter;
+				(function () use ($_sFile, &$T, &$D, &$_IN) {
+					require $_sFile;
+				})();
+			}
+
 		} catch(\Throwable $e) {
 			self::$_oThrow = $e;
 		}
@@ -270,7 +293,7 @@ class Page {
 		if (ob_get_length()) {
 			self::$_iStep = self::STEP_END;
 			if (static::$_sContentType !== 'html') {
-				self::sendContentTypeHeader();
+				self::_sendContentTypeHeader();
 			}
 			return;
 		}
@@ -295,7 +318,7 @@ class Page {
 			}
 
 			self::$_iStep = self::STEP_END;
-			self::sendContentTypeHeader();
+			self::_sendContentTypeHeader();
 
 			if (strlen($sCallback)) {
 				echo $sCallback . '(';
@@ -329,14 +352,33 @@ class Page {
 			self::$_oThrow = NULL;
 		}
 
+		$sFileDir = dirname($sFile);
+		$sFileBefore = $sFileDir . '/_before.inc.php';
+		$sFileAfter  = $sFileDir . '/_after.inc.php';
+
 		self::$_fTimeTpl = microtime(TRUE);
 
 		$e = NULL;
 		if (is_readable($sFile)) {
 			try {
-				(function () use ($sFile, $T, $D, $_IN) {
-					require $sFile;
+				if (file_exists($sFileBefore)) {
+					$_sFile = $sFileBefore;
+					(function () use ($_sFile, &$T, &$D, &$_IN) {
+						require $_sFile;
+					})();
+				}
+
+				$_sFile = $sFile;
+				(function () use ($_sFile, $T, $D, $_IN) {
+					require $_sFile;
 				})();
+
+				if (file_exists($sFileAfter)) {
+					$_sFile = $sFileAfter;
+					(function () use ($_sFile, &$T, &$D, &$_IN) {
+						require $_sFile;
+					})();
+				}
 			} catch(\Throwable $e) {
 			}
 		} else {
@@ -347,10 +389,8 @@ class Page {
 			ob_clean();
 
 			if (self::$_bDebugTpl) {
-				j('tpl stop');
 				self::stop(FALSE);
-				j(self::$_iStep);
-				throw $e;
+				return;
 			}
 
 			self::$_oThrow = $e;
