@@ -153,6 +153,10 @@ class Page {
 		return static::$_sContentType;
 	}
 
+	public static function isContentType(string $s): bool {
+		return static::$_sContentType === $s;
+	}
+
 	protected static function _sendContentTypeHeader(string $sContentType = '') {
 		$sOut = self::CONTENT_TYPE_LIST[$sContentType ?: self::$_sContentType];
 		header('Content-Type: ' . $sOut);

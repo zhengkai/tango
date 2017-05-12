@@ -175,14 +175,14 @@ class Session {
 	/**
 	 * 仅限登录用户，没有登录就做页面跳转，通常用在页头
 	 */
-	public static function gate(): bool {
+	public static function gate(bool $bReturn = TRUE): bool {
 
 		if (Session::auth()) {
 			return FALSE;
 		}
 
 		$sReturn = '';
-		if (!$_POST) {
+		if (!$_POST && $bReturn) {
 			$sReturn = '?return=' . urlencode($_SERVER["REQUEST_URI"]);
 		}
 		Page::jump('/passport/login' . $sReturn);
