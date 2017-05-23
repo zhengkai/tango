@@ -373,7 +373,7 @@ class Page {
 				}
 
 				$_sFile = $sFile;
-				(function () use ($_sFile, $T, $D, $_IN) {
+				(function () use ($_sFile, &$T, &$D, &$_IN) {
 					require $_sFile;
 				})();
 

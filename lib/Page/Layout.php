@@ -19,14 +19,14 @@ class Layout {
 	}
 
 	public function run() {
-		$aCall = [$this, '_run' . ($this->_sLayout ?: 'Single')];
+		$aCall = [$this, '_run' . ($this->_sLayout ?: 'None')];
 		if (!is_callable($aCall)) {
 			throw new \Exception('unknown layout "' . $this->_sLayout . '"');
 		}
 		return $aCall();
 	}
 
-	protected function _runSingle() {
+	protected function _runNone() {
 		echo $this->_sBody;
 		return TRUE;
 	}
