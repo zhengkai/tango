@@ -41,7 +41,7 @@ class Filter {
      *     需要注意默认的 int 不允许有负值，否则请使用 signedInt
 	 * @throws TangoException
 	 */
-	public static function run($sMethod = "GET", $lRule = []) {
+	public static function run($sMethod = "GET", $lRule = []): void {
 
 		if (self::$_bCheck) {
 			throw new TangoException('filter checked');
@@ -51,7 +51,9 @@ class Filter {
 		switch ((string)$sMethod) {
 
 			case 'POST':
-				// TODO: referer check
+				if (!static::checkReferer()) {
+					return;
+				}
 			case 'POST_NO_REF_CHECK':
 				$aParm =& $_POST;
 				break;
@@ -149,5 +151,9 @@ class Filter {
 		$_POST = [];
 		$_GET = [];
 		$_REQUEST = [];
+	}
+
+	public static function checkReferer(): bool {
+		return TRUE;
 	}
 }
