@@ -243,24 +243,18 @@ abstract class DBEnumBase {
 					return $sKey.' = ?';
 				}, array_merge([static::$_sKeyHash], static::$_lKeySearch));
 
-				$sQueryInsert = sprintf(
-					'INSERT IGNORE INTO %s SET %s',
-					static::$_sDBTable,
-					implode(', ', $lQuery)
-				);
-
 				$aValueInsert = array_merge([$sHash], array_values($aSearch));
 
 			} else {
 
-				$sQueryInsert = sprintf(
-					'INSERT IGNORE INTO %s SET %s',
-					static::$_sDBTable,
-					implode(', ', $lQuery)
-				);
-
 				$aValueInsert = $aValueSelect;
 			}
+
+			$sQueryInsert = sprintf(
+				'INSERT IGNORE INTO %s SET %s',
+				static::$_sDBTable,
+				implode(', ', $lQuery)
+			);
 
 			$iID = $oDB->getInsertID($sQueryInsert, $aValueInsert);
 			if (!$iID) {
