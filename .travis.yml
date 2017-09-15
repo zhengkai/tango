@@ -2,16 +2,15 @@ language: php
 
 php:
   - '7.1'
-  - nightly
 
 before_script:
-  - phpenv config-rm xdebug.ini
+  - phpenv config-rm xdebug.ini 2>&1
   - composer update --quiet
   - mysql < phpunit/db/create_table.sql
   - php -i
 
-script: 
+script:
   - ./vendor/bin/phpunit -c phpunit/phpunit.xml.dist
-    
+
 git:
   depth: 5
