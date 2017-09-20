@@ -23,7 +23,7 @@ class Session {
 	public static function _authCookie() {
 
 		// Cookie 完整性/防篡改校验
-		$sCookie =& $_COOKIE[self::COOKIE_NAME];
+		$sCookie =& $_COOKIE[static::COOKIE_NAME];
 		if (!is_string($sCookie)) {
 			return FALSE;
 		}
@@ -57,7 +57,7 @@ class Session {
 			return $bAuth = FALSE;
 		}
 
-		if (($_SERVER['REQUEST_TIME'] - $aCookie['time']) > self::RECORD_MIN_SEC) {
+		if (($_SERVER['REQUEST_TIME'] - $aCookie['time']) > static::RECORD_MIN_SEC) {
 			static::updateSession($aCookie['id'], $aCookie['session']);
 		}
 
@@ -116,7 +116,7 @@ class Session {
 		self::$_bSetSession = FALSE;
 
 		if ($iSession < 1) {
-			$iSession = self::genID();
+			$iSession = static::genID();
 		}
 
 		$oDB = \Tango\Drive\DB::getInstance('passport');
@@ -134,7 +134,7 @@ class Session {
 		];
 
 		$sCookie = implode(',', $aCookie);
-		$sCookie = self::_cookieHash($sCookie).$sCookie;
+		$sCookie = static::_cookieHash($sCookie).$sCookie;
 
 		static::_setCookie($sCookie);
 	}
@@ -155,7 +155,7 @@ class Session {
 
 		$sDomain = \Tango\Core\Page::getConfig()['cookie_domain'];
 
-		setcookie(self::COOKIE_NAME, $sValue ?: '', $sValue ? 2147483647 : 0, '/', $sDomain);
+		setcookie(static::COOKIE_NAME, $sValue ?: '', $sValue ? 2147483647 : 0, '/', $sDomain);
 		return TRUE;
 	}
 
