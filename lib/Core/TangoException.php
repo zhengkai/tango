@@ -160,8 +160,8 @@ class TangoException extends \Exception {
 
 		self::$_sLastError = $s;
 
-		if ($bSend) {
-			error_log("\n".$s."\n", 3, Log::getConfig()['file']);
+		if ($bSend && $file = Log::getConfig()['file']) {
+			error_log("\n".$s."\n", 3, $file);
 		}
 		return $s;
 	}
