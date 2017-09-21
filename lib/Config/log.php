@@ -5,4 +5,5 @@ return [
 	'max_size' => 1000000000, // 1GB
 	'disk_free_space' => 100000000, // 100MB
 	'time_format' => 'm-d H:i:s',
+	'file' => ini_get('error_log'),
 ];

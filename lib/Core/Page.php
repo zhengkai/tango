@@ -352,6 +352,8 @@ class Page {
 		$_IN =& self::$IN;
 
 		if (self::$_oThrow) {
+			TangoException::handler(self::$_oThrow);
+
 			self::$_oThrowTpl = self::$_oThrow;
 			self::$_oThrow = NULL;
 		}

@@ -73,12 +73,7 @@ class TangoException extends \Exception {
 	 * @access public
 	 * @return string
 	 */
-	public static function handler(\Exception $e, $bSend = TRUE) {
-
-		static $_sTimeFormat;
-		if ($_sTimeFormat === NULL) {
-			Log::getConfig()['time_format'];
-		}
+	public static function handler(\Throwable $e, $bSend = TRUE) {
 
 		$aTrace = [];
 
@@ -129,7 +124,7 @@ class TangoException extends \Exception {
 
 		$sHashType = hash('crc32', json_encode($aTrace, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-		$sTime = date($_sTimeFormat, $fTime);
+		$sTime = date(Log::getConfig()['time_format'], $fTime);
 		$sTime .= substr(sprintf('%.03f' ,$fTime), -4);
 
 		$sFunc = $aTrace['class'].$aTrace['type'].$aTrace['function'];
@@ -166,7 +161,7 @@ class TangoException extends \Exception {
 		self::$_sLastError = $s;
 
 		if ($bSend) {
-			error_log("\n".$s."\n", 3, ini_get('error_log'));
+			error_log("\n".$s."\n", 3, Log::getConfig()['file']);
 		}
 		return $s;
 	}
