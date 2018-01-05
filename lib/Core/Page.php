@@ -69,6 +69,7 @@ class Page {
 
 	public const CONTENT_TYPE_LIST = [
 		'html' => 'text/html',
+		'md' => 'text/html',
 		'txt' => 'text/plain',
 		'json' => 'application/json',
 		'jsonp' => 'application/javascript',
@@ -254,29 +255,26 @@ class Page {
 		$_IN =& self::$IN;
 
 		$sFileDir = dirname($sFile);
-		$sFileBefore = $sFileDir . '/_before.inc.php';
-		$sFileAfter  = $sFileDir . '/_after.inc.php';
 
 		self::$_fTimeWww = microtime(TRUE);
 		try {
 
+			$sFileBefore = $sFileDir . '/_before.inc.php';
 			if (file_exists($sFileBefore)) {
-				$_sFile = $sFileBefore;
-				(function () use ($_sFile, &$T, &$D, &$_IN) {
+				(function ($_sFile) use (&$T, &$D, &$_IN) {
 					require $_sFile;
-				})();
+				})($sFileBefore);
 			}
 
-			$_sFile = $sFile;
-			(function () use ($_sFile, &$T, &$D, &$_IN) {
+			(function ($_sFile) use (&$T, &$D, &$_IN) {
 				require $_sFile;
-			})();
+			})($sFile);
 
+			$sFileAfter  = $sFileDir . '/_after.inc.php';
 			if (file_exists($sFileAfter)) {
-				$_sFile = $sFileAfter;
-				(function () use ($_sFile, &$T, &$D, &$_IN) {
+				(function ($_sFile) use (&$T, &$D, &$_IN) {
 					require $_sFile;
-				})();
+				})($sFileAfter);
 			}
 
 		} catch(\Throwable $e) {
@@ -413,6 +411,18 @@ class Page {
 
 		if (self::$_oThrow) {
 			throw self::$_oThrow;
+		}
+
+		if (static::$_sContentType === 'txt') {
+			self::$_iStep = self::STEP_END;
+			self::_sendContentTypeHeader();
+			echo $sBody;
+			return;
+		}
+
+		if (static::$_sContentType === 'md') {
+			$o = new \Parsedown();
+			$sBody = $o->text($sBody);
 		}
 
 		$oLayout = static::initLayout();
